@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planet Zoo — Générateur de Défis</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="app-logo">🦁</div>
+      <div>
+        <h1 class="app-title">Zoo Challenge Generator</h1>
+        <p class="app-subtitle">Planet Zoo — Générateur de Défis</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="controls-panel">
+    <div class="controls-inner">
+
+      <div class="control-group">
+        <label class="control-label" for="zoo-name">Nom du Zoo</label>
+        <input class="zoo-name-input" id="zoo-name" type="text" placeholder="Mon Magnifique Zoo..." maxlength="40" />
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">Difficulté</label>
+        <div class="difficulty-btns">
+          <button class="diff-btn" id="btn-easy"   data-diff="easy">Facile</button>
+          <button class="diff-btn" id="btn-moyen"  data-diff="moyen">Intermédiaire</button>
+          <button class="diff-btn" id="btn-avance" data-diff="avance">Avancé</button>
+        </div>
+      </div>
+
+      <div class="control-group control-group--dlc">
+        <label class="control-label">Extensions actives</label>
+        <div class="dlc-controls">
+          <button class="dlc-toggle-btn" id="btn-all-on">Tout activer</button>
+          <button class="dlc-toggle-btn" id="btn-all-off">Tout désactiver</button>
+        </div>
+        <div class="dlc-grid" id="dlc-grid"></div>
+      </div>
+
+      <div class="control-group control-group--generate">
+        <button class="generate-btn" id="gen-btn">
+          <span>⚡</span> Générer le Défi
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <main class="main-content">
+    <div id="challenge-area">
+      <div class="challenge-card">
+        <div class="empty-state">
+          <div class="empty-icon">🦒</div>
+          <h2 class="empty-title">Aucun défi généré</h2>
+          <p class="empty-text">Choisis une difficulté, active tes extensions, et clique sur Générer!</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

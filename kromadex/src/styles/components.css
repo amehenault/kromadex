@@ -211,7 +211,6 @@ input, select, textarea {
   margin-top: var(--espace-1); 
 }
 
-/* Textarea auto-adaptatif pour permettre le retour à la ligne automatique sans couper les mots */
 .ligne textarea { 
   margin: 0; 
   min-width: 0; 
@@ -319,39 +318,14 @@ input, select, textarea {
 .choix button { min-height: 56px; border: 1px solid var(--bordure); border-radius: var(--rayon-s); background: var(--blanc); color: var(--couleur-principale); font: inherit; font-size: 1.3rem; display: grid; place-items: center; cursor: pointer; }
 .onglets .actif, .choix .actif { background: var(--couleur-principale); color: var(--blanc); border-color: var(--couleur-principale); }
 
-/* --- LISTE DE MES TOMES (PROFIL) --- */
-.liste-tomes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espace-2);
-  margin-top: var(--espace-3);
+/* --- FORMAT ET MASQUAGE SPÉCIFIQUE À L'EXPORTATION IMAGE --- */
+.mode-export {
+  width: 390px !important; /* Dimensions ajustées pour format mobile */
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
 }
 
-.liste-tomes .ligne {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--carte);
-  padding: var(--espace-1) var(--espace-2);
-  border-radius: var(--rayon-s);
-  border: 1px solid var(--bordure);
-  cursor: grab;
-  user-select: none;
-}
-
-.liste-tomes .ligne.en-glissement {
-  opacity: 0.4;
-  border: 1px dashed var(--couleur-principale);
-}
-
-.liste-tomes .ligne input {
-  flex: 1;
-  border: 1px solid transparent;
-  box-shadow: none;
-  text-align: left;
-}
-
-/* --- MASQUAGE LORS DE L'EXPORT EN IMAGE --- */
 .mode-export .btn,
 .mode-export .actions-ligne,
 .mode-export .plus,
@@ -361,12 +335,61 @@ input, select, textarea {
   display: none !important;
 }
 
-.mode-export input, 
-.mode-export select,
-.mode-export textarea {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
+.mode-export .haut {
+  grid-template-columns: 100px 1fr !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.mode-export .cadre-image {
+  aspect-ratio: 3 / 4 !important;
+  border-style: solid !important;
+}
+
+.meta-export-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  height: 100%;
+}
+
+.titre-export-page {
+  font-size: 1.15rem;
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sous-meta-export {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.valeur-export-titre-groupe {
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 4px 0;
+}
+
+.valeur-export-code {
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 4px;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.mode-export .ligne {
+  grid-template-columns: var(--cible-tactile) 1fr !important;
+}
+
+.mode-export .groupe-tete {
+  grid-template-columns: 1fr !important;
 }
 
 /* --- RESPONSIVE --- */

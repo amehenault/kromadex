@@ -69,7 +69,7 @@ async function reduire(file) {
   return new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.82));
 }
 
-function ChampCodeCouleur({ value, onChange }) {
+function ChampCodeCouleur({ value, onChange, enExport }) {
   const [verrouille, setVerrouille] = useState(Boolean(value));
 
   const TenterModification = () => {
@@ -80,6 +80,10 @@ function ChampCodeCouleur({ value, onChange }) {
       }
     }
   };
+
+  if (enExport) {
+    return <div className="valeur-export-code">{value || ''}</div>;
+  }
 
   return (
     <textarea
@@ -98,7 +102,7 @@ function ChampCodeCouleur({ value, onChange }) {
   );
 }
 
-function Groupe({ g, maj, retirer }) {
+function Groupe({ g, maj, retirer, enExport }) {
   const [glisserIndex, setGlisserIndex] = useState(null);
 
   const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => (r.id === id ? { ...r, [k]: v } : r)) });
@@ -125,7 +129,7 @@ function Groupe({ g, maj, retirer }) {
     <div 
       className={`ligne ${glisserIndex === reelIdx ? 'glisser' : ''}`} 
       key={r.id}
-      draggable
+      draggable={!enExport}
       onDragStart={() => setGlisserIndex(reelIdx)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => {
@@ -136,7 +140,7 @@ function Groupe({ g, maj, retirer }) {
       }}
     >
       <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-      <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} />
+      <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} enExport={enExport} />
       
       <div className="actions-ligne">
         <div className="fleches">
@@ -151,7 +155,11 @@ function Groupe({ g, maj, retirer }) {
   return (
     <section className="groupe">
       <div className="groupe-tete">
-        <input placeholder="Sous-catégorie" aria-label="Nom de la sous-catégorie" value={g.name} onChange={(e) => maj({ ...g, name: e.target.value })} />
+        {enExport ? (
+          <div className="valeur-export-titre-groupe">{g.name || 'Sans nom'}</div>
+        ) : (
+          <input placeholder="Sous-catégorie" aria-label="Nom de la sous-catégorie" value={g.name} onChange={(e) => maj({ ...g, name: e.target.value })} />
+        )}
         <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}>✕</button>
       </div>
 
@@ -206,7 +214,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   async function exporterEnImage() {
     if (!pageRef.current) return;
     setEnExport(true);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     try {
       const dataUrl = await toPng(pageRef.current, { cacheBust: true });
@@ -253,7 +261,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
 
       <div 
         ref={pageRef} 
-        className={enExport ? 'mode-export' : ''} 
+        className={`zone-export-conteneur ${enExport ? 'mode-export' : ''}`}
         style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}
       >
         <div className="haut">
@@ -262,33 +270,45 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
             <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
           </div>
           <div className="droite">
-            <label>Titre de la page *
-              <input placeholder="ex: Scooby-Doo" value={f.title} onChange={(e) => set('title', e.target.value)} required />
-            </label>
-
-            <div className="deux">
-              <div>
-                {ecritTome ? (
-                  <>
-                    <label htmlFor="nom-tome">Nom du tome</label>
-                    <div className="tome-nouveau">
-                      <input id="nom-tome" autoFocus value={f.tome} onChange={(e) => set('tome', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && validerTome()} />
-                      <button type="button" className="btn" onClick={validerTome}>OK</button>
-                    </div>
-                  </>
-                ) : (
-                  <label>Tome
-                    <select value={f.tome} onChange={(e) => choisirTome(e.target.value)}>
-                      <option value="">Choisir</option>
-                      {f.tome && !tomes.includes(f.tome) && <option>{f.tome}</option>}
-                      {tomes.map((t) => <option key={t}>{t}</option>)}
-                      <option value={NOUVEAU}>+ Nouveau tome</option>
-                    </select>
-                  </label>
-                )}
+            {enExport ? (
+              <div className="meta-export-compact">
+                <h2 className="titre-export-page">{f.title || 'Coloriage'}</h2>
+                <div className="sous-meta-export">
+                  {f.tome && <span>Tome : <b>{f.tome}</b></span>}
+                  {f.page_no && <span>Page : <b>{f.page_no}</b></span>}
+                </div>
               </div>
-              <label>Page<input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} /></label>
-            </div>
+            ) : (
+              <>
+                <label>Titre de la page *
+                  <input placeholder="ex: Scooby-Doo" value={f.title} onChange={(e) => set('title', e.target.value)} required />
+                </label>
+
+                <div className="deux">
+                  <div>
+                    {ecritTome ? (
+                      <>
+                        <label htmlFor="nom-tome">Nom du tome</label>
+                        <div className="tome-nouveau">
+                          <input id="nom-tome" autoFocus value={f.tome} onChange={(e) => set('tome', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && validerTome()} />
+                          <button type="button" className="btn" onClick={validerTome}>OK</button>
+                        </div>
+                      </>
+                    ) : (
+                      <label>Tome
+                        <select value={f.tome} onChange={(e) => choisirTome(e.target.value)}>
+                          <option value="">Choisir</option>
+                          {f.tome && !tomes.includes(f.tome) && <option value={f.tome}>{f.tome}</option>}
+                          {tomes.map((t) => <option key={t} value={t}>{t}</option>)}
+                          <option value={NOUVEAU}>+ Nouveau tome</option>
+                        </select>
+                      </label>
+                    )}
+                  </div>
+                  <label>Page<input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} /></label>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -296,7 +316,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
         
         <div className="liste-sous-categories">
           {groupes.map((g) => (
-            <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
+            <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={enExport} />
           ))}
 
           <button 

@@ -149,7 +149,7 @@ input, select {
   box-sizing: border-box;
 }
 
-/* --- CODES COULEURS & COLONNES --- */
+/* --- CODES COULEURS & SOUS-CATÉGORIES --- */
 .titre-codes { 
   margin: var(--espace-4) 0 var(--espace-3); 
   padding-bottom: var(--espace-2); 
@@ -157,27 +157,52 @@ input, select {
   font-size: 1.1rem;
 }
 
-.colonnes-conteneur {
+.liste-sous-categories {
   display: flex;
   flex-direction: column;
   gap: var(--espace-3);
   width: 100%;
 }
 
-.colonnes { display: flex; gap: var(--espace-2); align-items: flex-start; width: 100%; }
-.colonne { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--espace-2); }
-.groupe { background: var(--carte); border: 1px solid var(--bordure); border-radius: var(--rayon-m); padding: var(--espace-2); }
+.groupe { 
+  background: var(--carte); 
+  border: 1px solid var(--bordure); 
+  border-radius: var(--rayon-m); 
+  padding: var(--espace-2); 
+  width: 100%;
+}
 
-.groupe-tete { display: grid; grid-template-columns: 1fr 28px; gap: var(--espace-1); align-items: center; margin-bottom: var(--espace-2); }
+.groupe-tete { 
+  display: grid; 
+  grid-template-columns: 1fr 28px; 
+  gap: var(--espace-1); 
+  align-items: center; 
+  margin-bottom: var(--espace-2); 
+}
+
 .groupe-tete input { 
   margin: 0; 
   font-weight: bold; 
   min-width: 0; 
-  white-space: normal;
-  word-break: break-word;
+  font-size: 1.05rem;
 }
 
-/* Lignes avec boutons de drag & flèches */
+/* Grille de 2 colonnes verticales pour les codes à l'intérieur d'une sous-catégorie */
+.grille-codes-deux-colonnes {
+  display: flex;
+  gap: var(--espace-2);
+  width: 100%;
+}
+
+.colonne-codes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+}
+
+/* Lignes de codes */
 .ligne { 
   display: grid; 
   grid-template-columns: var(--cible-tactile) 1fr auto; 
@@ -208,9 +233,6 @@ input, select {
   font-size: 1.3rem; 
   cursor: pointer; 
 }
-
-.glyphe { width: 24px; height: 24px; display: inline-grid; place-items: center; line-height: 1; }
-.glyphe.vide { color: var(--bordure); }
 
 .actions-ligne {
   display: flex;
@@ -260,7 +282,7 @@ input, select {
 }
 
 .ajout-groupe-bas {
-  margin-top: var(--espace-3);
+  margin-top: var(--espace-2);
   width: 100%;
 }
 
@@ -285,22 +307,6 @@ input, select {
 .choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: var(--espace-2); }
 .choix button { min-height: 56px; border: 1px solid var(--bordure); border-radius: var(--rayon-s); background: var(--blanc); color: var(--couleur-principale); font: inherit; font-size: 1.3rem; display: grid; place-items: center; cursor: pointer; }
 .onglets .actif, .choix .actif { background: var(--couleur-principale); color: var(--blanc); border-color: var(--couleur-principale); }
-
-.entete-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--espace-2);
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: var(--rayon-s);
-  background: var(--btn);
-  border: 1px solid var(--couleur-principale);
-}
 
 /* --- LISTE DE MES TOMES (PROFIL) --- */
 .liste-tomes {
@@ -334,12 +340,6 @@ input, select {
   text-align: left;
 }
 
-.ligne-tome {
-  display: flex;
-  gap: var(--espace-2);
-  align-items: center;
-}
-
 /* --- MASQUAGE LORS DE L'EXPORT EN IMAGE --- */
 .mode-export .btn,
 .mode-export .actions-ligne,
@@ -367,24 +367,9 @@ input, select {
     margin: 0 auto;
   }
   .deux { grid-template-columns: 1fr; }
-  
-  .colonnes {
-    display: flex;
-    flex-direction: row;
-    gap: var(--espace-2);
-  }
-  
-  .colonne {
-    flex: 1;
-    min-width: 0;
-  }
 }
 
 @media (min-width: 700px) {
   .voile { align-items: center; justify-content: center; }
   .tiroir { max-width: 420px; border-radius: var(--rayon-l); }
-}
-
-@media (min-width: 900px) {
-  .colonnes { gap: var(--espace-3); }
 }

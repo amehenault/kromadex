@@ -98,6 +98,38 @@ function Groupe({ g, maj, retirer }) {
     maj({ ...g, rows: nvlRows });
   };
 
+  const totalCodes = g.rows.length;
+  const milieu = Math.ceil(totalCodes / 2);
+  const codesGauche = g.rows.slice(0, milieu);
+  const codesDroite = g.rows.slice(milieu);
+
+  const RendreLigne = (r, reelIdx) => (
+    <div 
+      className={`ligne ${glisserIndex === reelIdx ? 'glisser' : ''}`} 
+      key={r.id}
+      draggable
+      onDragStart={() => setGlisserIndex(reelIdx)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={() => {
+        if (glisserIndex !== null && glisserIndex !== reelIdx) {
+          deplacer(glisserIndex, reelIdx);
+        }
+        setGlisserIndex(null);
+      }}
+    >
+      <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
+      <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} />
+      
+      <div className="actions-ligne">
+        <div className="fleches">
+          <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
+          <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
+        </div>
+        <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+      </div>
+    </div>
+  );
+
   return (
     <section className="groupe">
       <div className="groupe-tete">
@@ -105,32 +137,14 @@ function Groupe({ g, maj, retirer }) {
         <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}>✕</button>
       </div>
 
-      {g.rows.map((r, idx) => (
-        <div 
-          className={`ligne ${glisserIndex === idx ? 'glisser' : ''}`} 
-          key={r.id}
-          draggable
-          onDragStart={() => setGlisserIndex(idx)}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={() => {
-            if (glisserIndex !== null && glisserIndex !== idx) {
-              deplacer(glisserIndex, idx);
-            }
-            setGlisserIndex(null);
-          }}
-        >
-          <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-          <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} />
-          
-          <div className="actions-ligne">
-            <div className="fleches">
-              <button type="button" className="fleche" disabled={idx === 0} aria-label="Monter" onClick={() => deplacer(idx, idx - 1)}>▲</button>
-              <button type="button" className="fleche" disabled={idx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(idx, idx + 1)}>▼</button>
-            </div>
-            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
-          </div>
+      <div className="grille-codes-deux-colonnes">
+        <div className="colonne-codes">
+          {codesGauche.map((r, i) => RendreLigne(r, i))}
         </div>
-      ))}
+        <div className="colonne-codes">
+          {codesDroite.map((r, i) => RendreLigne(r, milieu + i))}
+        </div>
+      </div>
 
       <button type="button" className="plus" aria-label="Ajouter une ligne" onClick={ajouter}>+</button>
     </section>
@@ -209,12 +223,6 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     r.push('/'); r.refresh();
   }
 
-  // Distribution de haut en bas sur 2 colonnes (colonne 1 prioritaire en cas d'impair)
-  const nbLignes = groupes.length;
-  const milieu = Math.ceil(nbLignes / 2);
-  const colonneGauche = groupes.slice(0, milieu);
-  const colonneDroite = groupes.slice(milieu);
-
   return (
     <>
       <div className="barre">
@@ -268,20 +276,10 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
 
         <h3 className="titre-codes">Codes couleurs</h3>
         
-        <div className="colonnes-conteneur">
-          <div className="colonnes">
-            <div className="colonne">
-              {colonneGauche.map((g) => (
-                <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
-              ))}
-            </div>
-
-            <div className="colonne">
-              {colonneDroite.map((g) => (
-                <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
-              ))}
-            </div>
-          </div>
+        <div className="liste-sous-categories">
+          {groupes.map((g) => (
+            <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
+          ))}
 
           <button 
             type="button" 

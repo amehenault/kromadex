@@ -66,6 +66,7 @@ function ChampCodeCouleur({ value, onChange }) {
   return (
     <textarea
       rows={1}
+      maxLength={100}
       placeholder="ex: PC-242"
       aria-label="Code de couleur"
       value={value}

@@ -61,6 +61,36 @@ function useColonnes() {
   return n;
 }
 
+// Composant individuel pour la saisie sécurisée des codes couleurs
+function ChampCodeCouleur({ value, onChange }) {
+  const [verrouille, setVerrouille] = useState(Boolean(value));
+
+  const TenterModification = () => {
+    if (verrouille) {
+      const toutDaccord = window.confirm('Voulez-vous modifier le code de couleur ?');
+      if (toutDaccord) {
+        setVerrouille(false);
+      }
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      placeholder="ex: PC-242"
+      aria-label="Code de couleur"
+      value={value}
+      readOnly={verrouille}
+      onClick={TenterModification}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        cursor: verrouille ? 'pointer' : 'text',
+        background: verrouille ? 'var(--carte)' : 'var(--blanc)',
+      }}
+    />
+  );
+}
+
 function Groupe({ g, maj, retirer }) {
   const [glisserIndex, setGlisserIndex] = useState(null);
 
@@ -101,7 +131,9 @@ function Groupe({ g, maj, retirer }) {
           }}
         >
           <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-          <input inputMode="numeric" placeholder="#" aria-label="Numéro de crayon" value={r.num} onChange={(e) => setRow(r.id, 'num', e.target.value)} />
+          
+          {/* Champ code couleur alphanumérique avec Pop-up de confirmation */}
+          <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} />
           
           <div className="actions-ligne">
             <div className="fleches">

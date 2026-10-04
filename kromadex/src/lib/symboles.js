@@ -1,9 +1,8 @@
-// Lettres, chiffres et symboles disponibles dans les listes déroulantes.
-
 export const LETTRES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 export const CHIFFRES = '1234567890'.split('');
 
 export const SYMBOLES = [
+  { id: 'etoile', nom: 'Étoile', d: '*' },
   { id: 'carre_blanc', nom: 'Carré blanc', d: '□' },
   { id: 'triangle_noir', nom: 'Triangle noir', d: '▲' },
   { id: 'losange_blanc', nom: 'Losange blanc', d: '◇' },

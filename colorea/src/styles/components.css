@@ -1,0 +1,36 @@
+.entete {
+  background: var(--couleur-secondaire); display: flex; justify-content: space-between; align-items: center;
+  padding: calc(var(--espace-3) + env(safe-area-inset-top)) var(--espace-4) var(--espace-3);
+}
+.entete h1 { margin: 0; font-size: 1.05rem; }
+.contenu { max-width: var(--largeur-max); margin: 0 auto; padding: var(--espace-3); }
+
+.btn { background: var(--couleur-principale); color: var(--blanc); border: 0; border-radius: var(--rayon-m); padding: var(--espace-3) var(--espace-4); font: inherit; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+.btn.alt { background: var(--surface); color: var(--couleur-principale); border: 1px solid var(--couleur-principale); }
+.btn.danger { background: var(--danger); }
+.btn:disabled { opacity: 0.5; }
+
+.carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-l); padding: var(--espace-4); margin: var(--espace-3) 0; }
+.carte.etroite { max-width: 380px; margin: var(--espace-5) auto; }
+.barre { display: flex; gap: var(--espace-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--espace-2); }
+.barre input, .barre select { flex: 1; min-width: 120px; margin: 0; }
+.erreur { color: var(--danger); font-size: 0.85rem; min-height: 1em; }
+
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--espace-3); }
+.tuile { background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-m); padding: var(--espace-2); color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: var(--espace-1); }
+.tuile img, .tuile .vide { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--rayon-s); background: var(--bordure); }
+.tuile small { opacity: 0.7; }
+.ajouter { position: fixed; right: var(--espace-4); bottom: calc(var(--espace-4) + env(safe-area-inset-bottom)); width: 56px; height: 56px; padding: 0; border-radius: 50%; font-size: 2rem; line-height: 56px; box-shadow: var(--ombre); }
+
+.feuille { display: grid; grid-template-columns: 38% 1fr; gap: var(--espace-3); background: var(--surface); border: 1px solid var(--bordure); border-radius: var(--rayon-l); padding: var(--espace-3); }
+.gauche { position: sticky; top: var(--espace-2); align-self: start; }
+.cadre-image { aspect-ratio: 3 / 4; border: 2px dashed var(--couleur-secondaire); border-radius: var(--rayon-m); display: grid; place-items: center; overflow: hidden; text-align: center; font-size: 0.8rem; margin-bottom: var(--espace-2); }
+.cadre-image img { width: 100%; height: 100%; object-fit: cover; }
+.deux { display: grid; grid-template-columns: 1fr 1fr; gap: var(--espace-2); }
+.points button { background: none; border: 0; font-size: 1.5rem; color: var(--couleur-principale); cursor: pointer; padding: 0 var(--espace-1); }
+
+.code { display: grid; grid-template-columns: 64px 1fr 48px 36px; gap: 6px; align-items: center; }
+.code input { margin: 2px 0; }
+.code .symbole { font-family: var(--typo-manuscrite); text-align: center; font-size: 1.2rem; }
+.code input[type=color] { padding: 2px; height: 40px; }
+.retirer { background: none; border: 0; font-size: 1.1rem; color: var(--danger); cursor: pointer; }

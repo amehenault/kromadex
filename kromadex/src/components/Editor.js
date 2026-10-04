@@ -64,8 +64,8 @@ function ChampCodeCouleur({ value, onChange }) {
   };
 
   return (
-    <input
-      type="text"
+    <textarea
+      rows={1}
       placeholder="ex: PC-242"
       aria-label="Code de couleur"
       value={value}
@@ -156,7 +156,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   const pageRef = useRef(null);
   
   const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? '', page_no: page?.page_no ?? '' });
-  const [tomes, setTomes] = useState(tomesInitiaux);
+  const [tomes, setTomes] = useState(tomesInitiaux || []);
   const [ecritTome, setEcritTome] = useState(false);
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);

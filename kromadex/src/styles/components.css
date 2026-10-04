@@ -138,7 +138,7 @@
 .tome-nouveau { display: flex; gap: var(--espace-1); align-items: center; }
 .tome-nouveau input { flex: 1; min-width: 0; }
 
-input, select { 
+input, select, textarea { 
   min-height: var(--cible-tactile); 
   width: 100%;
   padding: 0 var(--espace-2);
@@ -211,12 +211,23 @@ input, select {
   margin-top: var(--espace-1); 
 }
 
-.ligne input { 
+/* Textarea auto-adaptatif pour permettre le retour à la ligne automatique sans couper les mots */
+.ligne textarea { 
   margin: 0; 
   min-width: 0; 
   text-align: center; 
   font-size: 0.82rem; 
-  padding: 0 4px;
+  padding: 4px;
+  resize: none;
+  min-height: var(--cible-tactile);
+  height: auto;
+  line-height: 1.2;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .symbole-btn { 
@@ -351,7 +362,8 @@ input, select {
 }
 
 .mode-export input, 
-.mode-export select {
+.mode-export select,
+.mode-export textarea {
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;

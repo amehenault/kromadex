@@ -7,7 +7,8 @@ export function Glyph({ v }) {
   if (!v) return <span className="glyphe vide">?</span>;
   if (v.startsWith('s:')) {
     const s = SYMBOLES.find((x) => x.id === v.slice(2));
-    return s ? <svg className="glyphe" viewBox="0 0 24 24" role="img" aria-label={s.nom}><path d={s.d} fill="currentColor" fillRule="evenodd" /></svg> : null;
+    // Affiche le texte directement dans un span au lieu du SVG
+    return s ? <span className="glyphe symbole" aria-label={s.nom}>{s.d}</span> : null;
   }
   return <span className="glyphe">{v}</span>;
 }

@@ -124,7 +124,6 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
           <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
         </div>
         <div className="droite">
-          <label>Personnage<input value={f.title} onChange={(e) => set('title', e.target.value)} /></label>
           <div className="deux">
             <div>
               {ecritTome ? (

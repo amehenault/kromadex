@@ -299,6 +299,15 @@ input, select {
   align-items: center;
 }
 
+/* Réduction de la taille du texte dans les lignes de codes */
+.ligne input {
+  margin: 0;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 0 4px;
+}
+
 /* --- RESPONSIVE --- */
 @media (max-width: 550px) {
   .haut { 

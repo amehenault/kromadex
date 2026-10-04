@@ -8,13 +8,22 @@ export async function readForm(req) {
   try { groupes = JSON.parse(f.get('codes') || '[]'); } catch {}
   // codes = liste de sous-catégories, chacune avec ses lignes (symbole + numéro de crayon)
   groupes = (Array.isArray(groupes) ? groupes : []).slice(0, 40).map((g) => ({
-    id: txt(g.id, 40), name: txt(g.name, 60),
-    rows: (Array.isArray(g.rows) ? g.rows : []).slice(0, 80).map((r) => ({ id: txt(r.id, 40), sym: txt(r.sym, 30), num: txt(r.num, 10) })),
+    id: txt(g.id, 40), 
+    name: txt(g.name, 60),
+    rows: (Array.isArray(g.rows) ? g.rows : []).slice(0, 80).map((r) => ({ 
+      id: txt(r.id, 40), 
+      sym: txt(r.sym, 30), 
+      num: txt(r.num, 60) // <-- Porté de 10 à 60 caractères
+    })),
   }));
   const data = {
-    title: txt(f.get('title'), 120), tome: txt(f.get('tome'), 60),
-    page_no: txt(f.get('page_no'), 10), category: '',
-    difficulty: clamp(f.get('difficulty'), 0, 5), rating: clamp(f.get('rating'), 0, 5), codes: groupes,
+    title: txt(f.get('title'), 120), 
+    tome: txt(f.get('tome'), 60),
+    page_no: txt(f.get('page_no'), 10), 
+    category: '',
+    difficulty: clamp(f.get('difficulty'), 0, 5), 
+    rating: clamp(f.get('rating'), 0, 5), 
+    codes: groupes,
   };
   const img = f.get('image');
   let image = null;

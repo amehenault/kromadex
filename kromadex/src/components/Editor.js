@@ -51,17 +51,6 @@ async function reduire(file) {
   return new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.82));
 }
 
-function useColonnes() {
-  const [n, setN] = useState(2);
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 900px)');
-    const maj = () => setN(mq.matches ? 3 : 2);
-    maj(); mq.addEventListener('change', maj);
-    return () => mq.removeEventListener('change', maj);
-  }, []);
-  return n;
-}
-
 function ChampCodeCouleur({ value, onChange }) {
   const [verrouille, setVerrouille] = useState(Boolean(value));
 
@@ -150,7 +139,6 @@ function Groupe({ g, maj, retirer }) {
 
 export default function Editor({ page, tomes: tomesInitiaux }) {
   const r = useRouter();
-  const n = useColonnes();
   const pageRef = useRef(null);
   
   const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? '', page_no: page?.page_no ?? '' });
@@ -161,6 +149,8 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image` : null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [enExport, setEnExport] = useState(false);
+
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
 
   const choisirTome = (v) => { if (v === NOUVEAU) { set('tome', ''); setEcritTome(true); } else set('tome', v); };
@@ -183,6 +173,9 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
 
   async function exporterEnImage() {
     if (!pageRef.current) return;
+    setEnExport(true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     try {
       const dataUrl = await toPng(pageRef.current, { cacheBust: true });
       const link = document.createElement('a');
@@ -192,6 +185,8 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     } catch (err) {
       console.error('Erreur lors de l export:', err);
       alert('Impossible d exporter l image.');
+    } finally {
+      setEnExport(false);
     }
   }
 
@@ -214,6 +209,12 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     r.push('/'); r.refresh();
   }
 
+  // Distribution de haut en bas sur 2 colonnes (colonne 1 prioritaire en cas d'impair)
+  const nbLignes = groupes.length;
+  const milieu = Math.ceil(nbLignes / 2);
+  const colonneGauche = groupes.slice(0, milieu);
+  const colonneDroite = groupes.slice(milieu);
+
   return (
     <>
       <div className="barre">
@@ -224,8 +225,11 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
       </div>
       <p className="erreur">{erreur}</p>
 
-      {/* Conteneur exporté en image */}
-      <div ref={pageRef} style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}>
+      <div 
+        ref={pageRef} 
+        className={enExport ? 'mode-export' : ''} 
+        style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}
+      >
         <div className="haut">
           <div className="gauche">
             <div className="cadre-image">{apercu ? <img src={apercu} alt="" /> : <span>Ajoute ton image</span>}</div>
@@ -263,13 +267,29 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
         </div>
 
         <h3 className="titre-codes">Codes couleurs</h3>
-        <div className="colonnes">
-          {Array.from({ length: n }, (_, c) => (
-            <div className="colonne" key={c}>
-              {groupes.filter((_, i) => i % n === c).map((g) => <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />)}
-              {c === groupes.length % n && <button type="button" className="btn alt ajout-groupe" onClick={() => setGroupes((l) => [...l, groupeVide()])}>+ Sous-catégorie</button>}
+        
+        <div className="colonnes-conteneur">
+          <div className="colonnes">
+            <div className="colonne">
+              {colonneGauche.map((g) => (
+                <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
+              ))}
             </div>
-          ))}
+
+            <div className="colonne">
+              {colonneDroite.map((g) => (
+                <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} />
+              ))}
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            className="btn alt ajout-groupe ajout-groupe-bas" 
+            onClick={() => setGroupes((l) => [...l, groupeVide()])}
+          >
+            + Sous-catégorie
+          </button>
         </div>
       </div>
     </>

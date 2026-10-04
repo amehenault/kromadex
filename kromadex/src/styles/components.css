@@ -367,11 +367,16 @@ input, select {
     margin: 0 auto;
   }
   .deux { grid-template-columns: 1fr; }
+  
   .colonnes {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    gap: var(--espace-2);
   }
+  
   .colonne {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
 }
 

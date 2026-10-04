@@ -38,8 +38,26 @@ const suivant = (v) => {
 
 function normaliser(codes) {
   if (!Array.isArray(codes) || !codes.length) return [groupeVide()];
-  if (!codes[0].rows) return [{ id: uid(), name: '', rows: codes.map((c) => ({ id: uid(), sym: c.sym || '', num: c.pencil || '' })) }];
-  return codes.map((g) => ({ id: g.id || uid(), name: g.name || '', rows: (g.rows || []).map((r) => ({ id: r.id || uid(), sym: r.sym || '', num: r.num || '' })) }));
+  if (!codes[0].rows) {
+    return [{ 
+      id: uid(), 
+      name: '', 
+      rows: codes.map((c) => ({ 
+        id: uid(), 
+        sym: c.sym || '', 
+        num: String(c.pencil || c.num || '') 
+      })) 
+    }];
+  }
+  return codes.map((g) => ({ 
+    id: g.id || uid(), 
+    name: g.name || '', 
+    rows: (g.rows || []).map((r) => ({ 
+      id: r.id || uid(), 
+      sym: r.sym || '', 
+      num: String(r.num || '') 
+    })) 
+  }));
 }
 
 async function reduire(file) {
@@ -66,7 +84,6 @@ function ChampCodeCouleur({ value, onChange }) {
   return (
     <textarea
       rows={1}
-      maxLength={100}
       placeholder="ex: PC-242"
       aria-label="Code de couleur"
       value={value}

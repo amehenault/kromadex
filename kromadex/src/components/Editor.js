@@ -2,19 +2,39 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SymbolPicker from './SymbolPicker';
+import { LETTRES, SYMBOLES } from '@/lib/symboles';
 
 const NOUVEAU = '__nouveau__';
 const uid = () => crypto.randomUUID();
 const groupeVide = () => ({ id: uid(), name: '', rows: [] });
 
-// La ligne suivante propose automatiquement A puis B, ou 1 puis 2
+const ORDRE_CHIFFRES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+
 const suivant = (v) => {
-  if (/^[A-Y]$/.test(v || '')) return String.fromCharCode(v.charCodeAt(0) + 1);
-  if (/^[1-8]$/.test(v || '')) return String(+v + 1);
-  return v === '9' ? '0' : '';
+  if (!v) return 'A';
+
+  if (LETTRES.includes(v)) {
+    const idx = LETTRES.indexOf(v);
+    return idx < LETTRES.length - 1 ? LETTRES[idx + 1] : LETTRES[0];
+  }
+
+  if (ORDRE_CHIFFRES.includes(v)) {
+    const idx = ORDRE_CHIFFRES.indexOf(v);
+    return idx < ORDRE_CHIFFRES.length - 1 ? ORDRE_CHIFFRES[idx + 1] : ORDRE_CHIFFRES[0];
+  }
+
+  if (v.startsWith('s:')) {
+    const idActuel = v.slice(2);
+    const idx = SYMBOLES.findIndex((s) => s.id === idActuel);
+    if (idx !== -1) {
+      const suivantSymbol = idx < SYMBOLES.length - 1 ? SYMBOLES[idx + 1] : SYMBOLES[0];
+      return 's:' + suivantSymbol.id;
+    }
+  }
+
+  return 'A';
 };
 
-// Remet en ordre les anciens coloriages (liste plate de codes) et ajoute les identifiants
 function normaliser(codes) {
   if (!Array.isArray(codes) || !codes.length) return [groupeVide()];
   if (!codes[0].rows) return [{ id: uid(), name: '', rows: codes.map((c) => ({ id: uid(), sym: c.sym || '', num: c.pencil || '' })) }];
@@ -30,7 +50,6 @@ async function reduire(file) {
   return new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.82));
 }
 
-// 2 colonnes sur mobile, 3 sur ordinateur
 function useColonnes() {
   const [n, setN] = useState(2);
   useEffect(() => {
@@ -43,21 +62,57 @@ function useColonnes() {
 }
 
 function Groupe({ g, maj, retirer }) {
+  const [glisserIndex, setGlisserIndex] = useState(null);
+
   const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => (r.id === id ? { ...r, [k]: v } : r)) });
-  const ajouter = () => maj({ ...g, rows: [...g.rows, { id: uid(), sym: suivant(g.rows.at(-1)?.sym), num: '' }] });
+  
+  const ajouter = () => {
+    const dernierSym = g.rows.at(-1)?.sym;
+    maj({ ...g, rows: [...g.rows, { id: uid(), sym: suivant(dernierSym), num: '' }] });
+  };
+
+  const deplacer = (from, to) => {
+    if (to < 0 || to >= g.rows.length) return;
+    const nvlRows = [...g.rows];
+    const [element] = nvlRows.splice(from, 1);
+    nvlRows.splice(to, 0, element);
+    maj({ ...g, rows: nvlRows });
+  };
+
   return (
     <section className="groupe">
       <div className="groupe-tete">
         <input placeholder="Sous-catégorie" aria-label="Nom de la sous-catégorie" value={g.name} onChange={(e) => maj({ ...g, name: e.target.value })} />
         <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}>✕</button>
       </div>
-      {g.rows.map((r) => (
-        <div className="ligne" key={r.id}>
+
+      {g.rows.map((r, idx) => (
+        <div 
+          className={`ligne ${glisserIndex === idx ? 'glisser' : ''}`} 
+          key={r.id}
+          draggable
+          onDragStart={() => setGlisserIndex(idx)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => {
+            if (glisserIndex !== null && glisserIndex !== idx) {
+              deplacer(glisserIndex, idx);
+            }
+            setGlisserIndex(null);
+          }}
+        >
           <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
           <input inputMode="numeric" placeholder="#" aria-label="Numéro de crayon" value={r.num} onChange={(e) => setRow(r.id, 'num', e.target.value)} />
-          <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+          
+          <div className="actions-ligne">
+            <div className="fleches">
+              <button type="button" className="fleche" disabled={idx === 0} aria-label="Monter" onClick={() => deplacer(idx, idx - 1)}>▲</button>
+              <button type="button" className="fleche" disabled={idx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(idx, idx + 1)}>▼</button>
+            </div>
+            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+          </div>
         </div>
       ))}
+
       <button type="button" className="plus" aria-label="Ajouter une ligne" onClick={ajouter}>+</button>
     </section>
   );
@@ -82,10 +137,12 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     if (t) setTomes((l) => (l.includes(t) ? l : [...l, t].sort()));
     set('tome', t); setEcritTome(false);
   };
+
   async function choisir(e) {
     const x = e.target.files[0]; if (!x) return;
     const b = await reduire(x); setImage(b); setApercu(URL.createObjectURL(b));
   }
+
   const majGroupe = (g) => setGroupes((l) => l.map((x) => (x.id === g.id ? g : x)));
   const retirerGroupe = (g) => {
     if (g.rows.length && !confirm('Retirer cette sous-catégorie et ses codes?')) return;
@@ -93,6 +150,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   };
 
   async function enregistrer() {
+    if (!f.title.trim()) return;
     setBusy(true); setErreur('');
     const fd = new FormData();
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
@@ -103,6 +161,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     setErreur((await res.json().catch(() => ({}))).error || 'Enregistrement impossible.');
     setBusy(false);
   }
+
   async function supprimer() {
     if (!confirm('Supprimer ce coloriage pour toujours?')) return;
     await fetch(`/api/pages/${page.id}`, { method: 'DELETE' });
@@ -114,7 +173,7 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
       <div className="barre">
         <button className="btn alt" onClick={() => r.push('/')}>Retour</button>
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
-        <button className="btn" onClick={enregistrer} disabled={busy}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
+        <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim()}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
       <p className="erreur">{erreur}</p>
 
@@ -124,6 +183,10 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
           <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
         </div>
         <div className="droite">
+          <label>Titre de la page *
+            <input placeholder="ex: Scooby-Doo" value={f.title} onChange={(e) => set('title', e.target.value)} required />
+          </label>
+
           <div className="deux">
             <div>
               {ecritTome ? (

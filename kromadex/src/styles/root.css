@@ -1,17 +1,18 @@
-/* Toutes les couleurs, typos et espaces de l'app vivent ici. Change une valeur et tout suit. */
 :root {
-  --blanc: #ffffff;
-  --noir: #1d1830;
-  --couleur-principale: #6f4fc0;
-  --couleur-secondaire: #b9a3e3;
-  --fond: #f6f1fd;
-  --surface: #fffdfa;
-  --bordure: #d9cdef;
+  --blanc: #def2ec;
+  --noir: #0e322a;
+  --couleur-principale: #4bbca1;
+  --couleur-secondaire: #9bd7c6;
+  --carte: #bde5d8;
+  --bordure: var(--noir);
   --texte: var(--noir);
-  --danger: #b3261e;
+  --danger: #9c033b;
+
+  --btn: #358b76;
+  --btn-save: #ffd505;
 
   --typo-corps: "Trebuchet MS", system-ui, sans-serif;
-  --typo-manuscrite: "Segoe Print", "Bradley Hand", cursive;
+  --typo-code: "Impact", "arial", sans-serif;
 
   --rayon-s: 8px;
   --rayon-m: 12px;
@@ -26,4 +27,11 @@
   --cible-tactile: 44px;
   --ombre: 0 4px 14px rgb(0 0 0 / 0.18);
   --largeur-max: 980px;
+}
+
+div.vide {
+  display: block;
+  width: 148px;
+  height: 198px;
+  background: url('/couverture-par-defaut.jpg') no-repeat center / cover !important;
 }

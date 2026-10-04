@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Header({ connecte }) {
   const r = useRouter();
@@ -9,8 +10,15 @@ export default function Header({ connecte }) {
   }
   return (
     <header className="entete">
-      <h1>Mes coloriages mystères 🎨</h1>
-      {connecte && <button className="btn alt" onClick={sortir}>Déconnexion</button>}
+      <h1>Kromadex</h1>
+      {connecte && (
+        <div className="entete-actions">
+          <Link href="/profil" className="btn-icon" title="Profil">
+            <img src="/profil.svg" alt="Profil" width={22} height={22} />
+          </Link>
+          <button className="btn alt" onClick={sortir}>Déconnexion</button>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,46 +1,37 @@
-export async function readForm(req) {
-  const formData = await req.formData();
-  
-  const title = String(formData.get('title') || '').trim();
-  const tome = String(formData.get('tome') || '').trim();
-  const page_no = String(formData.get('page_no') || '').trim();
-  const category = String(formData.get('category') || '').trim();
-  const difficulty = String(formData.get('difficulty') || '').trim();
-  const rating = formData.get('rating') ? Number(formData.get('rating')) : null;
+import { NextResponse } from 'next/server';
+import { sql } from '@/lib/db';
+import { getUser } from '@/lib/auth';
+import { readForm } from '@/lib/pages';
 
-  // Récupération des codes sans AUCUN découpage de texte (.slice)
-  let codes = [];
+export async function POST(req) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });
+  }
+
   try {
-    const rawCodes = formData.get('codes');
-    if (rawCodes) {
-      codes = JSON.parse(rawCodes);
-    }
+    const { data: d, image } = await readForm(req);
+
+    const r = await sql`
+      insert into pages (user_id, title, tome, page_no, category, difficulty, rating, codes, image_b64, image_type)
+      values (
+        ${user.id}, 
+        ${d.title}, 
+        ${d.tome}, 
+        ${d.page_no}, 
+        ${d.category}, 
+        ${d.difficulty}, 
+        ${d.rating}, 
+        ${JSON.stringify(d.codes)}::jsonb, 
+        ${image?.b64 ?? null}, 
+        ${image?.type ?? null}
+      )
+      returning id
+    `;
+
+    return NextResponse.json({ id: r[0].id });
   } catch (e) {
-    codes = [];
+    console.error('Erreur POST /api/pages:', e);
+    return NextResponse.json({ error: e.message || 'Erreur lors de la création.' }, { status: 400 });
   }
-
-  // Traitement de l'image
-  let image = null;
-  const file = formData.get('image');
-  if (file && typeof file === 'object' && file.arrayBuffer) {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    image = {
-      b64: buffer.toString('base64'),
-      type: file.type || 'image/jpeg',
-    };
-  }
-
-  return {
-    data: {
-      title,
-      tome,
-      page_no,
-      category,
-      difficulty,
-      rating,
-      codes,
-    },
-    image,
-  };
 }

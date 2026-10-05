@@ -189,7 +189,32 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image` : null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [erreurServeur, setErreurServeur] = useState(null);
   const [enExport, setEnExport] = useState(false);
+
+  // Vérification préventive du serveur dès l'ouverture de l'éditeur
+  useEffect(() => {
+    async function verifierConnexionAPI() {
+      try {
+        const urlTest = page ? `/api/pages/${page.id}` : '/api/pages';
+        const methodeTest = page ? 'PUT' : 'POST';
+        
+        // Envoie une requête test pour vérifier que la route accepte la méthode
+        const res = await fetch(urlTest, { method: 'OPTIONS' });
+        
+        if (!res.ok && res.status !== 204 && res.status !== 200) {
+          // Si OPTIONS échoue, on vérifie via GET
+          const resGet = await fetch('/api/pages', { method: 'GET' });
+          if (!resGet.ok) {
+            setErreurServeur(`Attention, l'application n'est pas en mesure de sauvegarder, Erreur ${resGet.status} ${resGet.statusText || 'API/PAGES'}`);
+          }
+        }
+      } catch (err) {
+        setErreurServeur("Attention, l'application n'est pas en mesure de sauvegarder, Erreur de connexion réseau");
+      }
+    }
+    verifierConnexionAPI();
+  }, [page]);
 
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
 
@@ -237,9 +262,16 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
     fd.append('codes', JSON.stringify(groupes));
     if (image) fd.append('image', image, 'image.jpg');
-    const res = await fetch(page ? `/api/pages/${page.id}` : '/api/pages', { method: page ? 'PUT' : 'POST', body: fd });
+    
+    const cible = page ? `/api/pages/${page.id}` : '/api/pages';
+    const methode = page ? 'PUT' : 'POST';
+
+    const res = await fetch(cible, { method: methode, body: fd });
     if (res.ok) { r.push('/'); r.refresh(); return; }
-    setErreur((await res.json().catch(() => ({}))).error || 'Enregistrement impossible.');
+    
+    const reponseJson = await res.json().catch(() => ({}));
+    const message = reponseJson.error || `Erreur ${res.status} ${res.statusText || 'API/PAGES'}`;
+    setErreur(`Attention, l'application n'est pas en mesure de sauvegarder, ${message}`);
     setBusy(false);
   }
 
@@ -257,7 +289,22 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim()}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
-      <p className="erreur">{erreur}</p>
+
+      {/* Alerte rouge si le serveur signale une erreur au chargement ou à l'enregistrement */}
+      {(erreurServeur || erreur) && (
+        <div style={{
+          background: '#fee2e2',
+          color: '#dc2626',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: '1px solid #fca5a5',
+          margin: '12px 0',
+          fontWeight: 'bold',
+          textAlign: 'center'
+        }}>
+          ⚠️ {erreurServeur || erreur}
+        </div>
+      )}
 
       <div 
         ref={pageRef} 

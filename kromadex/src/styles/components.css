@@ -8,6 +8,30 @@
 .entete h1 { margin: 0; font-size: 1.05rem; }
 .contenu { max-width: var(--largeur-max); margin: 0 auto; padding: var(--espace-3); }
 
+.entete-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2); /* Ajoute l'espace entre le profil et déconnexion */
+}
+
+.btn-icon {
+  background-color: var(--btn); /* Fond turquoise foncé comme le bouton */
+  border: 1px solid var(--couleur-principale);
+  border-radius: var(--rayon-m);
+  width: var(--cible-tactile);
+  height: var(--cible-tactile);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-icon img {
+  display: block;
+}
+
 /* --- BOUTONS DE BASE --- */
 .btn { 
   background: var(--couleur-principale); 

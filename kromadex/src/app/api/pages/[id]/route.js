@@ -1,52 +1,55 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { readForm } from '@/lib/pages';
 
 export async function PUT(req, { params }) {
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });
-  }
-
-  const { id } = await params;
-
   try {
-    const { data: d, image } = await readForm(req);
+    const { id } = await params;
+    const user = await getUser();
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-    if (image) {
+    const formData = await req.formData();
+    const title = formData.get('title');
+    const tome = formData.get('tome');
+    const page_no = formData.get('page_no');
+    const codes = formData.get('codes');
+    const file = formData.get('image');
+
+    // Vérifie si un nouveau fichier image a réellement été téléversé
+    if (file && typeof file === 'object' && file.size > 0) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const base64 = buffer.toString('base64');
+      const imageType = file.type || 'image/jpeg';
+
       await sql`
-        update pages
-        set 
-          title = ${d.title}, 
-          tome = ${d.tome}, 
-          page_no = ${d.page_no}, 
-          category = ${d.category}, 
-          difficulty = ${d.difficulty}, 
-          rating = ${d.rating}, 
-          codes = ${JSON.stringify(d.codes)}::jsonb, 
-          image_b64 = ${image.b64}, 
-          image_type = ${image.type}
-        where id = ${id} and user_id = ${user.id}
+        UPDATE pages 
+        SET title = ${title}, 
+            tome = ${tome}, 
+            page_no = ${page_no}, 
+            codes = ${codes}, 
+            image_b64 = ${base64}, 
+            image_type = ${imageType}
+        WHERE id = ${id} AND user_id = ${user.id}
       `;
     } else {
       await sql`
-        update pages
-        set 
-          title = ${d.title}, 
-          tome = ${d.tome}, 
-          page_no = ${d.page_no}, 
-          category = ${d.category}, 
-          difficulty = ${d.difficulty}, 
-          rating = ${d.rating}, 
-          codes = ${JSON.stringify(d.codes)}::jsonb
-        where id = ${id} and user_id = ${user.id}
+        UPDATE pages 
+        SET title = ${title}, 
+            tome = ${tome}, 
+            page_no = ${page_no}, 
+            codes = ${codes}
+        WHERE id = ${id} AND user_id = ${user.id}
       `;
     }
 
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error('Erreur PUT /api/pages/[id]:', e);
-    return NextResponse.json({ error: e.message || 'Erreur lors de la mise à jour.' }, { status: 400 });
+    revalidatePath('/');
+    revalidatePath(`/pages/${id}`);
+    
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Erreur de sauvegarde :', err);
+    return NextResponse.json({ error: err.message || 'Erreur serveur' }, { status: 500 });
   }
 }

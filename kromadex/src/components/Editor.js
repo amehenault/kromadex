@@ -186,35 +186,11 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   const [ecritTome, setEcritTome] = useState(false);
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);
-  const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image` : null);
+  const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?t=${Date.now()}` : null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [erreurServeur, setErreurServeur] = useState(null);
   const [enExport, setEnExport] = useState(false);
-
-  // Vérification préventive du serveur dès l'ouverture de l'éditeur
-  useEffect(() => {
-    async function verifierConnexionAPI() {
-      try {
-        const urlTest = page ? `/api/pages/${page.id}` : '/api/pages';
-        const methodeTest = page ? 'PUT' : 'POST';
-        
-        // Envoie une requête test pour vérifier que la route accepte la méthode
-        const res = await fetch(urlTest, { method: 'OPTIONS' });
-        
-        if (!res.ok && res.status !== 204 && res.status !== 200) {
-          // Si OPTIONS échoue, on vérifie via GET
-          const resGet = await fetch('/api/pages', { method: 'GET' });
-          if (!resGet.ok) {
-            setErreurServeur(`Attention, l'application n'est pas en mesure de sauvegarder, Erreur ${resGet.status} ${resGet.statusText || 'API/PAGES'}`);
-          }
-        }
-      } catch (err) {
-        setErreurServeur("Attention, l'application n'est pas en mesure de sauvegarder, Erreur de connexion réseau");
-      }
-    }
-    verifierConnexionAPI();
-  }, [page]);
 
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
 
@@ -266,8 +242,16 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     const cible = page ? `/api/pages/${page.id}` : '/api/pages';
     const methode = page ? 'PUT' : 'POST';
 
-    const res = await fetch(cible, { method: methode, body: fd });
-    if (res.ok) { r.push('/'); r.refresh(); return; }
+    const res = await fetch(cible, { 
+      method: methode, 
+      body: fd,
+      cache: 'no-store'
+    });
+
+    if (res.ok) { 
+      window.location.href = '/'; 
+      return; 
+    }
     
     const reponseJson = await res.json().catch(() => ({}));
     const message = reponseJson.error || `Erreur ${res.status} ${res.statusText || 'API/PAGES'}`;
@@ -278,19 +262,18 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
   async function supprimer() {
     if (!confirm('Supprimer ce coloriage pour toujours?')) return;
     await fetch(`/api/pages/${page.id}`, { method: 'DELETE' });
-    r.push('/'); r.refresh();
+    window.location.href = '/';
   }
 
   return (
     <>
       <div className="barre">
-        <button className="btn alt" onClick={() => r.push('/')}>Retour</button>
+        <button className="btn alt" onClick={() => window.location.href = '/'}>Retour</button>
         <button type="button" className="btn alt" onClick={exporterEnImage}>Exporter en image 📷</button>
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim()}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
 
-      {/* Alerte rouge si le serveur signale une erreur au chargement ou à l'enregistrement */}
       {(erreurServeur || erreur) && (
         <div style={{
           background: '#fee2e2',
@@ -313,7 +296,9 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
       >
         <div className="haut">
           <div className="gauche">
-            <div className="cadre-image">{apercu ? <img src={apercu} alt="" /> : <span>Ajoute ton image</span>}</div>
+            <div className="cadre-image">
+              {apercu ? <img key={apercu} src={apercu} alt="" /> : <span>Ajoute ton image</span>}
+            </div>
             <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
           </div>
           <div className="droite">

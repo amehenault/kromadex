@@ -44,6 +44,7 @@ function normaliser(codes) {
       name: '', 
       rows: codes.map((c) => ({ 
         id: uid(), 
+        label: c.label || '',
         sym: c.sym || '', 
         num: String(c.pencil || c.num || '') 
       })) 
@@ -54,6 +55,7 @@ function normaliser(codes) {
     name: g.name || '', 
     rows: (g.rows || []).map((r) => ({ 
       id: r.id || uid(), 
+      label: r.label || '',
       sym: r.sym || '', 
       num: String(r.num || '') 
     })) 
@@ -109,7 +111,7 @@ function Groupe({ g, maj, retirer, enExport }) {
   
   const ajouter = () => {
     const dernierSym = g.rows.at(-1)?.sym;
-    maj({ ...g, rows: [...g.rows, { id: uid(), sym: suivant(dernierSym), num: '' }] });
+    maj({ ...g, rows: [...g.rows, { id: uid(), label: '', sym: suivant(dernierSym), num: '' }] });
   };
 
   const deplacer = (from, to) => {
@@ -127,7 +129,7 @@ function Groupe({ g, maj, retirer, enExport }) {
 
   const RendreLigne = (r, reelIdx) => (
     <div 
-      className={`ligne ${glisserIndex === reelIdx ? 'glisser' : ''}`} 
+      className={`item-code-bloc ${glisserIndex === reelIdx ? 'glisser' : ''}`} 
       key={r.id}
       draggable={!enExport}
       onDragStart={() => setGlisserIndex(reelIdx)}
@@ -138,16 +140,48 @@ function Groupe({ g, maj, retirer, enExport }) {
         }
         setGlisserIndex(null);
       }}
+      style={{ display: 'flex', flexDirection: 'column', margin: '6px 0' }}
     >
-      <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-      <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} enExport={enExport} />
-      
-      <div className="actions-ligne">
-        <div className="fleches">
-          <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
-          <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
-        </div>
-        <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+      {/* Label/Étiquette optionnelle sur toute la largeur */}
+      {enExport ? (
+        r.label?.trim() ? (
+          <div style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: '4px 0 2px 0', textTransform: 'capitalize' }}>
+            {r.label}
+          </div>
+        ) : null
+      ) : (
+        <input 
+          type="text" 
+          placeholder="ex: Cheveux, Pelage..." 
+          value={r.label || ''} 
+          onChange={(e) => setRow(r.id, 'label', e.target.value)}
+          style={{
+            width: '100%',
+            padding: '2px 6px',
+            fontSize: '0.8rem',
+            margin: '4px 0',
+            border: 'none',
+            borderBottom: '1px dashed #ccc',
+            background: 'transparent',
+            outline: 'none'
+          }}
+        />
+      )}
+
+      {/* Rangée Symbole + Code Couleur + Actions */}
+      <div className="ligne" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
+        <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} enExport={enExport} />
+        
+        {!enExport && (
+          <div className="actions-ligne" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div className="fleches">
+              <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
+              <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
+            </div>
+            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -295,8 +295,24 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
 
   async function supprimer() {
     if (!confirm('Supprimer ce coloriage pour toujours?')) return;
-    await fetch(`/api/pages/${page.id}`, { method: 'DELETE' });
-    window.location.href = '/';
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/pages/${page.id}`, { 
+        method: 'DELETE',
+        cache: 'no-store' 
+      });
+
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(`Erreur de suppression : ${json.error || res.statusText}`);
+        setBusy(false);
+      }
+    } catch (err) {
+      alert('Impossible de joindre le serveur pour supprimer.');
+      setBusy(false);
+    }
   }
 
   return (

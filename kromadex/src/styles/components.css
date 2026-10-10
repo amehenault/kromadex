@@ -344,7 +344,7 @@ input, select, textarea {
 
 /* --- FORMAT ET MASQUAGE SPÉCIFIQUE À L'EXPORTATION IMAGE --- */
 .mode-export {
-  width: 390px !important; /* Dimensions ajustées pour format mobile */
+  width: 390px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   padding: 16px !important;

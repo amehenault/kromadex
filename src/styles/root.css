@@ -1,0 +1,46 @@
+:root {
+  --blanc: #def2ec;
+  --noir: #0e322a;
+  --couleur-principale: #4bbca1;
+  --couleur-secondaire: #9bd7c6;
+  --carte: #bde5d8;
+  --bordure: var(--noir);
+  --texte: var(--noir);
+  --danger: #9c033b;
+
+  --btn: #358b76;
+  --btn-save: #ffd505;
+
+  /* Variables neutres ajoutées pour les profils, badges et conteneurs */
+  --fond-page: var(--blanc);
+  --fond-carte: #ffffff;
+  --bordure-carte: var(--couleur-secondaire);
+  --texte-principal: var(--noir);
+  --texte-secondaire: #4a6b62;
+  --accent-primaire: var(--btn);
+  --accent-doux: var(--carte);
+
+  --typo-corps: "Trebuchet MS", system-ui, sans-serif;
+  --typo-code: "Impact", "arial", sans-serif;
+
+  --rayon-s: 8px;
+  --rayon-m: 12px;
+  --rayon-l: 16px;
+
+  --espace-1: 4px;
+  --espace-2: 8px;
+  --espace-3: 12px;
+  --espace-4: 16px;
+  --espace-5: 24px;
+
+  --cible-tactile: 44px;
+  --ombre: 0 4px 14px rgb(0 0 0 / 0.18);
+  --largeur-max: 980px;
+}
+
+div.vide {
+  display: block;
+  width: 148px;
+  height: 198px;
+  background: url('/couverture-par-defaut.jpg') no-repeat center / cover !important;
+}

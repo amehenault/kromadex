@@ -7,7 +7,7 @@ import { LETTRES, SYMBOLES } from '@/lib/symboles';
 
 const NOUVEAU = '__nouveau__';
 const uid = () => crypto.randomUUID();
-const groupeVide = () => ({ id: uid(), name: '', rows: [] });
+const groupeVide = () => ({ id: uid(), name: '', rows: [{ id: uid(), label: '', sym: 'A', num: '' }] });
 
 const ORDRE_CHIFFRES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
@@ -43,7 +43,7 @@ function normaliser(codes) {
       id: uid(), 
       name: '', 
       rows: codes.map((c) => ({ 
-        id: uid(), 
+        id: c.id || uid(), 
         label: c.label || '',
         sym: c.sym || '', 
         num: String(c.pencil || c.num || '') 
@@ -142,7 +142,6 @@ function Groupe({ g, maj, retirer, enExport }) {
       }}
       style={{ display: 'flex', flexDirection: 'column', margin: '6px 0' }}
     >
-      {/* Label/Étiquette optionnelle sur toute la largeur */}
       {enExport ? (
         r.label?.trim() ? (
           <div style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: '4px 0 2px 0', textTransform: 'capitalize' }}>
@@ -168,7 +167,6 @@ function Groupe({ g, maj, retirer, enExport }) {
         />
       )}
 
-      {/* Rangée Symbole + Code Couleur + Actions */}
       <div className="ligne" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
         <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} enExport={enExport} />
@@ -270,7 +268,19 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     setBusy(true); setErreur('');
     const fd = new FormData();
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
-    fd.append('codes', JSON.stringify(groupes));
+    
+    // Garantir la sérialisation propre de tous les champs
+    const groupesPropres = groupes.map((g) => ({
+      ...g,
+      rows: (g.rows || []).map((row) => ({
+        id: row.id || uid(),
+        label: row.label || '',
+        sym: row.sym || '',
+        num: row.num || ''
+      }))
+    }));
+
+    fd.append('codes', JSON.stringify(groupesPropres));
     if (image) fd.append('image', image, 'image.jpg');
     
     const cible = page ? `/api/pages/${page.id}` : '/api/pages';

@@ -1,37 +1,49 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { readForm } from '@/lib/pages';
 
 export async function POST(req) {
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });
-  }
-
   try {
-    const { data: d, image } = await readForm(req);
+    const user = await getUser();
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-    const r = await sql`
-      insert into pages (user_id, title, tome, page_no, category, difficulty, rating, codes, image_b64, image_type)
-      values (
-        ${user.id}, 
-        ${d.title}, 
-        ${d.tome}, 
-        ${d.page_no}, 
-        ${d.category}, 
-        ${d.difficulty}, 
-        ${d.rating}, 
-        ${JSON.stringify(d.codes)}::jsonb, 
-        ${image?.b64 ?? null}, 
-        ${image?.type ?? null}
-      )
-      returning id
+    const formData = await req.formData();
+    const title = formData.get('title') || '';
+    const tome = formData.get('tome') || '';
+    const page_no = formData.get('page_no') || '';
+    const codesRaw = formData.get('codes');
+    const file = formData.get('image');
+
+    let codes = '[]';
+    if (codesRaw) {
+      try {
+        const parsed = typeof codesRaw === 'string' ? JSON.parse(codesRaw) : codesRaw;
+        codes = JSON.stringify(parsed);
+      } catch (e) {
+        codes = String(codesRaw);
+      }
+    }
+
+    let base64 = null;
+    let imageType = null;
+
+    if (file && typeof file === 'object' && file.size > 0) {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      base64 = buffer.toString('base64');
+      imageType = file.type || 'image/jpeg';
+    }
+
+    await sql`
+      INSERT INTO pages (user_id, title, tome, page_no, codes, image_b64, image_type)
+      VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${codes}::jsonb, ${base64}, ${imageType})
     `;
 
-    return NextResponse.json({ id: r[0].id });
-  } catch (e) {
-    console.error('Erreur POST /api/pages:', e);
-    return NextResponse.json({ error: e.message || 'Erreur lors de la création.' }, { status: 400 });
+    revalidatePath('/');
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Erreur lors de la création :', err);
+    return NextResponse.json({ error: err.message || 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -122,6 +122,12 @@ function Groupe({ g, maj, retirer, enExport }) {
     maj({ ...g, rows: nvlRows });
   };
 
+  const retirerLigne = (rowId) => {
+    if (window.confirm('Es-tu sûr de vouloir supprimer cette couleur ?')) {
+      maj({ ...g, rows: g.rows.filter((x) => x.id !== rowId) });
+    }
+  };
+
   const totalCodes = g.rows.length;
   const milieu = Math.ceil(totalCodes / 2);
   const codesGauche = g.rows.slice(0, milieu);
@@ -177,7 +183,7 @@ function Groupe({ g, maj, retirer, enExport }) {
               <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
               <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
             </div>
-            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => maj({ ...g, rows: g.rows.filter((x) => x.id !== r.id) })}>✕</button>
+            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => retirerLigne(r.id)}>✕</button>
           </div>
         )}
       </div>
@@ -269,7 +275,6 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
     const fd = new FormData();
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
     
-    // Garantir la sérialisation propre de tous les champs
     const groupesPropres = groupes.map((g) => ({
       ...g,
       rows: (g.rows || []).map((row) => ({

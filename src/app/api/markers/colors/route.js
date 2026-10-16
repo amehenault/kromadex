@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
   try {
+    const user = await getUser();
+    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const brandIdParam = searchParams.get('brandId');
 

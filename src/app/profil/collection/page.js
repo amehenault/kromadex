@@ -174,7 +174,7 @@ export default function CollectionCrayonsPage() {
           <ArrowLeft size={16} /> Profil
         </Link>
         <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-          <Palette size={24} /> KROMADEX — Nuancier de Collection
+          <Palette size={24} /> KROMADEX - Nuancier de Collection
         </h2>
       </div>
 
@@ -210,7 +210,7 @@ export default function CollectionCrayonsPage() {
                     padding: '8px 14px'
                   }}
                 >
-                  {b.brand_name} — {b.sub_type ? `${b.sub_type} ` : ''}{b.range_name}
+                  {b.brand_name} - {b.sub_type ? `${b.sub_type} ` : ''}{b.range_name}
                 </button>
               );
             })}
@@ -225,14 +225,9 @@ export default function CollectionCrayonsPage() {
       {setActifInfo && (
         <div className="carte" style={{ marginBottom: 'var(--espace-4)' }}>
           <div style={{ display: 'flex', gap: 'var(--espace-3)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h3 style={{ margin: 0 }}>
-                {setActifInfo.brand_name} — {setActifInfo.sub_type ? `${setActifInfo.sub_type} ` : ''}{setActifInfo.range_name}
-              </h3>
-              <small style={{ color: 'var(--texte-secondaire)' }}>
-                {couleurs.length} couleurs disponibles au total dans ce pack
-              </small>
-            </div>
+            <h3 style={{ margin: 0 }}>
+              {setActifInfo.brand_name} - {setActifInfo.sub_type ? `${setActifInfo.sub_type} ` : ''}{setActifInfo.range_name}
+            </h3>
 
             <div style={{ display: 'flex', gap: 'var(--espace-2)', flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

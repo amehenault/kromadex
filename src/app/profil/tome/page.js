@@ -86,9 +86,11 @@ export default async function TomePage({ searchParams }) {
               style={{
                 aspectRatio: '1 / 1', borderRadius: 'var(--rayon-m)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 textDecoration: 'none', fontWeight: 800, fontSize: '1.15rem', position: 'relative', overflow: 'hidden',
-                border: p ? '2px solid var(--btn)' : '1px solid var(--bordure-carte)',
-                background: fond ? `${fond} center / cover no-repeat` : p ? 'var(--accent-doux)' : 'var(--fond-carte)',
-                color: fond ? '#ffffff' : p ? 'var(--btn)' : 'var(--texte-secondaire)',
+                border: '2px solid var(--couleur-secondaire)',
+                background: fond
+                  ? `${fond} center / cover no-repeat`
+                  : 'var(--couleur-secondaire)',
+                color: fond ? 'var(--blanc)' : 'var(--noir)',
                 textShadow: fond ? '0 1px 3px rgba(0,0,0,0.85)' : 'none',
               }}
             >

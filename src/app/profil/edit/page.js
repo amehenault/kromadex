@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import Preferences from './preferences';
@@ -17,8 +18,14 @@ export default function EditProfilPage() {
 
     const res = await fetch('/api/user/update', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, actuel }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        actuel,
+      }),
     });
 
     if (res.ok) {
@@ -33,21 +40,54 @@ export default function EditProfilPage() {
   }
 
   return (
-    <div className="contenu" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-3)' }}>
-      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} />
+    <div
+      className="contenu edition-profil"
+      style={{
+        maxWidth: '500px',
+        margin: '0 auto',
+        padding: 'var(--espace-3)',
+      }}
+    >
+      <div
+        style={{
+          marginBottom: 'var(--espace-3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}
+      >
+        <Link
+          href="/profil"
+          className="btn alt"
+          aria-label="Retour au profil"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
         </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Modifier mon profil</h2>
+
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>
+          Modifier mon profil
+        </h2>
       </div>
 
       <PhotoProfil />
 
       <Preferences />
 
-      <h3>Mes accès</h3>
+      <form
+        onSubmit={handleSubmit}
+        className="carte"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--espace-3)',
+        }}
+      >
+        <h3 style={{ margin: 0 }}>Mes accès</h3>
 
-      <form onSubmit={handleSubmit} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)' }}>
         <label>
           Nouveau courriel
           <input
@@ -82,8 +122,20 @@ export default function EditProfilPage() {
           />
         </label>
 
-        <button type="submit" className="btn">Sauvegarder</button>
-        {message && <p style={{ marginTop: 'var(--espace-2)', textAlign: 'center' }}>{message}</p>}
+        <button type="submit" className="btn btn-corail">
+          Sauvegarder
+        </button>
+
+        {message && (
+          <p
+            style={{
+              marginTop: 'var(--espace-2)',
+              textAlign: 'center',
+            }}
+          >
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );

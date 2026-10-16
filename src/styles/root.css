@@ -1,28 +1,36 @@
 :root {
-  --blanc: #def2ec;
-  --noir: #0e322a;
-  --couleur-principale: #4bbca1;
-  --couleur-secondaire: #9bd7c6;
-  --carte: #bde5d8;
-  --bordure: var(--noir);
-  --texte: var(--noir);
+  --blanc: #fbfbfb;
+  --noir: #273136;
+  --couleur-principale: #ffa17a;
+  --couleur-secondaire: #4bbca1;
+
+  --accent-primaire: var(--couleur-secondaire);
+  --accent-doux: #e4f5ef;
+
+  --btn: var(--couleur-secondaire);
+  --btn-save: var(--couleur-secondaire);
+
+  --fond-navigation: var(--couleur-principale);
+  --texte-navigation: var(--noir);
+  --navigation-survol: rgb(255 255 255 / 0.22);
+
+  --btn-principal-fond: var(--couleur-secondaire);
+  --btn-principal-texte: var(--noir);
+  --btn-principal-survol: #65c9b1;
+
+  --btn-secondaire-fond: #ffffff;
+  --btn-secondaire-texte: #245b50;
+  --btn-secondaire-bordure: #a9cfc3;
+  --btn-secondaire-survol: var(--accent-doux);
+
+  /* Alertes */
   --danger: #9c033b;
 
-  --btn: #358b76;
-  --btn-save: #ffd505;
-
-  /* Variables neutres ajoutées pour les profils, badges et conteneurs */
-  --fond-page: var(--blanc);
-  --fond-carte: #ffffff;
-  --bordure-carte: var(--couleur-secondaire);
-  --texte-principal: var(--noir);
-  --texte-secondaire: #4a6b62;
-  --accent-primaire: var(--btn);
-  --accent-doux: var(--carte);
-
+  /* Typographie */
   --typo-corps: "Trebuchet MS", system-ui, sans-serif;
-  --typo-code: "Impact", "arial", sans-serif;
+  --typo-code: "Impact", "Arial", sans-serif;
 
+  /* Formes et espacements */
   --rayon-s: 8px;
   --rayon-m: 12px;
   --rayon-l: 16px;
@@ -34,7 +42,7 @@
   --espace-5: 24px;
 
   --cible-tactile: 44px;
-  --ombre: 0 4px 14px rgb(0 0 0 / 0.18);
+  --ombre: 0 4px 14px rgb(39 49 54 / 0.07);
   --largeur-max: 980px;
 }
 
@@ -42,5 +50,7 @@ div.vide {
   display: block;
   width: 148px;
   height: 198px;
-  background: url('/couverture-par-defaut.jpg') no-repeat center / cover !important;
+  background:
+    url("/couverture-par-defaut.jpg")
+    no-repeat center / cover !important;
 }

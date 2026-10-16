@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Palette, Plus, Trash2, ArrowLeft, Search, Check, Folder } from 'lucide-react';
+import { Palette, Plus, Trash2, ArrowLeft, Search, Folder } from 'lucide-react';
 
 export default function CollectionCrayonsPage() {
   const [toutesMarques, setToutesMarques] = useState([]);
@@ -9,7 +9,6 @@ export default function CollectionCrayonsPage() {
   const [setActif, setSetActif] = useState('');
   
   const [couleurs, setCouleurs] = useState([]);
-  const [mesCrayons, setMesCrayons] = useState(new Set());
   const [recherche, setRecherche] = useState('');
   const [chargement, setChargement] = useState(true);
 
@@ -40,8 +39,6 @@ export default function CollectionCrayonsPage() {
         } else if (data.allBrands?.length > 0) {
           setSetActif(Number(data.allBrands[0].id));
         }
-
-        setMesCrayons(new Set((data.userMarkerIds || []).map(Number)));
       }
     } catch (err) {
       console.error('Erreur chargement :', err);
@@ -65,25 +62,6 @@ export default function CollectionCrayonsPage() {
     }
     chargerCouleurs();
   }, [setActif]);
-
-  async function toggleCrayon(colorId) {
-    const nouveauSet = new Set(mesCrayons);
-    const idNum = Number(colorId);
-    const possede = nouveauSet.has(idNum);
-
-    if (possede) {
-      nouveauSet.delete(idNum);
-    } else {
-      nouveauSet.add(idNum);
-    }
-    setMesCrayons(nouveauSet);
-
-    await fetch('/api/markers/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ colorId: idNum, possede: !possede }),
-    });
-  }
 
   async function ajouterNouveauSet() {
     if (modeCreationCustom) {
@@ -152,14 +130,19 @@ export default function CollectionCrayonsPage() {
     }
   }
 
-  const marquesAffichees = toutesMarques.filter((b) => mesSetsIds.has(Number(b.id)));
+  // Tri des kits par nombre de couleurs (« Set de 12 » avant « Set de 24 »), puis par nom
+  const parNumero = (a, b) => {
+    const na = parseInt(a.range_name.match(/\d+/)?.[0] ?? '0', 10);
+    const nb = parseInt(b.range_name.match(/\d+/)?.[0] ?? '0', 10);
+    return na - nb || a.range_name.localeCompare(b.range_name, 'fr');
+  };
+
+  const marquesAffichees = toutesMarques.filter((b) => mesSetsIds.has(Number(b.id))).sort(parNumero);
   const setActifInfo = toutesMarques.find((b) => Number(b.id) === Number(setActif));
 
   const couleursFiltrees = couleurs.filter(
     (c) => c.color_code.toLowerCase().includes(recherche.toLowerCase())
   );
-
-  const nbCochees = couleurs.filter((c) => mesCrayons.has(Number(c.id))).length;
 
   const structureMarques = toutesMarques.reduce((acc, item) => {
     const brand = item.brand_name || 'Autre';
@@ -171,6 +154,9 @@ export default function CollectionCrayonsPage() {
     acc[brand][subType].push(item);
     return acc;
   }, {});
+  Object.values(structureMarques).forEach((sousTypes) =>
+    Object.values(sousTypes).forEach((kits) => kits.sort(parNumero))
+  );
 
   if (chargement) {
     return (
@@ -244,7 +230,7 @@ export default function CollectionCrayonsPage() {
                 {setActifInfo.brand_name} — {setActifInfo.sub_type ? `${setActifInfo.sub_type} ` : ''}{setActifInfo.range_name}
               </h3>
               <small style={{ color: 'var(--texte-secondaire)' }}>
-                {couleurs.length} couleurs disponibles au total dans ce pack ({nbCochees} cochées)
+                {couleurs.length} couleurs disponibles au total dans ce pack
               </small>
             </div>
 
@@ -279,50 +265,35 @@ export default function CollectionCrayonsPage() {
         gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
         gap: 'var(--espace-2)'
       }}>
-        {couleursFiltrees.map((c) => {
-          const possede = mesCrayons.has(Number(c.id));
+        {couleursFiltrees.map((c) => (
+          <div
+            key={c.id}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              padding: '10px 6px',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: 'var(--rayon-s)',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              background: c.hex_value || '#808080',
+              border: '1px solid rgba(0,0,0,0.15)',
+              marginBottom: '6px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.12)'
+            }} />
 
-          return (
-            <div
-              key={c.id}
-              onClick={() => toggleCrayon(c.id)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '10px 6px',
-                background: possede ? '#ffffff' : '#f5f5f5',
-                border: possede ? '2px solid #2d3748' : '1px solid #e2e8f0',
-                borderRadius: 'var(--rayon-s)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                textAlign: 'center'
-              }}
-            >
-              <div style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: c.hex_value || '#808080',
-                border: '1px solid rgba(0,0,0,0.15)',
-                marginBottom: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ffffff',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.12)',
-                filter: possede ? 'none' : 'brightness(0.9) grayscale(25%)',
-                opacity: 1
-              }}>
-                {possede && <Check size={18} strokeWidth={3} />}
-              </div>
-
-              <b style={{ fontSize: '0.95rem', color: '#1a202c', letterSpacing: '0.5px' }}>
-                {c.color_code}
-              </b>
-            </div>
-          );
-        })}
+            <b style={{ fontSize: '0.95rem', color: '#1a202c', letterSpacing: '0.5px' }}>
+              {c.color_code}
+            </b>
+          </div>
+        ))}
       </div>
 
       {afficherModalAjout && (

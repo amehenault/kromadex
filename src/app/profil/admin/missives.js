@@ -10,6 +10,7 @@ export default function Missives({ role }) {
   const [missives, setMissives] = useState([]);
   const [titre, setTitre] = useState('');
   const [contenu, setContenu] = useState('');
+  const [commentaires, setCommentaires] = useState(true);
   const [message, setMessage] = useState('');
   const estAdmin = role === 'admin';
 
@@ -21,7 +22,7 @@ export default function Missives({ role }) {
 
   async function publier(e) {
     e.preventDefault();
-    const r = await envoyer('/api/missives', 'POST', { titre, contenu });
+    const r = await envoyer('/api/missives', 'POST', { titre, contenu, commentaires });
     setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée ✓' : "Missive envoyée à l'admin pour approbation ✓") : r.error);
     if (r.ok) { setTitre(''); setContenu(''); charger(); }
   }
@@ -45,7 +46,7 @@ export default function Missives({ role }) {
         <b>Nouvelle missive</b>
         <p style={aide}>
           {estAdmin
-            ? "Elle s'affiche sur l'accueil de chaque membre jusqu'à ce qu'elle soit marquée comme lue."
+            ? "Elle est épinglée en haut de la Communauté, et signalée sur l'accueil tant qu'elle n'est pas lue."
             : "L'admin la relit et l'approuve avant qu'elle s'affiche sur l'accueil des membres."}
         </p>
         <label style={champ}>Titre
@@ -53,6 +54,10 @@ export default function Missives({ role }) {
         </label>
         <label style={champ}>Message
           <textarea rows={6} value={contenu} onChange={(e) => setContenu(e.target.value)} maxLength={4000} />
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+          <input type="checkbox" checked={commentaires} onChange={(e) => setCommentaires(e.target.checked)} style={{ width: '20px', height: '20px', margin: 0 }} />
+          Autoriser les commentaires
         </label>
         <button type="submit" className="btn" disabled={!titre.trim()} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>
           <Send size={16} /> {estAdmin ? 'Envoyer à tout le monde' : "Envoyer à l'admin"}

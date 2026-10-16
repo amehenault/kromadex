@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { lirePublication } from '@/lib/pages';
 
 export async function POST(req) {
   try {
@@ -15,6 +16,7 @@ export async function POST(req) {
     const memo = String(formData.get('memo') || '').slice(0, 1000);
     const codesRaw = formData.get('codes');
     const file = formData.get('image');
+    const pub = lirePublication(formData);
 
     let codes = '[]';
     if (codesRaw) {
@@ -37,8 +39,9 @@ export async function POST(req) {
     }
 
     await sql`
-      INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type)
-      VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${memo}, ${codes}::jsonb, ${base64}, ${imageType})
+      INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type, publiee, type_coloriage, publiee_le)
+      VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${memo}, ${codes}::jsonb, ${base64}, ${imageType},
+              ${pub.publiee}, ${pub.type}, ${pub.publiee ? new Date().toISOString() : null})
     `;
 
     // Un tome masqué redevient visible dès qu'on y enregistre une fiche

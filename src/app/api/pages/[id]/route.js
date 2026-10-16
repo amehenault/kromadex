@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { lirePublication } from '@/lib/pages';
 
 export async function PUT(req, { params }) {
   try {
@@ -16,6 +17,7 @@ export async function PUT(req, { params }) {
     const memo = String(formData.get('memo') || '').slice(0, 1000);
     const codes = formData.get('codes');
     const file = formData.get('image');
+    const pub = lirePublication(formData);
 
     if (file && typeof file === 'object' && file.size > 0) {
       const bytes = await file.arrayBuffer();
@@ -29,7 +31,11 @@ export async function PUT(req, { params }) {
             tome = ${tome}, 
             page_no = ${page_no},
             memo = ${memo},
-            codes = ${codes}, 
+            codes = ${codes},
+            publiee = ${pub.publiee},
+            type_coloriage = ${pub.type},
+            -- la date de publication est gardée tant que la fiche reste publiée
+            publiee_le = CASE WHEN ${pub.publiee} THEN COALESCE(publiee_le, now()) ELSE NULL END, 
             image_b64 = ${base64}, 
             image_type = ${imageType}
         WHERE id = ${id} AND user_id = ${user.id}
@@ -41,7 +47,11 @@ export async function PUT(req, { params }) {
             tome = ${tome}, 
             page_no = ${page_no},
             memo = ${memo},
-            codes = ${codes}
+            codes = ${codes},
+            publiee = ${pub.publiee},
+            type_coloriage = ${pub.type},
+            -- la date de publication est gardée tant que la fiche reste publiée
+            publiee_le = CASE WHEN ${pub.publiee} THEN COALESCE(publiee_le, now()) ELSE NULL END
         WHERE id = ${id} AND user_id = ${user.id}
       `;
     }

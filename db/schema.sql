@@ -129,3 +129,26 @@ create table if not exists avertissements (
 )
 ;
 alter table demandes add column if not exists reponse_vue boolean not null default true
+;
+alter table pages add column if not exists publiee boolean not null default false;
+alter table pages add column if not exists type_coloriage text not null default '';
+alter table pages add column if not exists publiee_le timestamptz;
+create index if not exists pages_publiees_idx on pages (publiee_le desc) where publiee;
+create table if not exists page_likes (
+  user_id uuid not null references users(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  primary key (user_id, page_id)
+);
+alter table missives add column if not exists commentaires boolean not null default true;
+create table if not exists missive_likes (
+  user_id uuid not null references users(id) on delete cascade,
+  missive_id int not null references missives(id) on delete cascade,
+  primary key (user_id, missive_id)
+);
+create table if not exists missive_commentaires (
+  id serial primary key,
+  missive_id int not null references missives(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  texte text not null,
+  cree_le timestamptz not null default now()
+)

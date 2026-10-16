@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import SymbolPicker from './SymbolPicker';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
+import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 
 const NOUVEAU = '__nouveau__';
 const uid = () => crypto.randomUUID();
@@ -215,12 +216,17 @@ function Groupe({ g, maj, retirer, enExport }) {
   );
 }
 
-export default function Editor({ page, tomes: tomesInitiaux, initial }) {
+export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes = {} }) {
   const r = useRouter();
   const pageRef = useRef(null);
-  
+
   // initial : pré-remplissage d'une nouvelle fiche (ex. depuis la grille d'un tome)
   const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: page?.page_no ?? initial?.page_no ?? '', memo: page?.memo ?? '' });
+  // Publication dans la communauté : le type est deviné à partir du tome du catalogue
+  const [publiee, setPubliee] = useState(Boolean(page?.publiee));
+  const [typeColo, setTypeColo] = useState(page?.type_coloriage || '');
+  const typeDuTome = typesTomes[(f.tome || '').toLowerCase()] || '';
+  const typeFinal = typeColo || typeDuTome;
   const [tomes, setTomes] = useState(tomesInitiaux || []);
   const [ecritTome, setEcritTome] = useState(false);
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
@@ -287,6 +293,8 @@ export default function Editor({ page, tomes: tomesInitiaux, initial }) {
     }));
 
     fd.append('codes', JSON.stringify(groupesPropres));
+    fd.append('publiee', publiee ? '1' : '0');
+    fd.append('type_coloriage', typeFinal);
     if (image) fd.append('image', image, 'image.jpg');
     
     const cible = page ? `/api/pages/${page.id}` : '/api/pages';
@@ -337,7 +345,7 @@ export default function Editor({ page, tomes: tomesInitiaux, initial }) {
         <button className="btn alt" onClick={() => window.location.href = '/'}>Retour</button>
         <button type="button" className="btn alt" onClick={exporterEnImage}>Exporter en image 📷</button>
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
-        <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim()}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
+        <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim() || (publiee && !typeFinal)}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
 
       {(erreurServeur || erreur) && (
@@ -416,6 +424,30 @@ export default function Editor({ page, tomes: tomesInitiaux, initial }) {
                     style={{ width: '100%', resize: 'vertical', font: 'inherit' }}
                   />
                 </label>
+
+                {/* Partage dans la communauté (le mémo reste privé) */}
+                <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={publiee} onChange={(e) => setPubliee(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0 }} />
+                    Publier dans la communauté
+                  </label>
+                  {publiee && (
+                    <>
+                      <small style={{ color: 'var(--texte-secondaire)' }}>Type de coloriage</small>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {TYPES_COLORIAGE.map((t) => (
+                          <button key={t.valeur} type="button" onClick={() => setTypeColo(t.valeur)}
+                            className={typeFinal === t.valeur ? 'btn' : 'btn alt'}
+                            style={{ minHeight: '40px', borderRadius: '999px', fontSize: '0.85rem' }}>
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+                      {!typeFinal && <small style={{ color: 'var(--danger)' }}>Choisis le type pour publier.</small>}
+                      <small style={{ color: 'var(--texte-secondaire)' }}>Ta photo, le titre, le tome, la page et tes codes couleurs seront visibles. Ton mémo reste privé.</small>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </div>

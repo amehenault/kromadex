@@ -34,3 +34,11 @@ export async function readForm(req) {
   }
   return { data, image };
 }
+
+// Publication dans la communauté : publiee ('1' ou '0') et type de coloriage
+const TYPES = ['mystere', 'cozy', 'autre'];
+export function lirePublication(f) {
+  const type = String(f.get('type_coloriage') || '');
+  const publiee = f.get('publiee') === '1' && TYPES.includes(type);
+  return { publiee, type: TYPES.includes(type) ? type : '' };
+}

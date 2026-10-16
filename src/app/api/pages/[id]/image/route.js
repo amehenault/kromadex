@@ -10,7 +10,9 @@ export async function GET(_req, { params }) {
   const user = await getUser();
   if (!user || !isId(id)) return new Response(null, { status: 404 });
 
-  const r = await sql`select image_b64, image_type from pages where id = ${id} and user_id = ${user.id} and image_b64 is not null`;
+  // Sa propre fiche, ou une fiche publiée dans la communauté
+  const r = await sql`select image_b64, image_type from pages
+    where id = ${id} and (user_id = ${user.id} or publiee) and image_b64 is not null`;
   if (!r.length) return new Response(null, { status: 404 });
 
   return new Response(Buffer.from(r[0].image_b64, 'base64'), {

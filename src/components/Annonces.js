@@ -12,7 +12,6 @@ export default function Annonces() {
   const [defi, setDefi] = useState(null);
   const [avertissements, setAvertissements] = useState([]);
   const [reponses, setReponses] = useState(0);
-  const [ouverte, setOuverte] = useState(null);
 
   useEffect(() => {
     json('/api/missives').then((d) => d && setMissives((d.missives || []).filter((m) => !m.lue)));
@@ -20,11 +19,6 @@ export default function Annonces() {
     json('/api/moderation?miens=1').then((d) => d && setAvertissements(d.avertissements || []));
     json('/api/demandes').then((d) => d && setReponses((d.demandes || []).filter((x) => !x.reponse_vue).length));
   }, []);
-
-  async function marquerLue(m) {
-    setMissives((l) => l.filter((x) => x.id !== m.id));
-    await poster('/api/missives', { lue: m.id });
-  }
 
   async function avertissementsLus() {
     setAvertissements([]);
@@ -73,21 +67,19 @@ export default function Annonces() {
           </div>
         </div>
       )}
-      {missives.map((m) => (
-        <div key={m.id} style={carte}>
+      {/* Missives non lues : on les lit dans la Communauté, où elles restent épinglées */}
+      {missives.length > 0 && (
+        <Link href={`/communaute#missive-${missives[0].id}`} style={{ ...carte, textDecoration: 'none', color: 'inherit', border: '2px solid var(--btn)' }}>
           <Mail size={20} style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />
-          <div style={{ flex: 1, minWidth: 0 }} onClick={() => setOuverte(ouverte === m.id ? null : m.id)}>
-            <b style={{ display: 'block', cursor: 'pointer' }}>{m.titre}</b>
-            {m.contenu && (
-              <p style={{
-                margin: '4px 0 0', fontSize: '0.9rem', whiteSpace: 'pre-wrap',
-                ...(ouverte === m.id ? {} : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
-              }}>{m.contenu}</p>
-            )}
+          <div style={{ minWidth: 0 }}>
+            <b style={{ display: 'block' }}>
+              {missives.length > 1 ? `${missives.length} missives non lues` : 'Nouvelle missive'}
+            </b>
+            <small style={{ display: 'block', overflowWrap: 'anywhere' }}>{missives[0].titre}</small>
+            <small style={{ color: 'var(--btn)', fontWeight: 700 }}>Lire dans la Communauté</small>
           </div>
-          <button type="button" aria-label="Marquer comme lue" onClick={() => marquerLue(m)} style={fermer}><X size={16} /></button>
-        </div>
-      ))}
+        </Link>
+      )}
     </div>
   );
 }

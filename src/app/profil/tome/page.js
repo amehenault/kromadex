@@ -3,9 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { getUserProfile } from '@/lib/user';
 import { pagesFaites } from '@/lib/mesTomes';
-import NbPagesAdmin from './nbPagesAdmin';
+import NbPagesCozy from './nbPagesCozy';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,13 +16,12 @@ export default async function TomePage({ searchParams }) {
   if (!nom) redirect('/profil');
 
   const uid = String(user.id);
-  const [[cat], [perso], [couv], pages, profil] = await Promise.all([
-    sql`SELECT id, nom, couverture, nb_pages FROM tome_catalog WHERE lower(nom) = lower(${nom}) LIMIT 1`,
+  const [[cat], [perso], [couv], pages] = await Promise.all([
+    sql`SELECT id, nom, couverture, nb_pages, type FROM tome_catalog WHERE lower(nom) = lower(${nom}) LIMIT 1`,
     sql`SELECT nb_pages FROM tomes_perso WHERE user_id = ${uid} AND lower(nom) = lower(${nom})`,
     sql`SELECT updated_at FROM tome_covers WHERE user_id = ${uid} AND lower(tome_name) = lower(${nom})`,
     sql`SELECT id, title, page_no, image_type IS NOT NULL AS has_image, OCTET_LENGTH(image_b64) AS img_size, created_at
         FROM pages WHERE user_id = ${user.id} AND lower(tome) = lower(${nom}) ORDER BY created_at DESC`,
-    getUserProfile(user.id),
   ]);
 
   const titre = cat?.nom || nom;
@@ -71,7 +69,7 @@ export default async function TomePage({ searchParams }) {
               Nombre de coloriages du livre inconnu.
             </small>
           )}
-          {cat && profil?.role === 'admin' && <NbPagesAdmin tomeId={cat.id} actuel={cat.nb_pages} />}
+          {cat && cat.type === 'cozy' && !cat.nb_pages && <NbPagesCozy tomeId={cat.id} />}
         </div>
       </div>
 

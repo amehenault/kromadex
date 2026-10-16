@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function Header({ connecte }) {
+export default function Header({ connecte, avatar }) {
   const r = useRouter();
   async function sortir() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -14,7 +14,9 @@ export default function Header({ connecte }) {
       {connecte && (
         <div className="entete-actions">
           <Link href="/profil" className="btn-icon" title="Profil">
-            <img src="/profil.svg" alt="Profil" width={22} height={22} />
+            {avatar
+              ? <img src={avatar} alt="Profil" width={30} height={30} style={{ borderRadius: '50%', objectFit: 'cover' }} />
+              : <img src="/profil.svg" alt="Profil" width={22} height={22} />}
           </Link>
           <button className="btn alt" onClick={sortir}>Déconnexion</button>
         </div>

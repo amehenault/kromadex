@@ -55,6 +55,7 @@ export default function Library({ pages = [] }) {
 
       const titreMatch = (p.title || p.titre || '').toString().toLowerCase().includes(terme);
       if (titreMatch) return true;
+      if ((p.memo || '').toLowerCase().includes(terme)) return true;
 
       if (Array.isArray(p.codes)) {
         return p.codes.some((groupe) => {
@@ -197,7 +198,7 @@ export default function Library({ pages = [] }) {
 
               <div onClick={() => setTomeSelectionne(t.nom)}>
                 <img 
-                  src={`/api/tomes/cover?name=${encodeURIComponent(t.nom)}&v=${version}`}
+                  src={`/api/tomes/cover?name=${encodeURIComponent(t.nom)}&format=img&v=${version}`}
                   alt={t.nom}
                   onError={(e) => {
                     if (t.premierePageId) {
@@ -243,6 +244,11 @@ export default function Library({ pages = [] }) {
               <small>
                 {[p.tome, p.page_no ? `page ${p.page_no}` : null].filter(Boolean).join(', ')}
               </small>
+              {p.memo && (
+                <small style={{ display: 'block', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  📝 {p.memo}
+                </small>
+              )}
             </Link>
           ))}
         </div>

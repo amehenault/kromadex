@@ -10,22 +10,35 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const name = searchParams.get('name');
+    // format=img : renvoie l'image elle-même (pour <img src>), sinon du JSON
+    const enImage = searchParams.get('format') === 'img';
     const user = await getUser();
 
     if (user && name) {
       const userIdStr = String(user.id);
       const r = await sql`
-        SELECT image_b64, image_type 
-        FROM tome_covers 
+        SELECT image_b64, image_type
+        FROM tome_covers
         WHERE user_id = ${userIdStr} AND tome_name = ${name}
       `;
 
       if (r.length && r[0].image_b64) {
         const mime = r[0].image_type || 'image/jpeg';
+        if (enImage) {
+          return new NextResponse(Buffer.from(r[0].image_b64, 'base64'), { headers: { 'Content-Type': mime } });
+        }
         return NextResponse.json({ cover: `data:${mime};base64,${r[0].image_b64}` });
+      }
+
+      // Pas de couverture personnelle : celle du catalogue si le nom correspond à un tome connu
+      const c = await sql`SELECT couverture FROM tome_catalog WHERE lower(nom) = lower(${name}) LIMIT 1`;
+      if (c.length && c[0].couverture) {
+        if (enImage) return NextResponse.redirect(new URL(c[0].couverture, req.url));
+        return NextResponse.json({ cover: c[0].couverture });
       }
     }
 
+    if (enImage) return new NextResponse(null, { status: 404 });
     return NextResponse.json({ cover: DEFAULT_COVER_SVG });
   } catch (err) {
     return NextResponse.json({ cover: DEFAULT_COVER_SVG });

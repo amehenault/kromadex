@@ -19,8 +19,12 @@ export async function POST(req, { params }) {
     } catch { return err('Ce courriel est déjà utilisé.', 409); }
   }
   if (action === 'login') {
-    const r = await sql`select id, password_hash from users where email = ${email}`;
+    const r = await sql`select id, password_hash, suspendu_jusqu from users where email = ${email}`;
     if (!r.length || !verifyPassword(pw, r[0].password_hash)) return err('Courriel ou mot de passe incorrect.', 401);
+    if (r[0].suspendu_jusqu && new Date(r[0].suspendu_jusqu) > new Date()) {
+      const fin = new Date(r[0].suspendu_jusqu).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+      return err(`Ton compte est suspendu jusqu'au ${fin}.`, 403);
+    }
     await createSession(r[0].id);
     return NextResponse.json({ ok: true });
   }

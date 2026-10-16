@@ -12,6 +12,7 @@ export async function POST(req) {
     const title = formData.get('title') || '';
     const tome = formData.get('tome') || '';
     const page_no = formData.get('page_no') || '';
+    const memo = String(formData.get('memo') || '').slice(0, 1000);
     const codesRaw = formData.get('codes');
     const file = formData.get('image');
 
@@ -36,10 +37,12 @@ export async function POST(req) {
     }
 
     await sql`
-      INSERT INTO pages (user_id, title, tome, page_no, codes, image_b64, image_type)
-      VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${codes}::jsonb, ${base64}, ${imageType})
+      INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type)
+      VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${memo}, ${codes}::jsonb, ${base64}, ${imageType})
     `;
 
+    // Un tome masqué redevient visible dès qu'on y enregistre une fiche
+    if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     revalidatePath('/');
     return NextResponse.json({ success: true });
   } catch (err) {

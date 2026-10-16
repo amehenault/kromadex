@@ -1,229 +1,134 @@
 import { redirect } from 'next/navigation';
-import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
+import { progressionNiveau } from '@/lib/niveaux';
 import Link from 'next/link';
-import ListeTomes from './listeTomes';
-import RolesPanel from '@/components/roles/RolesPanel';
-import { Edit3, User, Award, BookOpen, Sparkles, Palette, ArrowLeft } from 'lucide-react';
+import MesTomes from './mesTomes';
+import { listerMesTomes } from '@/lib/mesTomes';
+import { Edit3, User, BookOpen, Sparkles, Palette, ArrowLeft, Shield, Trophy, HelpCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+const NOM_POSTE = { admin: 'Admin', modo: 'Modératrice', cheffe: 'Cheffe des coloristes', coloriste: 'Coloriste' };
 
 export default async function ProfilPage() {
   const authUser = await getUser();
   if (!authUser) redirect('/login');
 
   const profile = await getUserProfile(authUser.id);
-  const userIdStr = String(authUser.id);
 
-  // Récupération des tomes et jointure avec les couvertures enregistrées
-  const resultats = await sql`
-    SELECT 
-      p.tome, 
-      COUNT(p.id)::int AS nb_pages,
-      tc.updated_at AS cover_updated
-    FROM pages p
-    LEFT JOIN tome_covers tc ON tc.user_id = ${userIdStr} AND tc.tome_name = p.tome
-    WHERE p.user_id = ${authUser.id} AND p.tome IS NOT NULL AND p.tome != ''
-    GROUP BY p.tome, tc.updated_at
-    ORDER BY p.tome ASC
-  `;
-
-  const tomesData = resultats.map((r) => ({
-    nom: r.tome,
-    nbPages: r.nb_pages,
-    totalTomePages: 100,
-    hasCover: !!r.cover_updated,
-    timestamp: r.cover_updated ? new Date(r.cover_updated).getTime() : Date.now()
-  }));
+  // Tomes du profil avec leur progression automatique
+  const mesTomes = await listerMesTomes(authUser.id);
 
   const xpActuel = profile?.xp || 0;
-  const niveauActuel = profile?.level || 1;
+  const niv = progressionNiveau(xpActuel);
 
-  const nomAffiche = profile?.name || 'Amélie Hénault';
-  const pseudoAffiche = profile?.pseudo || 'amelacreative';
-  const roleAffiche = (profile?.role || 'coloriste').toUpperCase();
+  const nomAffiche = profile?.name || profile?.pseudo || authUser.email;
+  const pseudoAffiche = profile?.pseudo;
+  const role = profile?.role || 'coloriste';
+
+  const bouton = {
+    width: '100%', justifyContent: 'center', gap: 'var(--espace-2)', fontSize: '1rem',
+    minHeight: '48px', display: 'inline-flex', alignItems: 'center',
+  };
+  const stat = {
+    background: 'var(--fond-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 8px', textAlign: 'center',
+    border: '1px solid var(--bordure-carte)', minWidth: 0,
+  };
 
   return (
-    <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-4)' }}>
-      
-      <div className="barre" style={{ marginBottom: 'var(--espace-4)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <Link href="/" className="btn alt" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <ArrowLeft size={16} /> Retour
+    <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
+
+      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link href="/" className="btn alt" aria-label="Retour à l'accueil" style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto' }}>
+          <ArrowLeft size={16} />
         </Link>
-        <h2 style={{ margin: 0 }}>Profil & Progression</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem', flex: 1, minWidth: 0 }}>Mon profil</h2>
+        <Link href="/profil/edit" className="btn alt" aria-label="Modifier mon profil" style={{ display: 'inline-flex', alignItems: 'center', flex: '0 0 auto' }}>
+          <Edit3 size={16} />
+        </Link>
       </div>
 
-      {/* Carte d'en-tête du profil */}
-      <div style={{
-        background: 'var(--fond-carte)',
-        borderRadius: 'var(--rayon-l)',
-        padding: 'var(--espace-5)',
-        boxShadow: 'var(--ombre)',
-        border: '1px solid var(--bordure-carte)',
-        marginBottom: 'var(--espace-4)',
-        textAlign: 'center',
-        position: 'relative'
-      }}>
-        <Link 
-          href="/profil/edit" 
-          aria-label="Modifier les identifiants"
-          style={{
-            position: 'absolute',
-            top: 'var(--espace-3)',
-            right: 'var(--espace-3)',
-            background: 'var(--carte)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '36px',
-            height: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textDecoration: 'none',
-            color: 'var(--texte-principal)',
-            cursor: 'pointer'
-          }}
-        >
-          <Edit3 size={18} />
-        </Link>
-
-        <div style={{ position: 'relative', width: '90px', height: '90px', margin: '0 auto var(--espace-3)' }}>
+      {/* En-tête : avatar, nom, poste, niveau */}
+      <div className="carte" style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: 'var(--espace-3)' }}>
+        <div style={{ position: 'relative', flex: '0 0 auto' }}>
           <div style={{
-            width: '90px',
-            height: '90px',
-            borderRadius: '50%',
-            background: 'var(--carte)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--texte-secondaire)'
+            width: '72px', height: '72px', borderRadius: '50%', background: 'var(--carte)', overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--texte-secondaire)',
           }}>
-            <User size={48} />
+            {profile?.a_avatar
+              ? <img src={`/api/user/avatar?v=${new Date(profile.avatar_maj).getTime()}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <User size={38} />}
           </div>
           <span style={{
-            position: 'absolute',
-            bottom: '-6px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'var(--accent-primaire)',
-            color: 'var(--blanc)',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            padding: '2px 8px',
-            borderRadius: 'var(--rayon-s)',
-            whiteSpace: 'nowrap'
+            position: 'absolute', bottom: '-6px', left: '50%', transform: 'translateX(-50%)',
+            background: 'var(--accent-primaire)', color: 'var(--blanc)', fontSize: '0.7rem', fontWeight: 'bold',
+            padding: '2px 8px', borderRadius: 'var(--rayon-s)', whiteSpace: 'nowrap',
           }}>
-            NIV. {niveauActuel}
+            NIV. {niv.niveau}
           </span>
         </div>
-
-        <h2 style={{ margin: 'var(--espace-1) 0', color: 'var(--texte-principal)' }}>
-          {nomAffiche}
-        </h2>
-        <p style={{ margin: '0 0 4px', color: 'var(--texte-secondaire)', fontSize: '0.95rem', fontWeight: 'bold' }}>
-          @{pseudoAffiche}
-        </p>
-        <p style={{ margin: 0, color: 'var(--accent-primaire)', fontSize: '0.85rem', fontWeight: 'bold' }}>
-          Rôle : {roleAffiche}
-        </p>
-      </div>
-
-      {/* Carte Titre */}
-      <div style={{
-        background: 'var(--accent-doux)',
-        borderRadius: 'var(--rayon-m)',
-        padding: 'var(--espace-3) var(--espace-4)',
-        border: '1px solid var(--bordure-carte)',
-        textAlign: 'center',
-        marginBottom: 'var(--espace-4)'
-      }}>
-        <small style={{ 
-          textTransform: 'uppercase', 
-          fontWeight: 'bold', 
-          color: 'var(--accent-primaire)',
-          fontSize: '0.75rem',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          marginBottom: 'var(--espace-1)'
-        }}>
-          <Sparkles size={14} /> Titre <Sparkles size={14} />
-        </small>
-        <h3 style={{ margin: 0, color: 'var(--texte-principal)' }}>
-          {profile?.title || 'Coloriste débutant'}
-        </h3>
-      </div>
-
-      {/* Statistiques */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-        gap: 'var(--espace-3)',
-        marginBottom: 'var(--espace-4)'
-      }}>
-        <div style={{
-          background: 'var(--fond-carte)',
-          borderRadius: 'var(--rayon-m)',
-          padding: 'var(--espace-3)',
-          textAlign: 'center',
-          border: '1px solid var(--bordure-carte)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <Award size={22} style={{ color: 'var(--accent-primaire)' }} />
-          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--texte-principal)' }}>{xpActuel}</div>
-          <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.75rem', textTransform: 'uppercase' }}>XP Total</small>
-        </div>
-
-        <div style={{
-          background: 'var(--fond-carte)',
-          borderRadius: 'var(--rayon-m)',
-          padding: 'var(--espace-3)',
-          textAlign: 'center',
-          border: '1px solid var(--bordure-carte)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <BookOpen size={22} style={{ color: 'var(--accent-primaire)' }} />
-          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--texte-principal)' }}>{tomesData.length}</div>
-          <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Tomes</small>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <b style={{ display: 'block', fontSize: '1.15rem', overflowWrap: 'anywhere' }}>{nomAffiche}</b>
+          {pseudoAffiche && <small style={{ display: 'block', color: 'var(--texte-secondaire)', fontWeight: 'bold' }}>@{pseudoAffiche}</small>}
+          <small style={{ display: 'block', color: 'var(--accent-primaire)', fontWeight: 'bold' }}>{NOM_POSTE[role]}</small>
+          <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '2px', fontWeight: 600 }}>
+            <Sparkles size={13} /> {profile?.title || 'Coloriste débutant'}
+          </small>
         </div>
       </div>
 
-      {/* Accès direct à la collection de crayons */}
-      <div style={{ marginBottom: 'var(--espace-4)' }}>
-        <Link 
-          href="/profil/collection" 
-          className="btn"
-          style={{ 
-            width: '100%', 
-            justifyContent: 'center', 
-            gap: 'var(--espace-2)',
-            fontSize: '1rem',
-            padding: 'var(--espace-3)',
-            display: 'inline-flex',
-            alignItems: 'center'
-          }}
-        >
+      {/* Niveau et statistiques */}
+      <div className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+          <b>Niveau {niv.niveau}</b>
+          <small style={{ color: 'var(--texte-secondaire)', fontWeight: 600 }}>{xpActuel} / {niv.suivant} XP</small>
+        </div>
+        <div style={{ height: '10px', borderRadius: '999px', background: 'var(--carte)', overflow: 'hidden', margin: '6px 0 4px' }}>
+          <div style={{ width: `${niv.pct}%`, height: '100%', background: 'var(--btn)' }} />
+        </div>
+        <small style={{ color: 'var(--texte-secondaire)' }}>Encore {niv.suivant - xpActuel} XP avant le niveau {niv.niveau + 1}</small>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginTop: 'var(--espace-3)' }}>
+          <div style={stat}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{xpActuel}</div>
+            <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.75rem', textTransform: 'uppercase' }}>XP total</small>
+          </div>
+          <div style={stat}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{mesTomes.length}</div>
+            <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Tomes</small>
+          </div>
+        </div>
+      </div>
+
+      {/* Accès rapides */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' }}>
+        {['admin', 'modo'].includes(role) && (
+          <Link href="/profil/admin" className="btn" style={bouton}>
+            <Shield size={20} /> {role === 'admin' ? 'Espace admin' : 'Espace modo'}
+          </Link>
+        )}
+        {role === 'cheffe' && (
+          <Link href="/profil/admin" className="btn" style={bouton}>
+            <Trophy size={20} /> Choisir le prochain défi
+          </Link>
+        )}
+        <Link href="/profil/collection" className="btn" style={bouton}>
           <Palette size={20} /> Ma collection de crayons
+        </Link>
+        <Link href="/profil/tomes" className="btn" style={bouton}>
+          <BookOpen size={20} /> Mes tomes de coloriage
+        </Link>
+        <Link href="/aide" className="btn alt" style={bouton}>
+          <HelpCircle size={20} /> Aide et demandes
         </Link>
       </div>
 
-      {/* Liste des tomes */}
-      <div className="carte" style={{ marginBottom: 'var(--espace-4)' }}>
-        <h3 style={{ marginTop: 0 }}>Liste de mes tomes</h3>
-        <ListeTomes tomesInitiaux={tomesData} />
+      {/* Progression automatique de chaque tome */}
+      <div className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
+        <h3 style={{ marginTop: 0 }}>Ma progression</h3>
+        <MesTomes tomes={mesTomes} />
       </div>
-
-      {/* Panneaux Rôles & Titres (Admins & Modos) */}
-      {(profile?.role === 'admin' || profile?.role === 'modo') && (
-        <RolesPanel />
-      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ export async function PUT(req, { params }) {
     const title = formData.get('title');
     const tome = formData.get('tome');
     const page_no = formData.get('page_no');
+    const memo = String(formData.get('memo') || '').slice(0, 1000);
     const codes = formData.get('codes');
     const file = formData.get('image');
 
@@ -26,7 +27,8 @@ export async function PUT(req, { params }) {
         UPDATE pages 
         SET title = ${title}, 
             tome = ${tome}, 
-            page_no = ${page_no}, 
+            page_no = ${page_no},
+            memo = ${memo},
             codes = ${codes}, 
             image_b64 = ${base64}, 
             image_type = ${imageType}
@@ -37,12 +39,14 @@ export async function PUT(req, { params }) {
         UPDATE pages 
         SET title = ${title}, 
             tome = ${tome}, 
-            page_no = ${page_no}, 
+            page_no = ${page_no},
+            memo = ${memo},
             codes = ${codes}
         WHERE id = ${id} AND user_id = ${user.id}
       `;
     }
 
+    if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     revalidatePath('/');
     revalidatePath(`/pages/${id}`);
     

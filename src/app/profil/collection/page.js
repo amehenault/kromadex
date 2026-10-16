@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Palette, Plus, Trash2, ArrowLeft, Search, Folder } from 'lucide-react';
+import { Palette, Plus, Trash2, ArrowLeft, Search, Folder, ChevronRight, Check, X } from 'lucide-react';
 
 export default function CollectionCrayonsPage() {
   const [toutesMarques, setToutesMarques] = useState([]);
@@ -18,6 +18,8 @@ export default function CollectionCrayonsPage() {
   const [modeCreationCustom, setModeCreationCustom] = useState(false);
   const [customMarque, setCustomMarque] = useState('');
   const [customNomSet, setCustomNomSet] = useState('');
+  const [marqueOuverte, setMarqueOuverte] = useState(null);
+  const [rechercheMarque, setRechercheMarque] = useState('');
 
   useEffect(() => {
     chargerDonneesInitiales();
@@ -103,6 +105,36 @@ export default function CollectionCrayonsPage() {
     setCustomMarque('');
     setCustomNomSet('');
     setSetAAjouter('');
+  }
+
+  function fermerModal() {
+    setAfficherModalAjout(false);
+    setModeCreationCustom(false);
+    setMarqueOuverte(null);
+    setRechercheMarque('');
+  }
+
+  // Ajout / retrait direct depuis le catalogue (mise à jour immédiate de l'écran)
+  async function ajouterSet(idNum) {
+    setMesSetsIds((prev) => new Set([...prev, idNum]));
+    if (!setActif) setSetActif(idNum);
+    const res = await fetch('/api/markers/sets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ADD', brandId: idNum }),
+    });
+    if (!res.ok) setMesSetsIds((prev) => { const m = new Set(prev); m.delete(idNum); return m; });
+  }
+
+  async function retirerSet(idNum) {
+    setMesSetsIds((prev) => { const m = new Set(prev); m.delete(idNum); return m; });
+    const res = await fetch('/api/markers/sets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'REMOVE', brandId: idNum }),
+    });
+    if (!res.ok) setMesSetsIds((prev) => new Set([...prev, idNum]));
+    else if (Number(setActif) === idNum) setSetActif('');
   }
 
   async function retirerSetActif(brandId) {
@@ -292,18 +324,35 @@ export default function CollectionCrayonsPage() {
       </div>
 
       {afficherModalAjout && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: 'var(--espace-3)'
-        }}>
-          <div className="carte" style={{ width: '100%', maxWidth: '520px', maxHeight: '85vh', overflowY: 'auto', background: 'var(--fond-carte)' }}>
-            <h3 style={{ marginTop: 0 }}>Ajouter un coffret</h3>
+        <div
+          onClick={fermerModal}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            className="carte"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: '560px', height: '92dvh', overflowY: 'auto', overscrollBehavior: 'contain',
+              background: 'var(--fond-carte)', margin: 0, borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', paddingTop: 0
+            }}
+          >
+            <div style={{
+              position: 'sticky', top: 0, zIndex: 2, background: 'var(--fond-carte)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 10px'
+            }}>
+              <h3 style={{ margin: 0 }}>Ajouter un coffret</h3>
+              <button type="button" className="btn alt" aria-label="Fermer" onClick={fermerModal} style={{ minHeight: '40px', minWidth: '40px', justifyContent: 'center' }}>
+                <X size={18} />
+              </button>
+            </div>
 
             <div style={{ display: 'flex', gap: 'var(--espace-2)', marginBottom: 'var(--espace-3)' }}>
               <button 
@@ -325,58 +374,91 @@ export default function CollectionCrayonsPage() {
             </div>
 
             {!modeCreationCustom ? (
-              <div style={{ marginBottom: 'var(--espace-4)' }}>
-                {Object.keys(structureMarques).map((marque) => (
-                  <div key={marque} style={{ marginBottom: '18px' }}>
-                    <h2 style={{ 
-                      fontSize: '1.4rem', 
-                      fontWeight: '800', 
-                      margin: '12px 0 6px 0', 
-                      color: 'var(--texte-principal)'
-                    }}>
-                      {marque}
-                    </h2>
+              !marqueOuverte ? (
+                // Étape 1 : la liste des marques
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' }}>
+                  <input
+                    type="search"
+                    placeholder="Rechercher une marque..."
+                    value={rechercheMarque}
+                    onChange={(e) => setRechercheMarque(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                  {Object.keys(structureMarques)
+                    .sort((a, b) => a.localeCompare(b, 'fr'))
+                    .filter((m) => m.toLowerCase().includes(rechercheMarque.trim().toLowerCase()))
+                    .map((marque) => {
+                      const kits = Object.values(structureMarques[marque]).flat();
+                      const nbPossedes = kits.filter((k) => mesSetsIds.has(Number(k.id))).length;
+                      return (
+                        <button
+                          key={marque}
+                          type="button"
+                          onClick={() => setMarqueOuverte(marque)}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+                            width: '100%', minHeight: '54px', padding: '10px 14px', borderRadius: 'var(--rayon-m)',
+                            border: '1px solid var(--bordure-carte)', background: 'var(--carte)',
+                            color: 'var(--texte-principal)', cursor: 'pointer', textAlign: 'left'
+                          }}
+                        >
+                          <span>
+                            <b style={{ fontSize: '1.05rem' }}>{marque}</b>
+                            <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>
+                              {kits.length} kit{kits.length > 1 ? 's' : ''}{nbPossedes ? ` · ${nbPossedes} dans ma collection` : ''}
+                            </small>
+                          </span>
+                          <ChevronRight size={20} />
+                        </button>
+                      );
+                    })}
+                </div>
+              ) : (
+                // Étape 2 : les kits de la marque choisie, touchés = ajoutés
+                <div style={{ marginBottom: 'var(--espace-3)' }}>
+                  <button
+                    type="button"
+                    className="btn alt"
+                    onClick={() => setMarqueOuverte(null)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', marginBottom: '8px' }}
+                  >
+                    <ArrowLeft size={16} /> Marques
+                  </button>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: '800', margin: '4px 0 10px', color: 'var(--texte-principal)' }}>
+                    {marqueOuverte}
+                  </h2>
 
-                    {Object.keys(structureMarques[marque]).map((subType) => (
-                      <div key={subType} style={{ marginLeft: '4px', marginBottom: '12px' }}>
-                        <div style={{ 
-                          fontSize: '0.95rem', 
-                          fontWeight: '700', 
-                          color: 'var(--texte-principal)',
-                          margin: '6px 0 6px 0'
-                        }}>
-                          {subType}
-                        </div>
-
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {structureMarques[marque][subType].map((b) => {
-                            const estSelectionne = Number(setAAjouter) === Number(b.id);
-                            return (
-                              <button
-                                key={b.id}
-                                type="button"
-                                onClick={() => setSetAAjouter(Number(b.id))}
-                                style={{
-                                  padding: '6px 12px',
-                                  fontSize: '0.95rem',
-                                  borderRadius: '6px',
-                                  border: estSelectionne ? '2px solid var(--btn)' : '1px solid var(--bordure-carte)',
-                                  background: estSelectionne ? 'var(--btn)' : 'var(--carte)',
-                                  color: estSelectionne ? '#ffffff' : 'var(--texte-principal)',
-                                  fontWeight: estSelectionne ? 'bold' : 'normal',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                {b.range_name}
-                              </button>
-                            );
-                          })}
-                        </div>
+                  {Object.keys(structureMarques[marqueOuverte] || {}).sort((a, b) => a.localeCompare(b, 'fr')).map((subType) => (
+                    <div key={subType} style={{ marginBottom: '14px' }}>
+                      <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--texte-secondaire)', margin: '0 0 6px' }}>
+                        {subType}
                       </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px' }}>
+                        {structureMarques[marqueOuverte][subType].map((b) => {
+                          const possede = mesSetsIds.has(Number(b.id));
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => (possede ? retirerSet(Number(b.id)) : ajouterSet(Number(b.id)))}
+                              style={{
+                                minHeight: '44px', padding: '8px 10px', fontSize: '0.9rem', borderRadius: '8px',
+                                border: possede ? '2px solid var(--btn)' : '1px solid var(--bordure-carte)',
+                                background: possede ? 'var(--btn)' : 'var(--carte)',
+                                color: possede ? '#ffffff' : 'var(--texte-principal)',
+                                fontWeight: possede ? 'bold' : 'normal', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', textAlign: 'center'
+                              }}
+                            >
+                              {possede ? <Check size={14} /> : <Plus size={14} />} {b.range_name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-2)', marginBottom: 'var(--espace-4)' }}>
                 <label><b>Marque / Fabricant :</b></label>
@@ -397,23 +479,18 @@ export default function CollectionCrayonsPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: 'var(--espace-2)', justifyContent: 'flex-end' }}>
-              <button 
-                type="button" 
-                className="btn alt" 
-                onClick={() => setAfficherModalAjout(false)}
-              >
-                Annuler
-              </button>
-              <button 
-                type="button" 
-                className="btn" 
-                onClick={ajouterNouveauSet}
-                style={{ fontWeight: 'bold' }}
-              >
-                Ajouter
-              </button>
-            </div>
+            {modeCreationCustom && (
+              <div style={{ display: 'flex', gap: 'var(--espace-2)', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={ajouterNouveauSet}
+                  style={{ fontWeight: 'bold', minHeight: '44px' }}
+                >
+                  Créer le kit
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

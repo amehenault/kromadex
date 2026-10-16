@@ -215,11 +215,12 @@ function Groupe({ g, maj, retirer, enExport }) {
   );
 }
 
-export default function Editor({ page, tomes: tomesInitiaux }) {
+export default function Editor({ page, tomes: tomesInitiaux, initial }) {
   const r = useRouter();
   const pageRef = useRef(null);
   
-  const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? '', page_no: page?.page_no ?? '' });
+  // initial : pré-remplissage d'une nouvelle fiche (ex. depuis la grille d'un tome)
+  const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: page?.page_no ?? initial?.page_no ?? '', memo: page?.memo ?? '' });
   const [tomes, setTomes] = useState(tomesInitiaux || []);
   const [ecritTome, setEcritTome] = useState(false);
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
@@ -404,6 +405,17 @@ export default function Editor({ page, tomes: tomesInitiaux }) {
                   </div>
                   <label>Page<input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} /></label>
                 </div>
+
+                <label>Mémo
+                  <textarea
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="ex: fond fait au Ohuhu, reste les cheveux…"
+                    value={f.memo}
+                    onChange={(e) => set('memo', e.target.value)}
+                    style={{ width: '100%', resize: 'vertical', font: 'inherit' }}
+                  />
+                </label>
               </>
             )}
           </div>

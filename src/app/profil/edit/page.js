@@ -1,10 +1,14 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import Preferences from './preferences';
+import PhotoProfil from './photoProfil';
+import { ArrowLeft } from 'lucide-react';
 
 export default function EditProfilPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [actuel, setActuel] = useState('');
   const [message, setMessage] = useState('');
 
   async function handleSubmit(e) {
@@ -14,42 +18,67 @@ export default function EditProfilPage() {
     const res = await fetch('/api/user/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, actuel }),
     });
 
     if (res.ok) {
       setMessage('Modifications enregistrées !');
+      setEmail('');
       setPassword('');
+      setActuel('');
     } else {
-      setMessage('Erreur lors de la mise à jour.');
+      const d = await res.json().catch(() => ({}));
+      setMessage(d.error || 'Erreur lors de la mise à jour.');
     }
   }
 
   return (
-    <div className="contenu" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-4)' }}>
-      <div className="barre" style={{ marginBottom: 'var(--espace-4)' }}>
-        <Link href="/profil" className="btn alt">← Annuler</Link>
-        <h2>Modifier mes accès</h2>
+    <div className="contenu" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-3)' }}>
+      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <ArrowLeft size={16} />
+        </Link>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Modifier mon profil</h2>
       </div>
+
+      <PhotoProfil />
+
+      <Preferences />
+
+      <h3>Mes accès</h3>
 
       <form onSubmit={handleSubmit} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)' }}>
         <label>
           Nouveau courriel
-          <input 
-            type="email" 
-            placeholder="Changer le courriel" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
+          <input
+            type="email"
+            autoComplete="email"
+            placeholder="Changer le courriel"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </label>
 
         <label>
           Nouveau mot de passe
-          <input 
-            type="password" 
-            placeholder="Nouveau mot de passe" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
+          <input
+            type="password"
+            autoComplete="new-password"
+            placeholder="8 caractères minimum"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+
+        <label>
+          Mot de passe actuel *
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            placeholder="Pour confirmer que c'est bien toi"
+            value={actuel}
+            onChange={(e) => setActuel(e.target.value)}
           />
         </label>
 

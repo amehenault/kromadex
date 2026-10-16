@@ -1,0 +1,101 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { Send, Trash2, Check, X } from 'lucide-react';
+import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
+
+const STATUT = { publiee: 'Publiée', en_attente: "En attente de l'admin", refusee: 'Refusée' };
+
+// Écrire des missives : l'admin publie directement, la modo envoie à l'admin pour approbation
+export default function Missives({ role }) {
+  const [missives, setMissives] = useState([]);
+  const [titre, setTitre] = useState('');
+  const [contenu, setContenu] = useState('');
+  const [message, setMessage] = useState('');
+  const estAdmin = role === 'admin';
+
+  async function charger() {
+    const res = await fetch('/api/missives?gestion=1');
+    if (res.ok) setMissives((await res.json()).missives || []);
+  }
+  useEffect(() => { charger(); }, []);
+
+  async function publier(e) {
+    e.preventDefault();
+    const r = await envoyer('/api/missives', 'POST', { titre, contenu });
+    setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée ✓' : "Missive envoyée à l'admin pour approbation ✓") : r.error);
+    if (r.ok) { setTitre(''); setContenu(''); charger(); }
+  }
+
+  async function decider(m, statut) {
+    await envoyer('/api/missives', 'PUT', { id: m.id, statut });
+    charger();
+  }
+
+  async function supprimer(m) {
+    if (!confirm(`Supprimer la missive « ${m.titre} » ?`)) return;
+    await envoyer('/api/missives', 'DELETE', { id: m.id });
+    charger();
+  }
+
+  const enAttente = missives.filter((m) => m.statut === 'en_attente');
+
+  return (
+    <div style={colonne}>
+      <form onSubmit={publier} className="carte" style={colonne}>
+        <b>Nouvelle missive</b>
+        <p style={aide}>
+          {estAdmin
+            ? "Elle s'affiche sur l'accueil de chaque membre jusqu'à ce qu'elle soit marquée comme lue."
+            : "L'admin la relit et l'approuve avant qu'elle s'affiche sur l'accueil des membres."}
+        </p>
+        <label style={champ}>Titre
+          <input value={titre} onChange={(e) => setTitre(e.target.value)} maxLength={120} placeholder="ex. Le défi d'octobre est lancé !" />
+        </label>
+        <label style={champ}>Message
+          <textarea rows={6} value={contenu} onChange={(e) => setContenu(e.target.value)} maxLength={4000} />
+        </label>
+        <button type="submit" className="btn" disabled={!titre.trim()} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>
+          <Send size={16} /> {estAdmin ? 'Envoyer à tout le monde' : "Envoyer à l'admin"}
+        </button>
+        {message && <small>{message}</small>}
+      </form>
+
+      {estAdmin && enAttente.length > 0 && (
+        <div className="carte" style={colonne}>
+          <b>À approuver ({enAttente.length})</b>
+          {enAttente.map((m) => (
+            <div key={m.id} style={{ ...ligneCarte, border: '2px solid var(--btn)' }}>
+              <small style={aide}>De @{m.auteur || 'modo'}</small>
+              <b>{m.titre}</b>
+              {m.contenu && <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{m.contenu}</p>}
+              <div style={actions}>
+                <button type="button" className="btn" style={petitBtn} onClick={() => decider(m, 'publiee')}><Check size={14} /> Approuver</button>
+                <button type="button" className="btn alt danger" style={petitBtn} onClick={() => decider(m, 'refusee')}><X size={14} /> Refuser</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="carte" style={colonne}>
+        <b>{estAdmin ? 'Toutes les missives' : 'Missives'}</b>
+        {missives.filter((m) => !(estAdmin && m.statut === 'en_attente')).map((m) => (
+          <div key={m.id} style={{ ...ligneCarte, opacity: m.statut === 'refusee' ? 0.6 : 1 }}>
+            <small style={aide}>
+              {new Date(m.cree_le).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {m.auteur ? ` · @${m.auteur}` : ''} · {STATUT[m.statut]}
+            </small>
+            <b>{m.titre}</b>
+            {m.contenu && <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{m.contenu}</p>}
+            {(estAdmin || m.statut !== 'publiee') && (
+              <button type="button" className="btn alt danger" style={{ ...petitBtn, alignSelf: 'flex-start' }} onClick={() => supprimer(m)}>
+                <Trash2 size={14} /> Supprimer
+              </button>
+            )}
+          </div>
+        ))}
+        {!missives.length && <p style={aide}>Aucune missive pour le moment.</p>}
+      </div>
+    </div>
+  );
+}

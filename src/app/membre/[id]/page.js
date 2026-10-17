@@ -15,7 +15,7 @@ export default async function MembrePage({ params }) {
   if (!isId(id)) notFound();
 
   const [[m], fiches, recompenses] = await Promise.all([
-    sql`SELECT u.id, u.pseudo, u.name, u.xp, u.genre, u.bio, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+    sql`SELECT u.id, u.pseudo, u.name, u.xp, u.genre, u.bio, u.role, u.pionnier, u.cadre, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
           (SELECT count(*)::int FROM abonnements WHERE suivi = u.id) AS abonnes,
           (SELECT count(*)::int FROM abonnements WHERE suiveur = u.id) AS abonnements,
           EXISTS (SELECT 1 FROM abonnements WHERE suiveur = ${user.id} AND suivi = u.id) AS abonne

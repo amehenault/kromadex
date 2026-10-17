@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, Crown, CalendarPlus } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide, petitBtn, dateStyle } from './outils';
 import { jourQuebec } from '@/lib/temps';
+import { nomPionnier } from '@/lib/cadres';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import Pseudo from '@/components/Pseudo';
 
@@ -113,6 +114,10 @@ export default function Membres({ role }) {
                   <option value="">Choisir un titre</option>
                   {titres.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
                 </select>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, minHeight: '44px' }}>
+                <input type="checkbox" checked={Boolean(u.pionnier)} onChange={(e) => modifier(u.id, { pionnier: e.target.checked })} style={{ width: '20px', height: '20px', margin: 0 }} />
+                {nomPionnier(u.genre)} (bêta-testrice ou bêta-testeur, débloque le cadre)
               </label>
               <label style={champ}>Kromadex+ offert jusqu'au (inclus)
                 <input type="date" value={offreActive(u) ? u.plus_offert_jusqu : ''} min={jourQuebec()}

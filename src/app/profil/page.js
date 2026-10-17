@@ -8,12 +8,13 @@ import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois } from '@/lib/abonnement';
+import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import MesTomes from './mesTomes';
 import { listerMesTomes } from '@/lib/mesTomes';
 import {
-  Edit3,
+  Settings,
   User,
   BookOpen,
   Sparkles,
@@ -63,7 +64,8 @@ export default async function ProfilPage() {
   // Récompenses des activités ; une relique complète donne un cadre de profil exclusif
   await parcheminDuMois(authUser.id);
   const recompenses = await recompensesDe(authUser.id);
-  const cadreRelique = recompenses.some((r) => r.genre === 'relique');
+  // Cadre de profil : celui choisi dans Paramètres parmi ceux débloqués (relique complétée, Pionnière ou Pionnier)
+  const cadre = cadreAffiche(profile?.cadre, cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: profile?.pionnier, role: profile?.role }));
   // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
   const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
@@ -138,16 +140,16 @@ export default async function ProfilPage() {
         </h2>
 
         <Link
-          href="/profil/edit"
+          href="/parametres"
           className="btn alt"
-          aria-label="Modifier mon profil"
+          aria-label="Paramètres"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             flex: '0 0 auto',
           }}
         >
-          <Edit3 size={16} aria-hidden="true" />
+          <Settings size={16} aria-hidden="true" />
         </Link>
       </div>
 
@@ -178,9 +180,9 @@ export default async function ProfilPage() {
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--texte-secondaire)',
-              boxShadow: cadreRelique ? '0 0 0 3px #d4a017, 0 0 0 6px var(--fond-carte), 0 0 0 8px #d4a017' : 'none',
+              ...styleCadre(cadre),
             }}
-            title={cadreRelique ? 'Cadre de la relique' : undefined}
+            title={CADRES[cadre]?.nom}
           >
             {profile?.a_avatar ? (
               <img
@@ -239,6 +241,8 @@ export default async function ProfilPage() {
               fontWeight: 'bold',
             }}
           >
+            {/* Pionnière ou Pionnier s'ajoute au poste (l'Invocatrice garde seulement son titre) */}
+            {profile?.pionnier && role !== 'admin' && <span style={{ color: 'var(--couleur-secondaire)' }}>{nomPionnier(profile?.genre)} · </span>}
             {nomPoste(role)}
           </small>
 
@@ -364,7 +368,7 @@ export default async function ProfilPage() {
                 textTransform: 'uppercase',
               }}
             >
-              Tomes
+              {voitMystere && voitCozy ? 'Tomes et livres' : voitCozy ? 'Livres' : 'Tomes'}
             </small>
           </div>
         </div>
@@ -382,7 +386,7 @@ export default async function ProfilPage() {
         </Link>
       )}
 
-      <MesRecompenses recompenses={recompenses} />
+      <MesRecompenses recompenses={recompenses} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
 
       {/* Les 2 quêtes les plus proches d'être réussies */}
       {prochesQuetes.length > 0 && (
@@ -560,6 +564,14 @@ export default async function ProfilPage() {
           <HelpCircle size={22} aria-hidden="true" />
           <span>Aide et demandes</span>
           {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
+        </Link>
+
+        <Link
+          href="/parametres"
+          className="btn profil-acces-lien"
+        >
+          <Settings size={22} aria-hidden="true" />
+          <span>Paramètres</span>
         </Link>
 
         <BoutonDeconnexion />

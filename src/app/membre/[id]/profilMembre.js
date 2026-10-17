@@ -10,6 +10,7 @@ import { titreNiveau } from '@/lib/titres';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
+import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 const POSTE = { admin: NOMS_POSTES.admin, modo: NOMS_POSTES.modo, cheffe: NOMS_POSTES.cheffe };
@@ -38,6 +39,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
     if (r) majLike(f.id, r);
   }
 
+  const cadre = cadreAffiche(m.cadre, cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: m.pionnier, role: m.role }));
   const compteur = { all: 'unset', cursor: 'pointer', textAlign: 'center', flex: 1, minHeight: '44px' };
 
   return (
@@ -49,9 +51,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
 
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: 'var(--espace-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Une relique complète donne un cadre de profil exclusif */}
-          <span title={recompenses.some((r) => r.genre === 'relique') ? 'Cadre de la relique' : undefined} style={{ borderRadius: '50%', display: 'inline-flex', flex: '0 0 auto',
-            boxShadow: recompenses.some((r) => r.genre === 'relique') ? '0 0 0 3px #d4a017, 0 0 0 6px var(--fond-carte), 0 0 0 8px #d4a017' : 'none' }}>
+          {/* Cadre de profil choisi parmi ceux débloqués (relique complétée, Pionnière ou Pionnier) */}
+          <span title={CADRES[cadre]?.nom} style={{ borderRadius: '50%', display: 'inline-flex', flex: '0 0 auto', margin: cadre ? '9px' : 0, ...styleCadre(cadre) }}>
             <Avatar x={m} taille={60} />
           </span>
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -59,6 +60,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
             <small style={{ display: 'block', fontWeight: 700 }}>
               Niveau {calculerNiveau(m.xp)}
+              {m.pionnier && m.role !== 'admin' && <span style={{ color: 'var(--couleur-secondaire)' }}> · {nomPionnier(m.genre)}</span>}
               {POSTE[m.role] && <span style={{ color: couleurPoste(m.role) }}> · {POSTE[m.role]}</span>}
             </small>
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreNiveau(calculerNiveau(m.xp), m.genre)}</small>

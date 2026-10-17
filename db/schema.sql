@@ -507,3 +507,10 @@ create table if not exists paiements_evenements (
   resultat text not null default '',
   donnees jsonb not null default '{}'
 )
+;
+-- Pionnière ou Pionnier : bêta-testrices et bêta-testeurs, s'ajoute à leur poste
+alter table users add column if not exists pionnier boolean not null default false;
+-- Cadre de profil choisi (null = le plus prestigieux débloqué, 'aucun' = sans cadre)
+alter table users add column if not exists cadre text;
+-- Notifications push voulues, par type (une clé absente = activée)
+alter table users add column if not exists notifs jsonb not null default '{}'

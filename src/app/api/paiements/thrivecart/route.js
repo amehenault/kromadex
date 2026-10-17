@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { sql } from '@/lib/db';
+import { prevenir } from '@/lib/push';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,7 @@ export async function POST(req) {
         plus_jusqu = GREATEST(COALESCE(plus_jusqu, now()), now()) + ${duree}::interval
       WHERE id = ${u.id}`;
     await noter(`actif (${formule})`, u.id);
+    if (evenement === 'order.success') prevenir('abonnement', { ids: [u.id] }, { titre: 'Bienvenue dans Kromadex+', texte: 'Ton abonnement est actif. Merci de soutenir Kromadex !', lien: '/kromadex-plus' });
   } else if (evenement === 'order.subscription_cancelled') {
     // Annulé : Kromadex+ reste actif jusqu'à la fin de la période déjà payée
     await sql`UPDATE users SET plus_statut = 'annule' WHERE id = ${u.id}`;

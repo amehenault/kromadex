@@ -6,9 +6,18 @@ import { IconeRecompense, LigneRecompense } from './Recompense';
 import { regrouperRecompenses, nomRecompense } from '@/lib/recompenses';
 
 // Les 3 récompenses les plus prestigieuses, et le détail complet avec « Voir plus »
-export default function MesRecompenses({ recompenses, titre = 'Mes récompenses' }) {
+// vide : texte affiché quand il n'y a encore aucune récompense (sinon l'encadré est caché)
+export default function MesRecompenses({ recompenses, titre = 'Mes récompenses', vide }) {
   const [tout, setTout] = useState(false);
-  if (!recompenses?.length) return null;
+  if (!recompenses?.length) {
+    if (!vide) return null;
+    return (
+      <section className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Award size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}</h3>
+        <small style={{ color: 'var(--texte-secondaire)' }}>{vide}</small>
+      </section>
+    );
+  }
   const groupes = regrouperRecompenses(recompenses);
 
   return (

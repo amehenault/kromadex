@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { mesTypesVisibles } from '@/lib/visibilite';
+import { prevenir } from '@/lib/push';
 
 const RAISONS = ['repetition', 'faux', 'inapproprie'];
 const propre = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
@@ -62,6 +63,7 @@ export async function POST(req) {
     if (!RAISONS.includes(b.raison)) return NextResponse.json({ error: 'Choisis une raison' }, { status: 400 });
     await sql`INSERT INTO mot_cle_signalements (mot_cle_id, user_id, raison) VALUES (${Number(b.signaler)}, ${profil.id}, ${b.raison})
       ON CONFLICT (mot_cle_id, user_id) DO UPDATE SET raison = EXCLUDED.raison`;
+    prevenir('signalements', { postes: ['admin', 'modo'] }, { titre: 'Mot-clef signalé', texte: 'Un mot-clef a été signalé.', lien: '/profil/admin?onglet=motscles' }, profil.id);
     return NextResponse.json({ ok: true });
   }
 

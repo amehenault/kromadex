@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { isId } from '@/lib/pages';
 import { retirerXP, penaliserXP } from '@/lib/series';
+import { prevenir } from '@/lib/push';
 
 // Coloriages d'épreuve signalés parce qu'ils ne correspondent pas à ce qui est demandé (admin et sentinelles)
 export async function GET() {
@@ -32,6 +33,7 @@ export async function POST(req) {
   if (!p) return NextResponse.json({ error: 'Ce coloriage n’est pas dans cette épreuve' }, { status: 404 });
   if (String(p.user_id) === String(profil.id)) return NextResponse.json({ error: 'Tu ne peux pas signaler ton propre coloriage' }, { status: 403 });
   await sql`INSERT INTO defi_signalements (defi_id, page_id, user_id) VALUES (${Number(defiId)}, ${pageId}, ${profil.id}) ON CONFLICT DO NOTHING`;
+  prevenir('signalements', { postes: ['admin', 'modo'] }, { titre: 'Coloriage signalé', texte: 'Un coloriage d’épreuve a été signalé.', lien: '/profil/admin?onglet=signalements' }, profil.id);
   return NextResponse.json({ ok: true });
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
+import { prevenir } from '@/lib/push';
 
 // Date d'échéance de l'épinglage (AAAA-MM-JJ) ou null
 const dateEpingle = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null);
@@ -63,6 +64,8 @@ export async function POST(req) {
   await sql`INSERT INTO missives (titre, contenu, auteur, statut, commentaires, epinglee_jusqu)
     VALUES (${titre}, ${String(corps.contenu || '').slice(0, 4000)}, ${profil.id}, ${statut}, ${corps.commentaires !== false},
             ${dateEpingle(corps.epingleeJusqu)})`;
+  if (statut === 'publiee') prevenir('missives', { tous: true }, { titre: 'Nouvelle missive', texte: titre, lien: '/missives' }, profil.id);
+  else prevenir('missivesAttente', { postes: ['admin'] }, { titre: 'Missive à approuver', texte: titre, lien: '/profil/admin?onglet=missives' }, profil.id);
   return NextResponse.json({ ok: true, statut });
 }
 
@@ -77,7 +80,8 @@ export async function PUT(req) {
   }
   if (!['publiee', 'refusee'].includes(statut)) return NextResponse.json({ error: 'Statut invalide' }, { status: 400 });
   // Une missive approuvée prend la date d'approbation pour apparaître en haut de l'accueil
-  await sql`UPDATE missives SET statut = ${statut}, cree_le = CASE WHEN ${statut} = 'publiee' THEN now() ELSE cree_le END WHERE id = ${Number(id)}`;
+  const [m] = await sql`UPDATE missives SET statut = ${statut}, cree_le = CASE WHEN ${statut} = 'publiee' THEN now() ELSE cree_le END WHERE id = ${Number(id)} RETURNING titre`;
+  if (m && statut === 'publiee') prevenir('missives', { tous: true }, { titre: 'Nouvelle missive', texte: m.titre, lien: '/missives' });
   return NextResponse.json({ ok: true });
 }
 

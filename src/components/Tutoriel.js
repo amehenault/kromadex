@@ -71,6 +71,7 @@ const ECRANS = [
       ['var(--chef)', 'Chef·fe des coloristes', 'a gagné l’épreuve du mois'],
       ['var(--sentinelle)', 'Sentinelle du Kromadex', 'veille sur la communauté'],
       ['var(--admin)', 'Invocatrice des couleurs', 'la créatrice de Kromadex'],
+      ['var(--couleur-secondaire)', 'Pionnière ou Pionnier', 'a testé Kromadex avant tout le monde, en plus de son rôle'],
     ],
   },
   {

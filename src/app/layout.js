@@ -3,6 +3,7 @@ import '@/styles/base.css';
 import '@/styles/components.css';
 import Header from '@/components/Header';
 import MenuBas from '@/components/MenuBas';
+import SansZoom from '@/components/SansZoom';
 import { FuseauProvider } from '@/components/Fuseau';
 import { fuseauDuPays } from '@/lib/pays';
 import { getUser } from '@/lib/auth';
@@ -22,7 +23,10 @@ export const viewport = {
   themeColor: '#4bbca1',
   viewportFit: 'cover', 
   width: 'device-width', 
-  initialScale: 1 
+  initialScale: 1,
+  // Pas de zoom à deux doigts : l'appli se comporte comme une appli installée
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function Layout({ children }) {
@@ -36,6 +40,7 @@ export default async function Layout({ children }) {
     <html lang="fr">
       <body>
         <FuseauProvider fuseau={fuseauDuPays(a?.pays)}>
+          <SansZoom />
           <Header />
           <main className={user ? 'contenu avec-menu-bas' : 'contenu'}>{children}</main>
           {user && <MenuBas avatar={avatar} />}

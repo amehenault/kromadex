@@ -1,4 +1,6 @@
 * { box-sizing: border-box; }
+/* Pas de zoom en tapotant deux fois (le zoom à deux doigts est bloqué dans le viewport) */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--fond-page); color: var(--texte-principal);
   font-family: var(--typo-corps);

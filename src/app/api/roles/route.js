@@ -8,7 +8,7 @@ export async function GET() {
   if (erreur) return erreur;
 
   const users = await sql`
-    SELECT id, email, pseudo, name, role, title, xp, level, cheffe_expires_at, unlocked_titles,
+    SELECT id, email, pseudo, name, role, title, xp, level, cheffe_expires_at, unlocked_titles, pionnier, genre,
            to_char(plus_offert_jusqu AT TIME ZONE 'America/Toronto' - interval '1 day', 'YYYY-MM-DD') AS plus_offert_jusqu, plus_statut, plus_jusqu
     FROM users
     ORDER BY (role = 'admin') DESC, email ASC
@@ -23,9 +23,15 @@ export async function PUT(req) {
   const { profil, erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
 
-  const { targetUserId, role, title, prolonger } = await req.json();
+  const { targetUserId, role, title, prolonger, pionnier } = await req.json();
   const [cible] = await sql`SELECT id, role FROM users WHERE id = ${targetUserId}`;
   if (!cible) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
+
+  // Pionnière ou Pionnier (bêta-testrices et bêta-testeurs) : s'ajoute au poste et débloque le cadre de Pionnière
+  if (typeof pionnier === 'boolean') {
+    await sql`UPDATE users SET pionnier = ${pionnier} WHERE id = ${targetUserId}`;
+    return NextResponse.json({ success: true });
+  }
 
   // Garder la cheffe un mois de plus (sinon le poste est retiré automatiquement à l'échéance)
   if (prolonger) {

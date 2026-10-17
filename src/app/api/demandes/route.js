@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
-import { TYPES_DEMANDE, groupeDuType } from '@/lib/demandes';
+import { TYPES_DEMANDE, groupeDuType, nomType } from '@/lib/demandes';
+import { prevenir } from '@/lib/push';
 
 // Mes demandes, ou toutes les demandes pour l'admin (?tout=1)
 export async function GET(req) {
@@ -38,6 +39,7 @@ export async function POST(req) {
   if (n >= 10) return NextResponse.json({ error: 'Tu as déjà envoyé 10 demandes aujourd’hui, réessaie demain.' }, { status: 429 });
 
   await sql`INSERT INTO demandes (user_id, type, message) VALUES (${profil.id}, ${type}, ${texte.slice(0, 2000)})`;
+  prevenir('demandes', { postes: ['admin'] }, { titre: `Nouvelle demande : ${nomType(type)}`, texte: texte.slice(0, 120), lien: '/profil/admin?onglet=demandes' }, profil.id);
   return NextResponse.json({ ok: true });
 }
 
@@ -47,7 +49,7 @@ export async function PUT(req) {
   if (erreur) return erreur;
   const { id, statut, reponse } = await req.json().catch(() => ({}));
   // Le statut doit exister pour la catégorie de la demande (ex. « Résolue » pour un bug, « Ajoutée » pour un tome)
-  const [d] = await sql`SELECT type FROM demandes WHERE id = ${Number(id)}`;
+  const [d] = await sql`SELECT type, user_id, reponse FROM demandes WHERE id = ${Number(id)}`;
   if (!d) return NextResponse.json({ error: 'Demande introuvable' }, { status: 404 });
   if (!groupeDuType(d.type).statuts.includes(statut)) return NextResponse.json({ error: 'Statut invalide pour cette demande' }, { status: 400 });
   const texte = String(reponse || '').trim().slice(0, 2000);
@@ -56,5 +58,8 @@ export async function PUT(req) {
     SET statut = ${statut}, reponse = ${texte}, maj_le = now(),
         reponse_vue = CASE WHEN reponse IS DISTINCT FROM ${texte} AND ${texte} <> '' THEN false ELSE reponse_vue END
     WHERE id = ${Number(id)}`;
+  if (texte && texte !== d.reponse) {
+    prevenir('reponses', { ids: [d.user_id] }, { titre: 'L’Invocatrice t’a répondu', texte: texte.slice(0, 120), lien: '/aide' });
+  }
   return NextResponse.json({ ok: true });
 }

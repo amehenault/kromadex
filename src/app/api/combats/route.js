@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { verifierLimite } from '@/lib/abonnement';
+import { prevenir } from '@/lib/push';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { COMBATS, THEMES_DUEL } from '@/lib/activites';
 import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/lib/combats';
@@ -80,6 +81,7 @@ export async function POST(req) {
         VALUES ('duel', ${moi}, ${u.id}, ${categorie}, ${themeType}, ${theme}, 'invitation', now() + make_interval(days => ${COMBATS.joursSoumission}))
         RETURNING id`;
       await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi})`;
+      prevenir('combats', { ids: [u.id] }, { titre: 'Invitation à un duel', texte: `Thème : ${theme}. Tu as 5 jours pour accepter.`, lien: '/combats' });
       return NextResponse.json({ ok: true, id: c.id });
     }
     // Joute : on lance l'appel avec son coloriage

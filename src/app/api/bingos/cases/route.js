@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { verifierLimite } from '@/lib/abonnement';
+import { prevenir } from '@/lib/push';
 
 // Ajouter un coloriage à une case de bingo ({ bingoId, case, pageId }), ou le retirer ({ bingoId, case } sans coloriage).
 // La case attend ensuite la validation de l'admin ou d'une sentinelle.
@@ -29,5 +30,6 @@ export async function POST(req) {
   if (limite) return limite;
   await sql`INSERT INTO bingo_cases (bingo_id, user_id, case_no, page_id) VALUES (${b.id}, ${user.id}, ${n}, ${pageId})
     ON CONFLICT (bingo_id, user_id, case_no) DO UPDATE SET page_id = EXCLUDED.page_id, valide = NULL, valide_par = NULL`;
+  prevenir('validation', { postes: ['admin', 'modo'] }, { titre: 'Case de bingo à valider', texte: 'Un coloriage attend ta validation.', lien: '/profil/admin?onglet=validation' }, user.id);
   return NextResponse.json({ ok: true });
 }

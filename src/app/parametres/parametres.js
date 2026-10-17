@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, Frame, Crown, PlayCircle, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Bell, Frame, Crown, PlayCircle, HelpCircle, LogOut, ChevronRight, Trash2, Award } from 'lucide-react';
 import NotificationsAppareil from '@/components/NotificationsAppareil';
 import PhotoProfil from '@/app/profil/edit/photoProfil';
 import APropos from '@/app/profil/edit/apropos';
@@ -15,10 +15,17 @@ const enregistrer = (corps) => fetch('/api/user/parametres', {
 }).then((r) => r.ok);
 
 // Paramètres : tout ce qu'une personne peut régler, au même endroit
-export default function Parametres({ clePublique, types, notifs: initiales, cadres, cadre: cadreInitial }) {
+export default function Parametres({ clePublique, types, notifs: initiales, cadres, cadre: cadreInitial, role, titre: titreInitial, titres }) {
   const router = useRouter();
   const [notifs, setNotifs] = useState(initiales);
   const [cadre, setCadre] = useState(cadreInitial || cadres[0] || 'aucun');
+  const [titre, setTitre] = useState(titreInitial === 'Coloriste débutant' ? '' : titreInitial);
+
+  async function choisirTitre(t) {
+    const avant = titre;
+    setTitre(t);
+    if (await enregistrer({ titre: t })) router.refresh(); else setTitre(avant);
+  }
 
   async function basculer(cle, v) {
     setNotifs((n) => ({ ...n, [cle]: v }));
@@ -36,7 +43,7 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
   }
 
   const carte = { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' };
-  const titre = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
+  const titre_ = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
   const ligne = { display: 'flex', alignItems: 'center', gap: '10px', minHeight: '48px', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' };
   const lien = { ...ligne, color: 'inherit', textDecoration: 'none', borderTop: '1px solid var(--bordure-carte)' };
 
@@ -51,7 +58,7 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
 
       {/* Notifications : l'appareil, puis chaque type */}
       <section className="carte" style={carte}>
-        <h3 style={titre}><Bell size={20} aria-hidden="true" /> Notifications</h3>
+        <h3 style={titre_}><Bell size={20} aria-hidden="true" /> Notifications</h3>
         <NotificationsAppareil clePublique={clePublique} />
         <small style={{ color: 'var(--texte-secondaire)' }}>Choisis ce qui t’envoie une notification (sur chaque appareil activé) :</small>
         {types.map((t) => (
@@ -68,7 +75,7 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
       {/* Cadre autour de la photo de profil, parmi ceux débloqués */}
       {cadres.length > 0 && (
         <section className="carte" style={carte}>
-          <h3 style={titre}><Frame size={20} aria-hidden="true" /> Cadre de profil</h3>
+          <h3 style={titre_}><Frame size={20} aria-hidden="true" /> Cadre de profil</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px' }}>
             {[...cadres, 'aucun'].map((c) => (
               <button key={c} type="button" onClick={() => choisirCadre(c)} aria-pressed={cadre === c}
@@ -81,6 +88,19 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
           </div>
         </section>
       )}
+
+      {/* Titre affiché sous le niveau, parmi les titres gagnés (ex. Cheffe des coloristes, titre d'une épreuve) */}
+      <section className="carte" style={carte}>
+        <h3 style={titre_}><Award size={20} aria-hidden="true" /> Titre affiché</h3>
+        {titres.length ? (
+          <select value={titre} onChange={(e) => choisirTitre(e.target.value)} aria-label="Titre affiché">
+            <option value="">Aucun titre spécial</option>
+            {titres.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        ) : (
+          <small style={{ color: 'var(--texte-secondaire)' }}>Gagne une épreuve ou une activité pour débloquer des titres spéciaux à afficher sur ton profil.</small>
+        )}
+      </section>
 
       <APropos />
       <Preferences />
@@ -101,6 +121,53 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
           <LogOut size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Déconnexion</span>
         </button>
       </section>
+
+      <SupprimerCompte role={role} />
     </div>
+  );
+}
+
+// Supprimer son compte : confirmation, puis mot de passe (on ne peut pas revenir en arrière)
+function SupprimerCompte({ role }) {
+  const router = useRouter();
+  const [ouvert, setOuvert] = useState(false);
+  const [motDePasse, setMotDePasse] = useState('');
+  const [message, setMessage] = useState('');
+  const [occupe, setOccupe] = useState(false);
+  if (role === 'admin') return null;
+
+  function demander() {
+    if (confirm('Es-tu sûr.e de vouloir supprimer ton compte ? Tu perdras l’entièreté de tes données.')) setOuvert(true);
+  }
+  async function supprimer(e) {
+    e.preventDefault();
+    setOccupe(true); setMessage('');
+    const r = await fetch('/api/user/compte', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ motDePasse }) });
+    if (r.ok) { router.replace('/login'); router.refresh(); return; }
+    setMessage((await r.json().catch(() => ({}))).error || 'Erreur, réessaie.');
+    setOccupe(false);
+  }
+
+  return (
+    <section id="supprimer-compte" className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)', borderColor: 'var(--danger)' }}>
+      <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger)' }}><Trash2 size={20} aria-hidden="true" /> Supprimer mon compte</h3>
+      <small style={{ color: 'var(--texte-secondaire)' }}>
+        Tes coloriages, ta collection, tes XP, tes récompenses et tous tes échanges seront effacés pour toujours.
+      </small>
+      {!ouvert ? (
+        <button type="button" className="btn alt danger" onClick={demander} style={{ minHeight: '48px' }}>Supprimer mon compte</button>
+      ) : (
+        <form onSubmit={supprimer} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label>Ton mot de passe, pour confirmer
+            <input type="password" required autoComplete="current-password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} />
+          </label>
+          <button type="submit" className="btn danger" disabled={occupe || !motDePasse} style={{ minHeight: '48px' }}>
+            {occupe ? 'Suppression…' : 'Supprimer définitivement mon compte'}
+          </button>
+          <button type="button" className="btn alt" onClick={() => { setOuvert(false); setMotDePasse(''); setMessage(''); }} style={{ minHeight: '44px' }}>Annuler</button>
+        </form>
+      )}
+      {message && <small role="alert" style={{ color: 'var(--danger)', fontWeight: 600 }}>{message}</small>}
+    </section>
   );
 }

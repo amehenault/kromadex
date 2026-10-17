@@ -11,8 +11,11 @@ export function erreurPseudo(pseudo) {
 }
 
 // Un pseudo est unique sans tenir compte des majuscules (index users_pseudo_unique en base)
+// userId : la personne elle-même (son propre pseudo ne compte pas) ; absent pendant l'inscription
 export async function pseudoPris(pseudo, userId) {
-  const [pris] = await sql`SELECT 1 FROM users WHERE lower(pseudo) = lower(${pseudo}) AND id <> ${userId}`;
+  const [pris] = userId
+    ? await sql`SELECT 1 FROM users WHERE lower(pseudo) = lower(${pseudo}) AND id <> ${userId}`
+    : await sql`SELECT 1 FROM users WHERE lower(pseudo) = lower(${pseudo})`;
   return Boolean(pris);
 }
 

@@ -657,3 +657,33 @@ div.vide {
 .pastille-coin { position: absolute; top: 2px; right: 6px; border: 2px solid var(--couleur-secondaire); width: 14px; height: 14px; }
 .profil-acces > .btn { position: relative; }
 .profil-acces > .btn > .pastille { position: absolute; top: 8px; right: 8px; }
+
+/* Image exportée : codes couleurs toujours sur 2 colonnes (même depuis un téléphone), logo et adresse en bas */
+.mode-export .grille-codes-deux-colonnes { flex-direction: row !important; }
+.pied-export {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bordure);
+  font-weight: 700; font-size: 0.85rem; color: var(--texte-principal);
+}
+.pied-export img { height: 28px; width: auto; }
+
+/* Fenêtres : montent du bas sur téléphone, centrées sur tablette et ordinateur */
+.fond-feuille {
+  position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.45);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.feuille {
+  width: 100%; max-width: 520px; max-height: 92dvh; overflow-y: auto; box-sizing: border-box;
+  background: var(--fond-carte); border-radius: var(--rayon-l) var(--rayon-l) 0 0;
+  display: flex; flex-direction: column;
+}
+@media (min-width: 600px) {
+  .fond-feuille { align-items: center; padding: var(--espace-4); }
+  .feuille { border-radius: var(--rayon-l); max-height: 88dvh; }
+}
+
+/* Les autres fenêtres du bas (data-feuille) : centrées et arrondies partout sur tablette et ordinateur */
+@media (min-width: 600px) {
+  [data-feuille] { align-items: center !important; padding: var(--espace-4) !important; }
+  [data-feuille] > * { border-radius: var(--rayon-l) !important; border-bottom-width: 1px !important; }
+}

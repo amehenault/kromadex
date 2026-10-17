@@ -28,5 +28,5 @@ export function styleCadre(cle) {
   return { boxShadow: `0 0 0 3px ${a}, 0 0 0 6px var(--fond-carte), 0 0 0 9px ${b}` };
 }
 
-// « Pionnière » ou « Pionnier » selon le genre (non-binaire et autre : forme masculine, comme les titres)
-export const nomPionnier = (genre) => (genre === 'feminin' ? 'Pionnière' : 'Pionnier');
+// « Pionnière », « Pionnier » ou « Pionnier.ère » selon le genre (même règle que les postes)
+export { nomPionnier } from '@/lib/postes';

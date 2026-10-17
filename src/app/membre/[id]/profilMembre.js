@@ -7,13 +7,12 @@ import { Avatar, BoutonJaime, imagePage, poster } from '@/app/communaute/outils'
 import FicheDetail from '@/app/communaute/ficheDetail';
 import { calculerNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import { nomPoste, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
 import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
-const POSTE = { admin: NOMS_POSTES.admin, modo: NOMS_POSTES.modo, cheffe: NOMS_POSTES.cheffe };
 
 export default function ProfilMembre({ membre, fiches: initiales, recompenses = [], moi }) {
   const router = useRouter();
@@ -60,8 +59,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
             <small style={{ display: 'block', fontWeight: 700 }}>
               Niveau {calculerNiveau(m.xp)}
-              {m.pionnier && m.role !== 'admin' && <span style={{ color: 'var(--couleur-secondaire)' }}> · {nomPionnier(m.genre)}</span>}
-              {POSTE[m.role] && <span style={{ color: couleurPoste(m.role) }}> · {POSTE[m.role]}</span>}
+              {m.pionnier && m.role !== 'admin' && <span style={{ color: couleurPoste(m.role) }}> · {nomPionnier(m.genre)}</span>}
+              {['admin', 'modo', 'cheffe'].includes(m.role) && <span style={{ color: couleurPoste(m.role) }}> · {nomPoste(m.role, m.genre)}</span>}
             </small>
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreNiveau(calculerNiveau(m.xp), m.genre)}</small>
           </div>
@@ -118,7 +117,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
       {ouverte && <FicheDetail id={ouverte} onFermer={() => setOuverte(null)} onLike={majLike} />}
 
       {liste && (
-        <div onClick={() => setListe(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <div data-feuille onClick={() => setListe(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '520px', maxHeight: '80dvh', overflowY: 'auto', background: 'var(--fond-carte)', borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', padding: 'var(--espace-3)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <b>{liste.titre}</b>

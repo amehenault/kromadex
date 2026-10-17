@@ -39,7 +39,7 @@ export default async function KromadexPlus() {
                 : <>Abonnement {abo.plus_formule === 'annuel' ? 'annuel' : 'mensuel'}, renouvelé automatiquement. Prochain renouvellement vers le <b>{jour(abo.plus_jusqu)}</b>.</>}
             </p>
           ) : (
-            <p style={{ margin: 0 }}>{abo.role === 'admin' ? 'En tant qu’Invocatrice, tu as accès à tout.' : <>Kromadex+ t’est offert par l’Invocatrice jusqu’au <b>{jour(new Date(new Date(abo.plus_offert_jusqu) - 1))}</b>.</>}</p>
+            <p style={{ margin: 0 }}>{abo.role === 'admin' ? 'En tant qu’Invocatrice, tu as accès à tout.' : abo.plus_offert_jusqu ? <>Kromadex+ t’est offert par l’Invocatrice jusqu’au <b>{jour(new Date(new Date(abo.plus_offert_jusqu) - 1))}</b>.</> : 'Kromadex+ t’est offert par l’Invocatrice.'}</p>
           )}
           {paye && (
             <>

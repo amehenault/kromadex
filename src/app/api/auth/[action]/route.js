@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { hashPassword, verifyPassword, createSession, destroySession } from '@/lib/auth';
 import { VALEURS_GENRES } from '@/lib/titres';
+import { VALEURS_PAYS } from '@/lib/pays';
+import { VALEURS_TYPES } from '@/lib/typesColoriage';
+import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } from '@/lib/pseudo';
 import { demanderReinitialisation, reinitialiser } from '@/lib/motDePasse';
 
 const err = (m, s) => NextResponse.json({ error: m }, { status: s });
@@ -12,14 +15,36 @@ export async function POST(req, { params }) {
   const b = await req.json().catch(() => ({}));
   const email = String(b.email || '').trim().toLowerCase();
   const pw = String(b.password || '');
+  // Inscription : compte (courriel, mot de passe confirmé) et profil (pseudo, nom, genre, pays, types de coloriage)
   if (action === 'register') {
-    if (!/^\S+@\S+\.\S+$/.test(email) || pw.length < 8) return err('Courriel valide et mot de passe de 8 caractères minimum requis.', 400);
+    if (!/^\S+@\S+\.\S+$/.test(email)) return err('Entre un courriel valide.', 400);
+    if (pw.length < 8) return err('Le mot de passe doit contenir au moins 8 caractères.', 400);
+    if (pw !== String(b.confirmation || '')) return err('Les deux mots de passe ne sont pas identiques.', 400);
+    const pseudo = nettoyerPseudo(b.pseudo);
+    if (erreurPseudo(pseudo)) return err(erreurPseudo(pseudo), 400);
+    if (await pseudoPris(pseudo)) return err(MESSAGE_PRIS, 409);
+    const nom = String(b.name || '').trim().slice(0, 60);
+    if (!nom) return err('Écris ton nom.', 400);
+    if (!VALEURS_GENRES.includes(b.genre)) return err('Choisis ton genre.', 400);
+    if (!VALEURS_PAYS.includes(b.pays)) return err('Choisis ton pays ou ta région.', 400);
+    const types = (l) => [...new Set((Array.isArray(l) ? l : []).filter((t) => VALEURS_TYPES.includes(t)))];
+    const pratiques = types(b.typesPratiques);
+    if (!pratiques.length) return err('Choisis au moins un type de coloriage que tu fais.', 400);
+    const [deja] = await sql`select 1 from users where email = ${email}`;
+    if (deja) return err('Ce courriel est déjà utilisé.', 409);
     try {
-      const genre = VALEURS_GENRES.includes(b.genre) ? b.genre : 'masculin';
-      const r = await sql`insert into users (email, password_hash, genre) values (${email}, ${hashPassword(pw)}, ${genre}) returning id`;
+      const r = await sql`
+        insert into users (email, password_hash, pseudo, name, genre, pays, types_pratiques, types_vus)
+        values (${email}, ${hashPassword(pw)}, ${pseudo}, ${nom}, ${b.genre}, ${b.pays},
+                ${pratiques}, ${types(b.typesVus)})
+        returning id`;
       await createSession(r[0].id);
       return NextResponse.json({ ok: true });
-    } catch { return err('Ce courriel est déjà utilisé.', 409); }
+    } catch (e) {
+      // Doublon au même moment (courriel ou pseudo pris entre la vérification et l'enregistrement)
+      if (estDoublon(e)) return err(String(e.message || '').includes('pseudo') ? MESSAGE_PRIS : 'Ce courriel est déjà utilisé.', 409);
+      throw e;
+    }
   }
   if (action === 'login') {
     const r = await sql`select id, password_hash, suspendu_jusqu from users where email = ${email}`;

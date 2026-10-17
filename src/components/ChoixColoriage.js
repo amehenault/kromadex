@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Feuille from './Feuille';
 import { AVERTISSEMENT_SOUMISSION } from '@/lib/activites';
+import TexteErreur from '@/components/TexteErreur';
 
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
@@ -61,7 +62,7 @@ export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, 
           {grille(liste)}
         </div>
       ))}
-      {erreur && <small style={{ color: 'var(--danger)', fontWeight: 600 }}>{erreur}</small>}
+      {erreur && <small style={{ color: 'var(--danger)', fontWeight: 600 }}><TexteErreur texte={erreur} /></small>}
     </Feuille>
   );
 }

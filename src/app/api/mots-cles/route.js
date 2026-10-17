@@ -7,9 +7,9 @@ import { prevenir } from '@/lib/push';
 const RAISONS = ['repetition', 'faux', 'inapproprie'];
 const propre = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
 
-// ?tome=id : mots-clés d'un tome
-// ?q=texte : recherche de tomes et livres par nom ou par mot-clé (barre de recherche)
-// ?gestion=1 : tous les mots-clés, les plus signalés en premier (admin et sentinelles)
+// ?tome=id : mots-clefs d'un tome
+// ?q=texte : recherche de tomes et livres par nom ou par mot-clef (barre de recherche)
+// ?gestion=1 : tous les mots-clefs, les plus signalés en premier (admin et sentinelles)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -18,7 +18,7 @@ export async function GET(req) {
   if (p.get('gestion') === '1') {
     if (!['admin', 'modo'].includes(profil.role)) return NextResponse.json({ error: 'Accès restreint' }, { status: 403 });
     const mots = await sql`
-      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, u.email, u.role AS role_auteur,
+      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, u.email, u.role AS role_auteur, u.genre AS genre_auteur,
              (SELECT count(*)::int FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id) AS signalements,
              (SELECT json_object_agg(r, n) FROM (SELECT raison AS r, count(*)::int AS n FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id GROUP BY raison) x) AS raisons
       FROM mots_cles m JOIN tome_catalog c ON c.id = m.tome_id LEFT JOIN users u ON u.id = m.user_id
@@ -53,7 +53,7 @@ export async function GET(req) {
   return NextResponse.json({ resultats });
 }
 
-// Ajouter un mot-clé à un tome qu'on possède ({ tomeId, mot, pageNo? }), ou signaler un mot-clé ({ signaler, raison })
+// Ajouter un mot-clef à un tome qu'on possède ({ tomeId, mot, pageNo? }), ou signaler un mot-clef ({ signaler, raison })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -68,33 +68,37 @@ export async function POST(req) {
   }
 
   const mot = propre(b.mot);
-  if (mot.length < 2) return NextResponse.json({ error: 'Le mot-clé doit contenir au moins 2 caractères' }, { status: 400 });
+  if (mot.length < 2) return NextResponse.json({ error: 'Le mot-clef doit contenir au moins 2 caractères' }, { status: 400 });
   const pageNo = String(b.pageNo || '').trim().slice(0, 10);
   if (pageNo && !/^\d+$/.test(pageNo)) return NextResponse.json({ error: 'Le numéro de page doit être un nombre' }, { status: 400 });
-  const [possede] = await sql`SELECT 1 FROM user_tomes WHERE user_id = ${String(profil.id)} AND tome_id = ${Number(b.tomeId)}`;
-  if (!possede) return NextResponse.json({ error: 'Tu peux ajouter des mots-clés seulement aux tomes que tu possèdes' }, { status: 403 });
+  // Permis si on possède le tome, ou si on a déjà un coloriage de ce tome
+  const [possede] = await sql`
+    SELECT 1 FROM user_tomes WHERE user_id = ${String(profil.id)} AND tome_id = ${Number(b.tomeId)}
+    UNION SELECT 1 FROM pages p JOIN tome_catalog c ON lower(c.nom) = lower(p.tome)
+      WHERE p.user_id = ${profil.id} AND c.id = ${Number(b.tomeId)}`;
+  if (!possede) return NextResponse.json({ error: 'Tu peux ajouter des mots-clefs aux tomes que tu possèdes ou que tu as déjà coloriés' }, { status: 403 });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM mots_cles WHERE user_id = ${profil.id} AND cree_le > now() - interval '1 day'`;
-  if (n >= 50) return NextResponse.json({ error: 'Tu as déjà ajouté 50 mots-clés aujourd’hui' }, { status: 429 });
+  if (n >= 50) return NextResponse.json({ error: 'Tu as déjà ajouté 50 mots-clefs aujourd’hui' }, { status: 429 });
   const cree = await sql`INSERT INTO mots_cles (tome_id, page_no, mot, user_id) VALUES (${Number(b.tomeId)}, ${pageNo}, ${mot}, ${profil.id})
     ON CONFLICT DO NOTHING RETURNING id`;
-  if (!cree.length) return NextResponse.json({ error: 'Ce mot-clé existe déjà pour cette page' }, { status: 409 });
+  if (!cree.length) return NextResponse.json({ error: 'Ce mot-clef existe déjà pour cette page' }, { status: 409 });
   return NextResponse.json({ ok: true });
 }
 
-// Admin et sentinelles : modifier un mot-clé ({ id, mot })
+// Admin et sentinelles : modifier un mot-clef ({ id, mot })
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
   const { id, mot } = await req.json().catch(() => ({}));
   const m = propre(mot);
-  if (m.length < 2) return NextResponse.json({ error: 'Mot-clé trop court' }, { status: 400 });
+  if (m.length < 2) return NextResponse.json({ error: 'Mot-clef trop court' }, { status: 400 });
   await sql`UPDATE mots_cles SET mot = ${m} WHERE id = ${Number(id)}`;
   // Les signalements portaient sur l'ancien mot : on repart de zéro
   await sql`DELETE FROM mot_cle_signalements WHERE mot_cle_id = ${Number(id)}`;
   return NextResponse.json({ ok: true });
 }
 
-// Supprimer : son propre mot-clé, ou n'importe lequel pour l'admin et les sentinelles
+// Supprimer : son propre mot-clef, ou n'importe lequel pour l'admin et les sentinelles
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

@@ -8,16 +8,20 @@ import Library from '@/components/Library';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Mes coloriages (bibliothèque personnelle), avec l'accès à la Roue du destin
+// Mes coloriages (bibliothèque personnelle), avec l’accès à la Roue du Destin
 export default async function MesColoriages() {
   const user = await getUser();
   if (!user) redirect('/login');
 
+  // Mots-clefs de chaque coloriage pour la recherche : les siens (tome perso) et ceux partagés de sa page dans le tome
   const pages = await sql`
-    SELECT id, title, tome, page_no, memo, codes, image_type IS NOT NULL AS has_image, OCTET_LENGTH(image_b64) AS img_size
-    FROM pages
-    WHERE user_id = ${user.id}
-    ORDER BY created_at DESC
+    SELECT p.id, p.title, p.tome, p.page_no, p.memo, p.codes, p.image_type IS NOT NULL AS has_image, OCTET_LENGTH(p.image_b64) AS img_size,
+           p.mots_cles || ARRAY(
+             SELECT m.mot FROM mots_cles m JOIN tome_catalog c ON c.id = m.tome_id
+             WHERE lower(c.nom) = lower(p.tome) AND (m.page_no = p.page_no OR m.page_no = '')) AS mots
+    FROM pages p
+    WHERE p.user_id = ${user.id}
+    ORDER BY p.created_at DESC
   `;
 
   return (
@@ -25,7 +29,7 @@ export default async function MesColoriages() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: 'var(--espace-3)' }}>
         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Mes coloriages</h2>
         <Link href="/roue" className="btn alt" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px' }}>
-          <Dices size={18} aria-hidden="true" /> Roue du destin
+          <Dices size={18} aria-hidden="true" /> Roue du Destin
         </Link>
       </div>
       <Library pages={JSON.parse(JSON.stringify(pages))} />

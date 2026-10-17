@@ -103,10 +103,11 @@ export async function POST(req) {
   if (b.action && b.action !== 'enregistrer') {
     const a = await chargerAventure(b.id);
     if (!a || a.debut > jourQuebec()) return non('Aventure introuvable', 404);
+    // S'inscrire à une aventure (expédition, épopée ou prophétie) : la limite de la version gratuite s'applique ici
     if (b.action === 'inscrire') {
-      if (a.genre !== 'epopee') return non('Pas d’inscription pour cette aventure');
-      if (a.fin < jourQuebec()) return non('Cette épopée est terminée');
-      const limite = await verifierLimite(profil.id, 'epopees', { aventureId: a.id });
+      if (a.fin < jourQuebec()) return non('Cette aventure est terminée');
+      const cle = { epopee: 'epopees', expedition: 'expeditions', prophetie: 'propheties' }[a.genre];
+      const limite = await verifierLimite(profil.id, cle, { aventureId: a.id });
       if (limite) return limite;
       await sql`INSERT INTO aventure_inscriptions (aventure_id, user_id) VALUES (${a.id}, ${profil.id}) ON CONFLICT DO NOTHING`;
       return NextResponse.json({ ok: true });
@@ -117,12 +118,9 @@ export async function POST(req) {
     }
     if (b.action === 'soumettre') {
       if (!isId(String(b.pageId || ''))) return non('Choisis un coloriage');
-      // Version gratuite : 3 expéditions par année, prophéties réservées à Kromadex+ (vérifié à la première soumission)
-      if (a.genre !== 'epopee') {
-        const [deja] = await sql`SELECT 1 FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${profil.id} LIMIT 1`;
-        const limite = !deja && await verifierLimite(profil.id, a.genre === 'prophetie' ? 'propheties' : 'expeditions', { aventureId: a.id });
-        if (limite) return limite;
-      }
+      // Il faut être inscrit.e à l'aventure pour soumettre (la limite de la version gratuite est vérifiée à l'inscription)
+      const [inscrit] = await sql`SELECT 1 FROM aventure_inscriptions WHERE aventure_id = ${a.id} AND user_id = ${profil.id}`;
+      if (!inscrit) return non('Inscris-toi d’abord à cette aventure', 403);
       const r = await soumettre(a, profil.id, b);
       return r.erreur ? non(r.erreur) : NextResponse.json(r);
     }

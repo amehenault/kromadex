@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Trash2, Check } from 'lucide-react';
-import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import { nomPoste, couleurPoste } from '@/lib/postes';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
 import Pseudo from '@/components/Pseudo';
 
@@ -48,7 +48,7 @@ export default function SignalementsEpreuves() {
           <img src={image(s)} alt={s.title || ''} loading="lazy" style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', borderRadius: 'var(--rayon-s)', background: 'var(--carte)' }} />
           <small style={{ overflowWrap: 'anywhere' }}>
             Par <Pseudo x={s} role={s.role_auteur} />
-            {s.role_auteur && <span style={{ color: couleurPoste(s.role_auteur), fontWeight: 700 }}> · {NOMS_POSTES[s.role_auteur]}</span>}
+            {s.role_auteur && <span style={{ color: couleurPoste(s.role_auteur), fontWeight: 700 }}> · {nomPoste(s.role_auteur, s.genre_auteur)}</span>}
           </small>
           <div style={actions}>
             <button type="button" className="btn alt danger" style={petitBtn} onClick={() => traiter(s, 'retirer')}><Trash2 size={14} aria-hidden="true" /> Retirer le coloriage</button>

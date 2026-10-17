@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, CalendarClock } from 'lucide-react';
 import { NB_CASES, CATEGORIES_BINGO, nomCategorieBingo } from '@/lib/bingos';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
+import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 
 const vide = () => ({
   id: null, titre: '', categorie: 'les_deux', debut: '', fin: '',
@@ -16,6 +17,8 @@ export default function Bingos() {
   const [form, setForm] = useState(vide);
   const [caseActive, setCaseActive] = useState(0);
   const [message, setMessage] = useState('');
+  // Brouillon automatique dès qu'on commence à remplir le bingo
+  const brouillon = useBrouillon('bingo', form, Boolean(form.titre.trim() || form.cases.some((c) => c.trim()) || form.conditions.some((c) => c.trim())));
 
   async function charger() {
     const res = await fetch('/api/bingos?gestion=1');
@@ -30,7 +33,7 @@ export default function Bingos() {
     e.preventDefault();
     const r = await envoyer('/api/bingos', 'POST', form);
     setMessage(r.ok ? 'Bingo enregistré' : r.error);
-    if (r.ok) { setForm(vide()); setCaseActive(0); charger(); }
+    if (r.ok) { setForm(vide()); setCaseActive(0); brouillon.effacer(); charger(); }
   }
 
   async function supprimer(b) {
@@ -41,6 +44,7 @@ export default function Bingos() {
 
   return (
     <div style={colonne}>
+      <BandeauBrouillon nom="de bingo" brouillon={brouillon} onReprendre={(d) => d && setForm({ ...vide(), ...d })} />
       <form onSubmit={enregistrer} className="carte" style={colonne}>
         <b>{form.id ? 'Modifier le bingo' : 'Nouveau bingo'}</b>
         <label style={champ}>Titre

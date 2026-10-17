@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles, History, Lock } from 'lucide-react';
+import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles, History, Lock, Compass, Swords, Dices } from 'lucide-react';
+import { NOMS_AVENTURES } from '@/lib/activites';
 import { abonnementDe, JOURS_STATS_GRATUIT } from '@/lib/abonnement';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const nomMois = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' });
 
-// Statistiques personnelles : séries, mois en cours, tomes, J'aime, défis et bingos
+// Statistiques personnelles : séries, mois en cours, tomes, J'aime, résumé des participations, historique
 export default async function StatistiquesPage() {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -45,7 +46,8 @@ export default async function StatistiquesPage() {
         WHERE dp.user_id = ${uid}
           AND ((d.genre <> 'groupe' AND d.mois = ${debutMois}::date) OR (d.genre = 'groupe' AND d.fin >= ${aujourdhui}::date))
         ORDER BY d.genre, d.titre`,
-    sql`SELECT b.id, b.titre, (SELECT count(*)::int FROM bingo_cases c WHERE c.bingo_id = b.id AND c.user_id = ${uid}) AS cochees
+    sql`SELECT b.id, b.titre, cardinality(b.cases) AS taille,
+          (SELECT count(*)::int FROM bingo_cases c WHERE c.bingo_id = b.id AND c.user_id = ${uid}) AS cochees
         FROM bingos b
         WHERE COALESCE(b.debut, ${debutMois}::date) <= ${aujourdhui}::date
           AND COALESCE(b.fin, (${debutMois}::date + interval '1 month - 1 day')::date) >= ${aujourdhui}::date`,
@@ -61,6 +63,33 @@ export default async function StatistiquesPage() {
   const [recents] = plus ? [null] : await sql`SELECT count(*)::int AS n FROM pages
       WHERE user_id = ${uid} AND created_at > now() - make_interval(days => ${JOURS_STATS_GRATUIT})`;
 
+  // Résumé de mes participations : aventures, combats et tournois en cours, derniers tirages de la Roue du Destin
+  const [aventures, combats, tournois, tirages] = await Promise.all([
+    sql`SELECT a.id, a.genre, a.titre,
+          (SELECT count(*)::int FROM aventure_soumissions s WHERE s.aventure_id = a.id AND s.user_id = ${uid}) AS soumis
+        FROM aventures a
+        WHERE a.fin >= ${aujourdhui}::date AND a.debut <= ${aujourdhui}::date
+          AND (EXISTS (SELECT 1 FROM aventure_inscriptions i WHERE i.aventure_id = a.id AND i.user_id = ${uid})
+            OR EXISTS (SELECT 1 FROM aventure_soumissions s WHERE s.aventure_id = a.id AND s.user_id = ${uid}))
+        ORDER BY a.fin`,
+    sql`SELECT c.id, c.genre, c.theme, c.statut, (c.invite = ${uid} AND c.statut = 'invitation') AS invitation_recue,
+          (SELECT p.page_id IS NOT NULL FROM combat_participants p WHERE p.combat_id = c.id AND p.user_id = ${uid}) AS soumis
+        FROM combats c
+        WHERE c.genre IN ('duel', 'joute') AND c.statut IN ('invitation', 'ouvert', 'soumission', 'verdict')
+          AND (c.invite = ${uid} OR EXISTS (SELECT 1 FROM combat_participants p WHERE p.combat_id = c.id AND p.user_id = ${uid}))
+        ORDER BY c.cree_le DESC`,
+    sql`SELECT t.id, t.titre, t.statut, t.ronde FROM tournois t JOIN tournoi_inscrits i ON i.tournoi_id = t.id
+        WHERE i.user_id = ${uid} AND t.statut IN ('inscriptions', 'en_cours') ORDER BY t.cree_le DESC`,
+    sql`SELECT r.id, r.tome, r.page_no,
+          EXISTS (SELECT 1 FROM pages p WHERE p.user_id = ${uid} AND lower(p.tome) = lower(r.tome) AND p.page_no = r.page_no) AS fait
+        FROM roue_tirages r WHERE r.user_id = ${uid} ORDER BY r.tire_le DESC LIMIT 5`,
+  ]);
+  const etatCombat = (c) => c.invitation_recue ? 'Invitation à accepter'
+    : c.statut === 'invitation' ? 'En attente de réponse'
+    : c.statut === 'verdict' ? 'Verdict de l’Assemblée en cours'
+    : c.soumis ? 'Coloriage envoyé' : 'Coloriage à envoyer';
+  const rienEnCours = !defis.length && !bingos.length && !aventures.length && !combats.length && !tournois.length && !tirages.length;
+
   const serieColo = serieEnCours(colories, aujourdhui);
   const serieCo = serieEnCours(connectes, aujourdhui);
   const resteColo = 7 - (serieColo.longueur % 7);
@@ -72,6 +101,8 @@ export default async function StatistiquesPage() {
   const coloriesSet = new Set(colories);
   const joursMois = colories.filter((j) => j >= debutMois).length;
 
+  const ligneResume = { display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit', minHeight: '44px' };
+  const texteResume = { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
   const carte = { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' };
   const tuile = { background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px', minWidth: 0 };
   const grand = { fontSize: '1.4rem', fontWeight: 800, display: 'block' };
@@ -183,22 +214,51 @@ export default async function StatistiquesPage() {
         </div>
       </div>
 
-      {/* Épreuves et bingos en cours */}
+      {/* Résumé de mes participations : épreuves, bingos, aventures, combats et Roue du Destin */}
       <div className="carte" style={carte}>
-        <b>Épreuves et bingos en cours</b>
-        {!defis.length && !bingos.length && <small style={petit}>Aucune épreuve ni aucun bingo en cours pour toi.</small>}
+        <b>Résumé de mes participations</b>
+        <small style={petit}>Tout ce que tu as en cours, au même endroit : touche une ligne pour y aller.</small>
+        {rienEnCours && <small style={petit}>Rien en cours pour l’instant. Lance-toi dans une épreuve, un bingo, une aventure, un combat ou fais tourner la Roue du Destin !</small>}
         {defis.map((d) => (
           <Link key={d.id} href="/defis" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
             <Trophy size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.titre}</span>
-            <small style={petit}>{d.envoye ? 'Coloriage envoyé' : 'À envoyer'}</small>
+            <small style={petit}>{d.envoye ? 'Coloriage envoyé' : 'Coloriage à envoyer'}</small>
           </Link>
         ))}
         {bingos.map((b) => (
           <Link key={b.id} href="/defis" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
             <Grid3x3 size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.titre}</span>
-            <small style={petit}>{b.cochees} / 25</small>
+            <small style={petit}>{b.cochees} / {b.taille || 9} cases remplies</small>
+          </Link>
+        ))}
+        {aventures.map((a) => (
+          <Link key={`a${a.id}`} href={`/aventures/${a.id}`} style={ligneResume}>
+            <Compass size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
+            <span style={texteResume}>{NOMS_AVENTURES[a.genre]?.singulier} · {a.titre}</span>
+            <small style={petit}>{a.soumis ? `${a.soumis} coloriage${a.soumis > 1 ? 's' : ''} soumis` : 'Inscrit.e'}</small>
+          </Link>
+        ))}
+        {combats.map((c) => (
+          <Link key={`c${c.id}`} href="/combats" style={ligneResume}>
+            <Swords size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
+            <span style={texteResume}>{c.genre === 'duel' ? 'Duel' : 'Joute'} · {c.theme}</span>
+            <small style={petit}>{etatCombat(c)}</small>
+          </Link>
+        ))}
+        {tournois.map((t) => (
+          <Link key={`t${t.id}`} href="/combats" style={ligneResume}>
+            <Trophy size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
+            <span style={texteResume}>Tournoi · {t.titre}</span>
+            <small style={petit}>{t.statut === 'inscriptions' ? 'Inscriptions en cours' : `Ronde ${t.ronde}`}</small>
+          </Link>
+        ))}
+        {tirages.map((r) => (
+          <Link key={`r${r.id}`} href={r.fait ? '/coloriages' : `/pages/new?tome=${encodeURIComponent(r.tome)}&page=${r.page_no}`} style={ligneResume}>
+            <Dices size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
+            <span style={texteResume}>Roue du Destin · {r.tome}, page {r.page_no}</span>
+            <small style={petit}>{r.fait ? 'Coloriée' : 'À colorier'}</small>
           </Link>
         ))}
       </div>

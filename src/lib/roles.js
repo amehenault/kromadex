@@ -5,7 +5,7 @@ import { getUserProfile } from '@/lib/user';
 // Postes (noms affichés dans lib/postes.js) : coloriste, cheffe (1 mois), modo, admin (unique)
 export const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
-  { valeur: 'cheffe', label: 'Chef·fe des coloristes (1 mois)' },
+  { valeur: 'cheffe', label: 'Chef.fe des coloristes (1 mois)' },
   { valeur: 'modo', label: 'Sentinelle du Kromadex' },
 ];
 

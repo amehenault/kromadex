@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import SymbolPicker from './SymbolPicker';
 import MotsClesColoriage from './MotsClesColoriage';
+import ChoixTome from './ChoixTome';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { X, Camera, AlertTriangle } from 'lucide-react';
 
-const NOUVEAU = '__nouveau__';
 const uid = () => crypto.randomUUID();
 const groupeVide = () => ({ id: uid(), name: '', rows: [{ id: uid(), label: '', sym: 'A', num: '' }] });
 
@@ -218,35 +217,34 @@ function Groupe({ g, maj, retirer, enExport }) {
   );
 }
 
-export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes = {}, tomeCatalogue = null }) {
-  const r = useRouter();
+export default function Editor({ page, initial, bibliotheque = [], mesTypes = [], tomeCatalogue = null, palette: paletteInitiale = null }) {
+  // Palette de couleurs dont s'inspire le coloriage (affichée dans la Communauté)
+  const [palette, setPalette] = useState(paletteInitiale);
   const pageRef = useRef(null);
 
   // initial : pré-remplissage d'une nouvelle fiche (ex. depuis la grille d'un tome)
   const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: page?.page_no ?? initial?.page_no ?? '', memo: page?.memo ?? '' });
-  // Publication dans la communauté : le type est deviné à partir du tome du catalogue
+  // Tome choisi dans la bibliothèque (type et nombre de pages connus, ou tome perso)
+  const tomeChoisi = bibliotheque.find((t) => t.nom.toLowerCase() === (f.tome || '').toLowerCase());
+  // Publication dans la communauté : le type vient du tome ; le choix ne s'affiche qu'aux personnes qui font plusieurs types
+  const typesProposes = TYPES_COLORIAGE.filter((t) => !mesTypes.length || mesTypes.includes(t.valeur));
   const [publiee, setPubliee] = useState(Boolean(page?.publiee));
   const [typeColo, setTypeColo] = useState(page?.type_coloriage || '');
-  const typeDuTome = typesTomes[(f.tome || '').toLowerCase()] || '';
-  const typeFinal = typeColo || typeDuTome;
-  const [tomes, setTomes] = useState(tomesInitiaux || []);
-  const [ecritTome, setEcritTome] = useState(false);
+  const typeDuTome = ['mystere', 'cozy', 'autre'].includes(tomeChoisi?.type) ? tomeChoisi.type : '';
+  const typeFinal = typeColo || typeDuTome || (typesProposes.length === 1 ? typesProposes[0].valeur : '');
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);
-  const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?t=${Date.now()}` : null);
+  const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
-  const [erreurServeur, setErreurServeur] = useState(null);
   const [enExport, setEnExport] = useState(false);
 
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
-
-  const choisirTome = (v) => { if (v === NOUVEAU) { set('tome', ''); setEcritTome(true); } else set('tome', v); };
-  const validerTome = () => {
-    const t = f.tome.trim();
-    if (t) setTomes((l) => (l.includes(t) ? l : [...l, t].sort()));
-    set('tome', t); setEcritTome(false);
-  };
+  // Changer de tome vide la page si elle dépasse le nombre de pages du nouveau tome
+  function choisirTome(nom) {
+    const t = bibliotheque.find((x) => x.nom.toLowerCase() === nom.toLowerCase());
+    setF((s) => ({ ...s, tome: nom, page_no: t?.total && Number(s.page_no) > t.total ? '' : s.page_no }));
+  }
 
   async function choisir(e) {
     const x = e.target.files[0]; if (!x) return;
@@ -259,20 +257,20 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
     setGroupes((l) => l.filter((x) => x.id !== g.id));
   };
 
+  // L'image est faite à partir d'une copie hors de l'écran : la page visible ne bouge pas pendant l'export
   async function exporterEnImage() {
-    if (!pageRef.current) return;
     setEnExport(true);
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
+    await new Promise((resolve) => setTimeout(resolve, 200));
     try {
-      const dataUrl = await toPng(pageRef.current, { cacheBust: true });
+      if (!pageRef.current) throw new Error('Copie introuvable');
+      const dataUrl = await toPng(pageRef.current, { cacheBust: true, pixelRatio: 2 });
       const link = document.createElement('a');
-      link.download = `${f.title || 'coloriage'}-export.png`;
+      link.download = `${f.title || 'coloriage'}-kromadex.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Erreur lors de l export:', err);
-      alert('Impossible d exporter l image.');
+      console.error('Erreur lors de l’export :', err);
+      alert('Impossible d’exporter l’image.');
     } finally {
       setEnExport(false);
     }
@@ -283,36 +281,18 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
     setBusy(true); setErreur('');
     const fd = new FormData();
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
-    
     const groupesPropres = groupes.map((g) => ({
       ...g,
-      rows: (g.rows || []).map((row) => ({
-        id: row.id || uid(),
-        label: row.label || '',
-        sym: row.sym || '',
-        num: row.num || ''
-      }))
+      rows: (g.rows || []).map((row) => ({ id: row.id || uid(), label: row.label || '', sym: row.sym || '', num: row.num || '' })),
     }));
-
     fd.append('codes', JSON.stringify(groupesPropres));
     fd.append('publiee', publiee ? '1' : '0');
     fd.append('type_coloriage', typeFinal);
+    fd.append('palette_id', palette ? String(palette.id) : '');
     if (image) fd.append('image', image, 'image.jpg');
-    
-    const cible = page ? `/api/pages/${page.id}` : '/api/pages';
-    const methode = page ? 'PUT' : 'POST';
 
-    const res = await fetch(cible, { 
-      method: methode, 
-      body: fd,
-      cache: 'no-store'
-    });
-
-    if (res.ok) { 
-      window.location.href = '/coloriages'; 
-      return; 
-    }
-    
+    const res = await fetch(page ? `/api/pages/${page.id}` : '/api/pages', { method: page ? 'PUT' : 'POST', body: fd, cache: 'no-store' });
+    if (res.ok) { window.location.href = '/coloriages'; return; }
     const reponseJson = await res.json().catch(() => ({}));
     const message = reponseJson.error || `Erreur ${res.status} ${res.statusText || 'API/PAGES'}`;
     setErreur(`Attention, l'application n'est pas en mesure de sauvegarder, ${message}`);
@@ -323,11 +303,7 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
     if (!confirm('Supprimer ce coloriage pour toujours?')) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/pages/${page.id}`, { 
-        method: 'DELETE',
-        cache: 'no-store' 
-      });
-
+      const res = await fetch(`/api/pages/${page.id}`, { method: 'DELETE', cache: 'no-store' });
       if (res.ok) {
         window.location.href = '/coloriages';
       } else {
@@ -335,146 +311,158 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
         alert(`Erreur de suppression : ${json.error || res.statusText}`);
         setBusy(false);
       }
-    } catch (err) {
+    } catch {
       alert('Impossible de joindre le serveur pour supprimer.');
       setBusy(false);
     }
   }
 
+  // Contenu de la fiche ; exp = version image (sans champs ni boutons)
+  const contenu = (exp) => (
+    <>
+      <div className="haut">
+        <div className="gauche">
+          <div className="cadre-image">
+            {apercu ? <img key={apercu} src={apercu} alt="" /> : <span>Ajoute ton image</span>}
+          </div>
+          {!exp && <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>}
+        </div>
+        <div className="droite">
+          {exp ? (
+            <div className="meta-export-compact">
+              <h2 className="titre-export-page">{f.title || 'Coloriage'}</h2>
+              <div className="sous-meta-export">
+                {f.tome && <span>Tome : <b>{f.tome}</b></span>}
+                {f.page_no && <span>Page : <b>{f.page_no}</b></span>}
+              </div>
+            </div>
+          ) : (
+            <>
+              <label>Titre de la page *
+                <input placeholder="ex: Scooby-Doo" value={f.title} onChange={(e) => set('title', e.target.value)} required />
+              </label>
+
+              <div className="deux">
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem' }}>Tome ou livre</span>
+                  <ChoixTome valeur={f.tome} bibliotheque={bibliotheque} onChange={choisirTome} />
+                </div>
+                {/* Page : liste des pages quand le nombre de pages du tome est connu, sinon champ libre */}
+                <label>Page
+                  {tomeChoisi?.total ? (
+                    <select value={f.page_no} onChange={(e) => set('page_no', e.target.value)}>
+                      <option value="">Choisir</option>
+                      {Array.from({ length: tomeChoisi.total }, (_, i) => String(i + 1)).map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  ) : (
+                    <input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} />
+                  )}
+                </label>
+              </div>
+
+              {palette && (
+                <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <small style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>Inspiré de la palette de couleurs : {palette.nom || 'Sans titre'}</small>
+                    <button type="button" className="btn alt" aria-label="Retirer la palette" onClick={() => setPalette(null)} style={{ minWidth: '44px', minHeight: '44px', padding: 0, flex: '0 0 auto' }}>
+                      <X size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', borderRadius: 'var(--rayon-s)', overflow: 'hidden', height: '28px', border: '1px solid var(--bordure-carte)' }}>
+                    {palette.couleurs.map((c, i) => <span key={i} style={{ flex: 1, background: c }} />)}
+                  </div>
+                </div>
+              )}
+
+              <label>Mémo
+                <textarea rows={3} maxLength={1000} placeholder="ex: fond fait au Ohuhu, reste les cheveux…" value={f.memo}
+                  onChange={(e) => set('memo', e.target.value)} style={{ width: '100%', resize: 'vertical', font: 'inherit' }} />
+              </label>
+
+              {/* Partage dans la communauté (le mémo reste privé) */}
+              <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={publiee} onChange={(e) => setPubliee(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0 }} />
+                  Publier dans la communauté
+                </label>
+                {publiee && (
+                  <>
+                    {typesProposes.length > 1 && (
+                      <>
+                        <small style={{ color: 'var(--texte-secondaire)' }}>Type de coloriage</small>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {typesProposes.map((t) => (
+                            <button key={t.valeur} type="button" onClick={() => setTypeColo(t.valeur)}
+                              className={typeFinal === t.valeur ? 'btn' : 'btn alt'}
+                              style={{ minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem' }}>
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                        {!typeFinal && <small style={{ color: 'var(--danger)' }}>Choisis le type pour publier.</small>}
+                      </>
+                    )}
+                    <small style={{ color: 'var(--texte-secondaire)' }}>Ta photo, le titre, le tome, la page et tes codes couleurs seront visibles. Ton mémo reste privé.</small>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <h3 className="titre-codes">Codes couleurs</h3>
+
+      <div className="liste-sous-categories">
+        {groupes.map((g) => (
+          <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={exp} />
+        ))}
+        {!exp && (
+          <button type="button" className="btn alt ajout-groupe ajout-groupe-bas" onClick={() => setGroupes((l) => [...l, groupeVide()])}>
+            + Sous-catégorie
+          </button>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <>
       <div className="barre">
         <button className="btn alt" onClick={() => window.location.href = '/coloriages'}>Retour</button>
-        <button type="button" className="btn alt" onClick={exporterEnImage}><Camera size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />Exporter en image</button>
+        <button type="button" className="btn alt" onClick={exporterEnImage} disabled={enExport}>
+          <Camera size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />{enExport ? 'Export…' : 'Exporter en image'}
+        </button>
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim() || (publiee && !typeFinal)}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
 
-      {/* Coloriage déjà enregistré : ajout de mots-clefs au tome et à la page du coloriage */}
-      {page && <MotsClesColoriage tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image` : null} />}
+      {/* Coloriage déjà enregistré : mots-clefs du coloriage (et de sa page dans le tome) */}
+      {page && <MotsClesColoriage pageId={page.id} tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null} />}
 
-      {(erreurServeur || erreur) && (
-        <div style={{
-          background: '#fee2e2',
-          color: '#dc2626',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: '1px solid #fca5a5',
-          margin: '12px 0',
-          fontWeight: 'bold',
-          textAlign: 'center'
-        }}>
+      {erreur && (
+        <div style={{ background: '#fee2e2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', border: '1px solid #fca5a5', margin: '12px 0', fontWeight: 'bold', textAlign: 'center' }}>
           <AlertTriangle size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-          {erreurServeur || erreur}
+          {erreur}
         </div>
       )}
 
-      <div 
-        ref={pageRef} 
-        className={`zone-export-conteneur ${enExport ? 'mode-export' : ''}`}
-        style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}
-      >
-        <div className="haut">
-          <div className="gauche">
-            <div className="cadre-image">
-              {apercu ? <img key={apercu} src={apercu} alt="" /> : <span>Ajoute ton image</span>}
-            </div>
-            <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
-          </div>
-          <div className="droite">
-            {enExport ? (
-              <div className="meta-export-compact">
-                <h2 className="titre-export-page">{f.title || 'Coloriage'}</h2>
-                <div className="sous-meta-export">
-                  {f.tome && <span>Tome : <b>{f.tome}</b></span>}
-                  {f.page_no && <span>Page : <b>{f.page_no}</b></span>}
-                </div>
-              </div>
-            ) : (
-              <>
-                <label>Titre de la page *
-                  <input placeholder="ex: Scooby-Doo" value={f.title} onChange={(e) => set('title', e.target.value)} required />
-                </label>
-
-                <div className="deux">
-                  <div>
-                    {ecritTome ? (
-                      <>
-                        <label htmlFor="nom-tome">Nom du tome</label>
-                        <div className="tome-nouveau">
-                          <input id="nom-tome" autoFocus value={f.tome} onChange={(e) => set('tome', e.target.value)} onKeyDown={(e) => e.key === 'Enter' && validerTome()} />
-                          <button type="button" className="btn" onClick={validerTome}>OK</button>
-                        </div>
-                      </>
-                    ) : (
-                      <label>Tome
-                        <select value={f.tome} onChange={(e) => choisirTome(e.target.value)}>
-                          <option value="">Choisir</option>
-                          {f.tome && !tomes.includes(f.tome) && <option value={f.tome}>{f.tome}</option>}
-                          {tomes.map((t) => <option key={t} value={t}>{t}</option>)}
-                          <option value={NOUVEAU}>+ Nouveau tome</option>
-                        </select>
-                      </label>
-                    )}
-                  </div>
-                  <label>Page<input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} /></label>
-                </div>
-
-                <label>Mémo
-                  <textarea
-                    rows={3}
-                    maxLength={1000}
-                    placeholder="ex: fond fait au Ohuhu, reste les cheveux…"
-                    value={f.memo}
-                    onChange={(e) => set('memo', e.target.value)}
-                    style={{ width: '100%', resize: 'vertical', font: 'inherit' }}
-                  />
-                </label>
-
-                {/* Partage dans la communauté (le mémo reste privé) */}
-                <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={publiee} onChange={(e) => setPubliee(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0 }} />
-                    Publier dans la communauté
-                  </label>
-                  {publiee && (
-                    <>
-                      <small style={{ color: 'var(--texte-secondaire)' }}>Type de coloriage</small>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {TYPES_COLORIAGE.map((t) => (
-                          <button key={t.valeur} type="button" onClick={() => setTypeColo(t.valeur)}
-                            className={typeFinal === t.valeur ? 'btn' : 'btn alt'}
-                            style={{ minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem' }}>
-                            {t.label}
-                          </button>
-                        ))}
-                      </div>
-                      {!typeFinal && <small style={{ color: 'var(--danger)' }}>Choisis le type pour publier.</small>}
-                      <small style={{ color: 'var(--texte-secondaire)' }}>Ta photo, le titre, le tome, la page et tes codes couleurs seront visibles. Ton mémo reste privé.</small>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <h3 className="titre-codes">Codes couleurs</h3>
-        
-        <div className="liste-sous-categories">
-          {groupes.map((g) => (
-            <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={enExport} />
-          ))}
-
-          <button 
-            type="button" 
-            className="btn alt ajout-groupe ajout-groupe-bas" 
-            onClick={() => setGroupes((l) => [...l, groupeVide()])}
-          >
-            + Sous-catégorie
-          </button>
-        </div>
+      <div className="zone-export-conteneur" style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}>
+        {contenu(false)}
       </div>
+
+      {/* Copie pour l'image, hors de l'écran, avec le logo et l'adresse de Kromadex en bas */}
+      {enExport && (
+        <div aria-hidden="true" style={{ position: 'fixed', left: '-10000px', top: 0, pointerEvents: 'none' }}>
+          <div ref={pageRef} className="zone-export-conteneur mode-export" style={{ background: 'var(--arriere-plan, #e4f0ec)' }}>
+            {contenu(true)}
+            <div className="pied-export">
+              <img src="/logo.svg" alt="" />
+              <span>app.kromadex.com</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

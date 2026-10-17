@@ -4,6 +4,7 @@ import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown
 import { CATEGORIES_DEFI } from '@/lib/defis';
 import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES } from '@/lib/activites';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
+import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const iso = (a, m, j) => `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
@@ -52,6 +53,8 @@ export default function Aventures() {
   const [aventures, setAventures] = useState([]);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
+  // Brouillon automatique dès qu'on commence à écrire l'aventure
+  const brouillon = useBrouillon('aventure', form || {}, Boolean(form && (form.titre?.trim() || form.description?.trim() || form.etapes?.some((e) => e.instructions?.trim()))));
 
   async function charger() {
     const r = await fetch('/api/aventures?gestion=1');
@@ -78,7 +81,7 @@ export default function Aventures() {
     e.preventDefault();
     const r = await envoyer('/api/aventures', 'POST', { ...form, action: 'enregistrer' });
     setMessage(r.ok ? 'Aventure enregistrée' : r.error);
-    if (r.ok) { setForm(null); charger(); }
+    if (r.ok) { setForm(null); brouillon.effacer(); charger(); }
   }
   async function supprimer(a) {
     if (!confirm(`Supprimer « ${a.titre} » et toutes ses soumissions ?`)) return;
@@ -224,6 +227,7 @@ export default function Aventures() {
 
   return (
     <div style={colonne}>
+      <BandeauBrouillon nom="d’aventure" brouillon={brouillon} onReprendre={(d) => d && d.genre && setForm(d)} />
       <div className="carte" style={colonne}>
         <b>Créer une aventure</b>
         <p style={aide}>Expédition : une par fête. Épopée : une par saison (janvier, mars, juillet, septembre), deux semaines. Prophétie : une par année, en mai ou en novembre.</p>
@@ -249,7 +253,7 @@ export default function Aventures() {
             <b style={{ overflowWrap: 'anywhere' }}>{a.titre}</b>
             <small>
               {a.etapes.length} étape{a.etapes.length > 1 ? 's' : ''} · {a.stats.personnes} personne{a.stats.personnes > 1 ? 's' : ''} · {a.stats.soumissions} soumission{a.stats.soumissions > 1 ? 's' : ''}
-              {a.genre === 'epopee' && ` · ${a.stats.inscrits} inscrit·es · dragon : ${a.epopee.pvRestants} / ${a.pv}${a.epopee.vaincu ? ' (vaincu)' : ''}`}
+              {a.genre === 'epopee' && ` · ${a.stats.inscrits} inscrit.es · dragon : ${a.epopee.pvRestants} / ${a.pv}${a.epopee.vaincu ? ' (vaincu)' : ''}`}
             </small>
             <div style={actions}>
               <button type="button" className="btn alt" style={petitBtn} onClick={() => setForm({ ...a, xp: a.xp || {} })}><Pencil size={14} aria-hidden="true" /> Modifier</button>

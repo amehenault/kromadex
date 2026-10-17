@@ -33,6 +33,31 @@ export function CodesLecture({ codes }) {
   );
 }
 
+// « Inspiré de la palette de couleurs » : bandes, codes des crayons et packs utilisés
+function PaletteInspiration({ palette }) {
+  return (
+    <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <b style={{ overflowWrap: 'anywhere' }}>Inspiré de la palette de couleurs : {palette.nom || 'Sans titre'}</b>
+      <div style={{ display: 'flex', borderRadius: 'var(--rayon-m)', overflow: 'hidden', height: '40px', border: '1px solid var(--bordure-carte)' }}>
+        {palette.couleurs.map((c, i) => <span key={i} style={{ flex: 1, background: c }} />)}
+      </div>
+      {palette.codes?.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '8px' }}>
+          {palette.codes.map((c, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: 0, textAlign: 'center' }}>
+              <span aria-hidden="true" style={{ width: 28, height: 28, borderRadius: '50%', background: c.hex, border: '1px solid var(--bordure-carte)' }} />
+              <small style={{ fontWeight: 700, overflowWrap: 'anywhere', lineHeight: 1.2 }}>{c.code || c.nom}</small>
+            </div>
+          ))}
+        </div>
+      )}
+      {palette.noms_packs?.length > 0 && (
+        <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>{palette.noms_packs.length > 1 ? 'Packs' : 'Pack'} : {palette.noms_packs.join(', ')}</small>
+      )}
+    </div>
+  );
+}
+
 // Feuille plein écran : grande photo, infos, J'aime et codes couleurs
 export default function FicheDetail({ id, onFermer, onLike }) {
   const [fiche, setFiche] = useState(null);
@@ -48,7 +73,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
   }
 
   return (
-    <div onClick={onFermer} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+    <div data-feuille onClick={onFermer} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={(e) => e.stopPropagation()} style={{
         width: '100%', maxWidth: '560px', maxHeight: '92dvh', overflowY: 'auto', background: 'var(--fond-page)',
         borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', padding: 'var(--espace-3)',
@@ -74,6 +99,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
             {(fiche.tome || fiche.page_no) && (
               <small style={{ fontWeight: 700 }}>{fiche.tome}{fiche.page_no ? ` · page ${fiche.page_no}` : ''}</small>
             )}
+            {fiche.palette && <PaletteInspiration palette={fiche.palette} />}
             <div className="carte"><b style={{ display: 'block', marginBottom: '8px' }}>Codes couleurs</b><CodesLecture codes={fiche.codes} /></div>
             <CommentairesFiche pageId={fiche.id} />
           </div>

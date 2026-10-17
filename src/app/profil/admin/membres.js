@@ -1,23 +1,20 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Crown, CalendarPlus } from 'lucide-react';
-import { envoyer, colonne, ligneCarte, champ, aide, petitBtn, dateStyle } from './outils';
-import { jourQuebec } from '@/lib/temps';
+import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 import { nomPionnier } from '@/lib/cadres';
-import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import { nomPoste, couleurPoste } from '@/lib/postes';
 import Pseudo from '@/components/Pseudo';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
-  { valeur: 'cheffe', label: 'Chef·fe des coloristes (1 mois)' },
+  { valeur: 'cheffe', label: 'Chef.fe des coloristes (1 mois)' },
   { valeur: 'modo', label: 'Sentinelle du Kromadex' },
 ];
-const NOM_POSTE = NOMS_POSTES;
 
-// Attribuer manuellement les postes et les titres
+// Attribuer les postes et le rôle Pionnière (le titre affiché, c'est la personne qui le choisit dans ses Paramètres)
 export default function Membres({ role }) {
   const [membres, setMembres] = useState([]);
-  const [titres, setTitres] = useState([]);
   const [recherche, setRecherche] = useState('');
   const [filtre, setFiltre] = useState('tous');
   const [message, setMessage] = useState('');
@@ -28,7 +25,6 @@ export default function Membres({ role }) {
     if (res.ok) {
       const d = await res.json();
       setMembres(d.users || []);
-      setTitres(d.titles || []);
     }
   }
   useEffect(() => { charger(); }, []);
@@ -40,19 +36,7 @@ export default function Membres({ role }) {
       && (filtre === 'tous' || u.role === filtre));
   }, [membres, recherche, filtre]);
 
-  // Offrir Kromadex+ jusqu'à une date (incluse), ou le retirer (null) ; un abonnement payé n'est pas touché
-  async function offrir(u, jusqu) {
-    const r = await envoyer('/api/abonnement', 'PUT', { userId: u.id, jusqu });
-    setMessage(r.ok ? (jusqu ? `Kromadex+ offert jusqu'au ${jusqu}` : 'Kromadex+ offert retiré') : r.error);
-    charger();
-  }
-  // Ajoute des mois à partir de la date offerte encore active, sinon d'aujourd'hui (ex. gagnante d'un concours : 1 an)
-  const offreActive = (u) => u.plus_offert_jusqu && u.plus_offert_jusqu >= jourQuebec();
-  function prolongerOffre(u, mois) {
-    const d = new Date(`${offreActive(u) ? u.plus_offert_jusqu : jourQuebec()}T12:00:00Z`);
-    d.setUTCMonth(d.getUTCMonth() + mois);
-    offrir(u, d.toISOString().slice(0, 10));
-  }
+  // Abonnement Kromadex+ payé (affiché seulement)
   const paye = (u) => u.plus_jusqu && new Date(u.plus_jusqu) > new Date() && u.plus_statut !== 'aucun';
 
   async function modifier(id, corps) {
@@ -64,7 +48,7 @@ export default function Membres({ role }) {
   return (
     <div className="carte" style={colonne}>
       <p style={aide}>
-        Tout le monde est <b>coloriste</b> par défaut. Le ou la <b>chef·fe des coloristes</b> a gagné une épreuve mensuelle :
+        Tout le monde est <b>coloriste</b> par défaut. Le ou la <b>chef.fe des coloristes</b> a gagné une épreuve mensuelle :
         le poste dure 1 mois, avec 7 jours après la nomination pour créer son épreuve. Les <b>sentinelles du Kromadex</b> modèrent.
         Le poste d'<b>Invocatrice des couleurs</b> est unique.
       </p>
@@ -89,7 +73,7 @@ export default function Membres({ role }) {
           </small>
           {u.role === 'admin' || !estAdmin ? (
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: couleurPoste(u.role) }}>
-              {u.role === 'admin' && <Crown size={14} />} {NOM_POSTE[u.role] || 'Coloriste'}{u.title ? ` · ${u.title}` : ''}
+              {u.role === 'admin' && <Crown size={14} />} {nomPoste(u.role, u.genre)}{u.title ? ` · ${u.title}` : ''}
             </small>
           ) : (
             <>
@@ -109,28 +93,14 @@ export default function Membres({ role }) {
                   </button>
                 </div>
               )}
-              <label style={champ}>Titre affiché
-                <select value={u.title || ''} onChange={(e) => e.target.value && modifier(u.id, { title: e.target.value })}>
-                  <option value="">Choisir un titre</option>
-                  {titres.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
-                </select>
-              </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, minHeight: '44px' }}>
                 <input type="checkbox" checked={Boolean(u.pionnier)} onChange={(e) => modifier(u.id, { pionnier: e.target.checked })} style={{ width: '20px', height: '20px', margin: 0 }} />
-                {nomPionnier(u.genre)} (bêta-testrice ou bêta-testeur, débloque le cadre)
+                {nomPionnier(u.genre)} (bêta-testrice ou bêta-testeur, débloque le cadre ; Kromadex+ s’offre dans l’onglet Kromadex+)
               </label>
-              <label style={champ}>Kromadex+ offert jusqu'au (inclus)
-                <input type="date" value={offreActive(u) ? u.plus_offert_jusqu : ''} min={jourQuebec()}
-                  onChange={(e) => offrir(u, e.target.value || null)} style={dateStyle} />
-              </label>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <button type="button" className="btn alt" style={petitBtn} onClick={() => prolongerOffre(u, 3)}>+ 3 mois</button>
-                <button type="button" className="btn alt" style={petitBtn} onClick={() => prolongerOffre(u, 12)}>+ 1 an</button>
-                {offreActive(u) && <button type="button" className="btn alt danger" style={petitBtn} onClick={() => offrir(u, null)}>Retirer</button>}
-              </div>
+              {/* Kromadex+ offert : dans l'onglet Kromadex+ ; ici on voit seulement les abonnements payés */}
               {paye(u) && (
                 <small style={aide}>
-                  Abonné·e Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}
+                  Abonné.e Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}
                 </small>
               )}
             </>

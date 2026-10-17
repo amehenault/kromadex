@@ -59,7 +59,15 @@ export default function NotificationsAppareil({ clePublique }) {
         <small style={aide}>Les notifications sont bloquées pour Kromadex. Autorise-les dans les réglages de ton téléphone ou de ton navigateur, puis reviens ici.</small>
       )}
       {etat === 'inactives' && (
-        <button type="button" className="btn" style={bouton} onClick={activer}><Bell size={18} aria-hidden="true" /> Activer les notifications sur cet appareil</button>
+        <>
+          <button type="button" className="btn" style={bouton} onClick={activer}><Bell size={18} aria-hidden="true" /> Activer les notifications sur cet appareil</button>
+          {/* Mémo pour donner envie d'activer les notifications */}
+          <small style={{ ...aide, background: 'var(--accent-doux)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', lineHeight: 1.45 }}>
+            <b style={{ color: 'var(--texte-principal)' }}>Ne rate plus rien de Kromadex !</b> Sois prévenu.e dès qu’une nouvelle missive arrive,
+            qu’on t’invite en duel ou que l’Invocatrice répond à ta demande. Tu choisis exactement ce que tu reçois,
+            et tu peux tout désactiver en un geste.
+          </small>
+        </>
       )}
       {etat === 'actives' && (
         <>

@@ -6,7 +6,7 @@ import Roue from './roue';
 
 export const dynamic = 'force-dynamic';
 
-// Roue du destin : tirer au hasard une page non faite parmi les tomes du compte
+// Roue du Destin : tirer au hasard une page non faite parmi les tomes du compte
 export default async function RouePage() {
   const user = await getUser();
   if (!user) redirect('/login');

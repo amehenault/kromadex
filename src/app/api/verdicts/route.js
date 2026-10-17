@@ -4,6 +4,7 @@ import { vueVerdict, rendreVerdict, lireActivite } from '@/lib/verdicts';
 import { cloturerEpreuves } from '@/lib/clotures';
 import { avancerCombats } from '@/lib/combats';
 import { avancerTournois } from '@/lib/tournois';
+import { verdictsARendre } from '@/lib/verdictsARendre';
 
 // Met l'activité à jour avant de la montrer (fin du verdict, clôture)
 async function avancer(activite) {
@@ -17,7 +18,10 @@ async function avancer(activite) {
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  const activite = new URL(req.url).searchParams.get('activite');
+  const q = new URL(req.url).searchParams;
+  // ?a_rendre=1 : toutes les activités où je peux rendre un verdict (écran « Verdicts à rendre »)
+  if (q.get('a_rendre')) return NextResponse.json({ activites: await verdictsARendre(user.id) });
+  const activite = q.get('activite');
   await avancer(activite);
   const vue = await vueVerdict(activite, user.id);
   if (!vue) return NextResponse.json({ error: 'Activité introuvable' }, { status: 404 });

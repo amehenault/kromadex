@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
-import { TYPES_DEMANDE, groupeDuType, nomType } from '@/lib/demandes';
+import { TYPES_DEMANDE, groupeDuType, nomType, STATUTS_ARCHIVES, JOURS_ARCHIVES } from '@/lib/demandes';
 import { prevenir } from '@/lib/push';
 
 // Mes demandes, ou toutes les demandes pour l'admin (?tout=1)
@@ -9,6 +9,8 @@ export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   if (new URL(req.url).searchParams.get('tout') && profil.role === 'admin') {
+    // Les demandes archivées (résolues, ajoutées, refusées) sont supprimées 30 jours après leur archivage
+    await sql`DELETE FROM demandes WHERE statut = ANY(${STATUTS_ARCHIVES}) AND maj_le < now() - make_interval(days => ${JOURS_ARCHIVES})`;
     const demandes = await sql`
       SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.email, u.role
       FROM demandes d JOIN users u ON u.id = d.user_id
@@ -43,7 +45,7 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Admin : changer le statut et répondre (résolue, ajoutée et refusée = archivée, jamais supprimée)
+// Invocatrice : changer le statut et répondre (résolue, ajoutée et refusée = archivée, supprimée 30 jours plus tard)
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

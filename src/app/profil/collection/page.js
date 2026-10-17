@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Palette, Plus, Trash2, ArrowLeft, Search, Folder, ChevronRight, Check, X } from 'lucide-react';
+import { Palette, Plus, Trash2, ArrowLeft, Search, ChevronRight, Check, X } from 'lucide-react';
 
 export default function CollectionCrayonsPage() {
   const [toutesMarques, setToutesMarques] = useState([]);
@@ -193,7 +193,7 @@ export default function CollectionCrayonsPage() {
   if (chargement) {
     return (
       <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-4)' }}>
-        <p>Chargement de KROMADEX...</p>
+        <p>Chargement…</p>
       </div>
     );
   }
@@ -201,33 +201,28 @@ export default function CollectionCrayonsPage() {
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-4)' }}>
       
-      <div className="barre" style={{ marginBottom: 'var(--espace-4)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <Link href="/profil" className="btn alt" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <ArrowLeft size={16} /> Profil
+      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <ArrowLeft size={16} aria-hidden="true" />
         </Link>
-        <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-          <Palette size={24} /> KROMADEX - Nuancier de Collection
+        <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          <Palette size={22} aria-hidden="true" /> Mes coffrets de crayons ({marquesAffichees.length})
         </h2>
       </div>
 
-      <div className="carte" style={{ marginBottom: 'var(--espace-4)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--espace-3)', flexWrap: 'wrap', gap: 'var(--espace-2)' }}>
-          <h3 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <Folder size={20} /> Mes Coffrets / Kits Possédés ({marquesAffichees.length})
-          </h3>
-          
-          <button 
-            type="button" 
-            className="btn" 
-            onClick={() => setAfficherModalAjout(true)}
-            style={{ fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Plus size={18} /> Ajouter un coffret à ma collection
-          </button>
-        </div>
+      <div className="carte" style={{ marginBottom: 'var(--espace-4)', display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)' }}>
+        <button 
+          type="button" 
+          className="btn btn-corail" 
+          onClick={() => setAfficherModalAjout(true)}
+          style={{ fontWeight: 'bold', display: 'flex', width: '100%', minHeight: '48px', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+        >
+          <Plus size={18} aria-hidden="true" /> Ajouter un coffret de crayons
+        </button>
 
+        {/* Un coffret par ligne : le nom passe à la ligne au lieu de dépasser */}
         {marquesAffichees.length > 0 ? (
-          <div style={{ display: 'flex', gap: 'var(--espace-2)', overflowX: 'auto', paddingBottom: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-2)' }}>
             {marquesAffichees.map((b) => {
               const estActif = Number(setActif) === Number(b.id);
               return (
@@ -237,9 +232,14 @@ export default function CollectionCrayonsPage() {
                   onClick={() => setSetActif(Number(b.id))}
                   className={estActif ? 'btn' : 'btn alt'}
                   style={{
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.85rem',
-                    padding: '8px 14px'
+                    width: '100%',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere',
+                    fontSize: '0.9rem',
+                    padding: '10px 14px',
+                    minHeight: '48px'
                   }}
                 >
                   {b.brand_name} - {b.sub_type ? `${b.sub_type} ` : ''}{b.range_name}
@@ -248,8 +248,8 @@ export default function CollectionCrayonsPage() {
             })}
           </div>
         ) : (
-          <p style={{ color: 'var(--texte-secondaire)', margin: '8px 0 0' }}>
-            Aucun coffret dans votre collection.
+          <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>
+            Aucun coffret dans ta collection pour l’instant.
           </p>
         )}
       </div>
@@ -257,19 +257,19 @@ export default function CollectionCrayonsPage() {
       {setActifInfo && (
         <div className="carte" style={{ marginBottom: 'var(--espace-4)' }}>
           <div style={{ display: 'flex', gap: 'var(--espace-3)', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ margin: 0 }}>
+            <h3 style={{ margin: 0, overflowWrap: 'anywhere', minWidth: 0 }}>
               {setActifInfo.brand_name} - {setActifInfo.sub_type ? `${setActifInfo.sub_type} ` : ''}{setActifInfo.range_name}
             </h3>
 
             <div style={{ display: 'flex', gap: 'var(--espace-2)', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: '1 1 200px', minWidth: 0 }}>
                 <Search size={16} style={{ position: 'absolute', left: '10px', color: 'var(--texte-secondaire)' }} />
                 <input 
                   type="text" 
                   placeholder="Filtrer par code..." 
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
-                  style={{ minWidth: '220px', paddingLeft: '32px' }}
+                  style={{ width: '100%', minWidth: 0, paddingLeft: '32px' }}
                 />
               </div>
 
@@ -325,6 +325,7 @@ export default function CollectionCrayonsPage() {
 
       {afficherModalAjout && (
         <div
+          data-feuille
           onClick={fermerModal}
           style={{
             position: 'fixed',

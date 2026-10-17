@@ -57,6 +57,9 @@ export default function Library({ pages = [] }) {
       const titreMatch = (p.title || p.titre || '').toString().toLowerCase().includes(terme);
       if (titreMatch) return true;
       if ((p.memo || '').toLowerCase().includes(terme)) return true;
+      // Mots-clefs du coloriage (perso et partagés) et nom du tome
+      if ((p.mots || []).some((m) => m.toLowerCase().includes(terme))) return true;
+      if ((p.tome || '').toLowerCase().includes(terme)) return true;
 
       if (Array.isArray(p.codes)) {
         return p.codes.some((groupe) => {
@@ -106,7 +109,7 @@ export default function Library({ pages = [] }) {
 
       <div className="barre" style={{ gap: '10px', flexWrap: 'wrap' }}>
         <input 
-          placeholder="Rechercher par titre ou par label (ex: Samy, Cheveux...)" 
+          placeholder="Rechercher par titre, tome, mot-clef ou label (ex. lapin, Cheveux…)" 
           value={q} 
           onChange={(e) => setQ(e.target.value)} 
           style={{ flex: 1, minWidth: '220px' }}
@@ -204,7 +207,7 @@ export default function Library({ pages = [] }) {
                   alt={t.nom}
                   onError={(e) => {
                     if (t.premierePageId) {
-                      e.target.src = `/api/pages/${t.premierePageId}/image?s=${t.imgSize}&v=${version}`;
+                      e.target.src = `/api/pages/${t.premierePageId}/image?s=${t.imgSize}`;
                     } else {
                       e.target.style.display = 'none';
                     }
@@ -237,8 +240,10 @@ export default function Library({ pages = [] }) {
             <Link key={p.id} href={`/pages/${p.id}`} className="tuile">
               {p.has_image ? (
                 <img 
-                  src={`/api/pages/${p.id}/image?s=${p.img_size || 0}&v=${version}`} 
-                  alt="" 
+                  src={`/api/pages/${p.id}/image?s=${p.img_size || 0}`}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <div className="vide" />

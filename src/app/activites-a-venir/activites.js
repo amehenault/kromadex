@@ -43,7 +43,7 @@ export default function ActivitesAVenir({ clePublique }) {
       <p style={{ marginTop: 0, color: 'var(--texte-secondaire)', fontSize: '0.9rem' }}>
         Rappels : 2 semaines avant chaque mois pour l’épreuve mensuelle et les 2 bingos, 1 mois avant chaque expédition, 2 mois avant chaque épopée et avant la prophétie.
       </p>
-      {/* Rappel chaque matin tant qu'une activité reste à planifier (réglable dans Paramètres) */}
+      {/* Rappel tant qu'une activité reste à planifier : chaque jour si elle est en retard, sinon aux 2 jours (réglable dans Paramètres) */}
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' }}>
         <b>Rappels sur cet appareil</b>
         <NotificationsAppareil clePublique={clePublique} />

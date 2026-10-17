@@ -6,12 +6,13 @@ import { cadresDebloques } from '@/lib/cadres';
 
 export const dynamic = 'force-dynamic';
 
-// Paramètres : notifications voulues par type ({ notifs: { missives: false, … } }) et cadre de profil ({ cadre })
+// Paramètres : notifications voulues par type ({ notifs: { missives: false, … } }), cadre de profil ({ cadre })
+// et titre affiché ({ titre } parmi les titres débloqués, '' = aucun)
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const b = await req.json().catch(() => ({}));
-  const [u] = await sql`SELECT role, pionnier, notifs,
+  const [u] = await sql`SELECT role, pionnier, notifs, unlocked_titles,
       EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'relique') AS relique
     FROM users WHERE id = ${user.id}`;
 
@@ -29,6 +30,13 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Ce cadre n’est pas encore débloqué' }, { status: 403 });
     }
     await sql`UPDATE users SET cadre = ${choix} WHERE id = ${user.id}`;
+  }
+  if ('titre' in b) {
+    const titre = String(b.titre || '');
+    if (titre && !(u.unlocked_titles || []).includes(titre)) {
+      return NextResponse.json({ error: 'Ce titre n’est pas encore débloqué' }, { status: 403 });
+    }
+    await sql`UPDATE users SET title = ${titre || null} WHERE id = ${user.id}`;
   }
   return NextResponse.json({ ok: true });
 }

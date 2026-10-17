@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste, POSTES } from '@/lib/roles';
+import { nomPoste } from '@/lib/postes';
 
 // Liste des membres et des titres (admin et modo)
 export async function GET() {
@@ -24,7 +25,7 @@ export async function PUT(req) {
   if (erreur) return erreur;
 
   const { targetUserId, role, title, prolonger, pionnier } = await req.json();
-  const [cible] = await sql`SELECT id, role FROM users WHERE id = ${targetUserId}`;
+  const [cible] = await sql`SELECT id, role, genre FROM users WHERE id = ${targetUserId}`;
   if (!cible) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
 
   // Pionnière ou Pionnier (bêta-testrices et bêta-testeurs) : s'ajoute au poste et débloque le cadre de Pionnière
@@ -46,7 +47,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: 'Poste invalide' }, { status: 400 });
     }
     if (cible.role === 'admin' || String(cible.id) === String(profil.id)) {
-      return NextResponse.json({ error: "Le poste d'admin ne peut pas être modifié" }, { status: 403 });
+      return NextResponse.json({ error: "Le poste d’Invocatrice des couleurs ne peut pas être modifié" }, { status: 403 });
     }
     let expiresAt = null;
     if (role === 'cheffe') {
@@ -57,11 +58,13 @@ export async function PUT(req) {
     // La date de nomination sert au délai de 7 jours pour créer l'épreuve de cheffe
     await sql`UPDATE users SET role = ${role}, cheffe_expires_at = ${expiresAt},
       cheffe_depuis = ${role === 'cheffe' ? new Date().toISOString() : null} WHERE id = ${targetUserId}`;
-    // La cheffe reçoit aussi le titre qui va avec
+    // La cheffe reçoit aussi le titre qui va avec (Cheffe, Chef ou Chef.fe des coloristes selon son genre)
+    const titreCheffe = nomPoste('cheffe', cible.genre);
+    await sql`INSERT INTO system_titles (name, description) VALUES (${titreCheffe}, 'Titre de la personne gagnante de l’épreuve du mois') ON CONFLICT (name) DO NOTHING`;
     if (role === 'cheffe') {
       await sql`
-        UPDATE users SET unlocked_titles = COALESCE(unlocked_titles, '[]'::jsonb) || '["Chef·fe des coloristes"]'::jsonb
-        WHERE id = ${targetUserId} AND NOT (COALESCE(unlocked_titles, '[]'::jsonb) ? 'Chef·fe des coloristes')`;
+        UPDATE users SET unlocked_titles = COALESCE(unlocked_titles, '[]'::jsonb) || to_jsonb(${titreCheffe}::text)
+        WHERE id = ${targetUserId} AND NOT (COALESCE(unlocked_titles, '[]'::jsonb) ? ${titreCheffe})`;
     }
   }
 

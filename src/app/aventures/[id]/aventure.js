@@ -7,6 +7,7 @@ import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import { FETES, NOMS_AVENTURES, DEGATS, XP_EPOPEE, XP_PROPHETIE } from '@/lib/activites';
+import TexteErreur from '@/components/TexteErreur';
 
 const ICONES = { expedition: Compass, epopee: Shield, prophetie: Sparkles };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
@@ -81,7 +82,7 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
         {attaque ? 'Attaquer le dragon' : 'Soumettre mon coloriage'}
       </button>
       <button type="button" className="btn alt" onClick={() => setPage(null)} style={{ minHeight: '44px' }}>Choisir un autre coloriage</button>
-      {erreur && <small style={{ color: 'var(--danger)', fontWeight: 600 }}>{erreur}</small>}
+      {erreur && <small style={{ color: 'var(--danger)', fontWeight: 600 }}><TexteErreur texte={erreur} /></small>}
     </Feuille>
   );
 }
@@ -129,7 +130,7 @@ export default function Aventure({ id }) {
     charger(); router.refresh();
   }
 
-  if (erreur) return <p style={{ padding: 'var(--espace-3)' }}>{erreur}</p>;
+  if (erreur) return <p style={{ padding: 'var(--espace-3)' }}><TexteErreur texte={erreur} /></p>;
   if (!a) return <p style={{ padding: 'var(--espace-3)' }}>Chargement…</p>;
 
   const Icone = ICONES[a.genre];
@@ -186,7 +187,16 @@ export default function Aventure({ id }) {
           </small>
         )}
       </div>
-      {message && <p className="carte" style={{ margin: '0 0 var(--espace-3)', fontWeight: 700 }}>{message}</p>}
+      {message && <p className="carte" style={{ margin: '0 0 var(--espace-3)', fontWeight: 700 }}><TexteErreur texte={message} /></p>}
+
+      {/* Expédition et prophétie : on s'inscrit avant de soumettre (l'épopée a sa propre inscription plus bas) */}
+      {a.genre !== 'epopee' && !a.inscrit && !terminee && (
+        <div className="carte" style={carteEtape}>
+          <b>S’inscrire à {a.genre === 'expedition' ? 'l’expédition' : 'la prophétie'}</b>
+          <small style={{ color: 'var(--texte-secondaire)' }}>Inscris-toi pour pouvoir soumettre tes coloriages. Ils devront venir de ta section Tomes / Livres.</small>
+          <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}>S’inscrire</button>
+        </div>
+      )}
 
       {/* Expédition : un seul coloriage */}
       {a.genre === 'expedition' && a.etapes.map((e) => (
@@ -196,7 +206,7 @@ export default function Aventure({ id }) {
           <Contraintes etape={e} />
           {mes(e.id).length > 0
             ? <><small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Expédition réussie</small>{vignettes(mes(e.id))}</>
-            : !terminee && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
+            : !terminee && a.inscrit && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
           {!mes(e.id).length && <small style={{ color: 'var(--texte-secondaire)' }}>Une seule soumission est permise. Il n’y a pas de verdict : l’expédition est réussie dès que les contraintes sont respectées.</small>}
         </div>
       ))}
@@ -285,7 +295,7 @@ export default function Aventure({ id }) {
               <Contraintes etape={e} />
               {mes(e.id).length
                 ? <><small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Étape accomplie</small>{vignettes(mes(e.id))}</>
-                : !terminee && (!e.fin || e.fin >= a.aujourdhui) && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
+                : !terminee && a.inscrit && (!e.fin || e.fin >= a.aujourdhui) && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
             </>
           )}
         </div>

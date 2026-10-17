@@ -11,7 +11,7 @@ export async function GET() {
   if (erreur) return erreur;
   const signalements = await sql`
     SELECT s.defi_id, s.page_id, d.titre AS epreuve, d.description, d.genre, count(*)::int AS nombre, max(s.cree_le) AS dernier,
-           p.title, OCTET_LENGTH(p.image_b64) AS img_size, u.id AS auteur_id, u.pseudo, u.name, u.email, u.role AS role_auteur
+           p.title, OCTET_LENGTH(p.image_b64) AS img_size, u.id AS auteur_id, u.pseudo, u.name, u.email, u.role AS role_auteur, u.genre AS genre_auteur
     FROM defi_signalements s
     JOIN defis d ON d.id = s.defi_id JOIN pages p ON p.id = s.page_id JOIN users u ON u.id = p.user_id
     WHERE NOT s.traite

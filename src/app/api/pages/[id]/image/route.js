@@ -5,7 +5,7 @@ import { isId } from '@/lib/pages';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET(_req, { params }) {
+export async function GET(req, { params }) {
   const { id } = await params;
   const user = await getUser();
   if (!user || !isId(id)) return new Response(null, { status: 404 });
@@ -23,12 +23,13 @@ export async function GET(_req, { params }) {
         or exists (select 1 from aventure_soumissions where page_id = p.id))`;
   if (!r.length) return new Response(null, { status: 404 });
 
+  // L'adresse contient la taille de l'image (?s=) : elle change quand l'image change.
+  // L'appareil peut donc garder l'image en mémoire, ce qui l'affiche tout de suite les fois suivantes.
+  const versionnee = new URL(req.url).searchParams.has('s');
   return new Response(Buffer.from(r[0].image_b64, 'base64'), {
     headers: {
       'Content-Type': r[0].image_type,
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      'Cache-Control': versionnee ? 'private, max-age=31536000, immutable' : 'private, no-cache',
     },
   });
 }

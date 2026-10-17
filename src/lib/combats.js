@@ -6,7 +6,7 @@ import { COMBATS, XP_COMBATS, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE, TITRE_EXPE
 
 // Cycle d'un combat
 //  duel  : invitation (5 jours pour accepter) -> soumission (12 jours après la création) -> verdict (5 jours) -> terminé
-//  joute : ouvert (12 jours pour que 2 à 4 coloristes soumettent) -> verdict (5 jours) -> terminé
+//  joute : ouvert (12 jours pour que les coloristes soumettent ; 2, 3 ou 4 places choisies à la création) -> verdict (5 jours) -> terminé
 //  Un combat sans tous ses coloriages à temps est annulé.
 
 async function terminer(c) {
@@ -47,13 +47,13 @@ export async function avancerCombats() {
   for (const c of finis) await terminer(c);
 }
 
-// Le verdict commence dès que tous les coloriages sont là (2 pour un duel, 4 pour une joute complète)
+// Le verdict commence dès que tous les coloriages sont là (2 pour un duel, le nombre de places choisi pour une joute)
 export async function verifierDepartVerdict(combatId) {
   await sql`
     UPDATE combats c SET statut = 'verdict', verdict_fin = now() + make_interval(days => ${COMBATS.joursVerdict})
     WHERE c.id = ${combatId} AND c.statut IN ('soumission', 'ouvert')
       AND (SELECT count(*) FROM combat_participants p WHERE p.combat_id = c.id AND p.page_id IS NOT NULL)
-          >= CASE WHEN c.genre = 'duel' THEN 2 ELSE ${COMBATS.maxJoute} END`;
+          >= CASE WHEN c.genre = 'duel' THEN 2 ELSE c.places END`;
 }
 
 // Deux personnes se suivent mutuellement

@@ -4,12 +4,11 @@ import { gagnantVerdict } from '@/lib/verdicts';
 import { donnerRecompense, donnerTitre, recompenserVictoire } from '@/lib/recompensesServeur';
 import { LIGNES_BINGO, NB_CASES } from '@/lib/bingos';
 import { XP_EPREUVES, XP_GROUPE, FRAGMENTS_PAR_RELIQUE, XP_RELIQUE, XP_BINGO } from '@/lib/activites';
+import { nomPoste } from '@/lib/postes';
 
 // Clôture des épreuves et des bingos, faite au besoin quand on consulte les activités.
 // Une épreuve dure un mois moins un jour : le verdict se termine la veille du dernier jour du mois
-// et les gagnant·es sont annoncé·es le dernier jour.
-
-const TITRE_CHEFFE = 'Chef·fe des coloristes';
+// et les gagnant.es sont annoncé.es le dernier jour.
 
 // Reliques : chaque groupe de 4 fragments complète une relique (cadre de profil exclusif et 400 XP)
 async function verifierReliques(userId) {
@@ -23,12 +22,12 @@ async function verifierReliques(userId) {
   }
 }
 
-// La personne qui gagne l'épreuve du mois devient Chef·fe des coloristes pour un mois
+// La personne qui gagne l'épreuve du mois devient Cheffe ou Chef des coloristes pour un mois (titre accordé à son genre)
 async function nommerCheffe(userId) {
   const maj = await sql`
     UPDATE users SET role = 'cheffe', cheffe_depuis = now(), cheffe_expires_at = now() + interval '1 month'
-    WHERE id = ${userId} AND role IN ('coloriste', 'cheffe') RETURNING id`;
-  if (maj.length) await donnerTitre(userId, TITRE_CHEFFE);
+    WHERE id = ${userId} AND role IN ('coloriste', 'cheffe') RETURNING genre`;
+  if (maj.length) await donnerTitre(userId, nomPoste('cheffe', maj[0].genre));
 }
 
 async function cloturerEpreuve(d) {

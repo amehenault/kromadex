@@ -7,7 +7,7 @@ export const TYPES_NOTIFS = [
   { cle: 'abonnement', label: 'Mon abonnement Kromadex+' },
   { cle: 'demandes', label: 'Nouvelles demandes dans Aide', postes: ['admin'] },
   { cle: 'missivesAttente', label: 'Missives de Sentinelles à approuver', postes: ['admin'] },
-  { cle: 'rappels', label: 'Activités à planifier (chaque matin)', postes: ['admin'] },
+  { cle: 'rappels', label: 'Activités à planifier (chaque jour si en retard, sinon aux 2 jours)', postes: ['admin'] },
   { cle: 'validation', label: 'Cases de bingo à valider', postes: ['admin', 'modo'] },
   { cle: 'signalements', label: 'Coloriages et mots-clefs signalés', postes: ['admin', 'modo'] },
 ];

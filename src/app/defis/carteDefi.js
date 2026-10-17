@@ -7,12 +7,11 @@ import { Avatar, poster } from '@/app/communaute/outils';
 import { TempsRestant } from '@/components/Fuseau';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import Verdict from '@/components/Verdict';
-import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import { nomPoste, couleurPoste } from '@/lib/postes';
 import { XP_EPREUVES, XP_GROUPE } from '@/lib/activites';
 import Pseudo from '@/components/Pseudo';
 
-const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de chef·fe', groupe: 'Épreuve de groupe' };
-const ROLE = NOMS_POSTES;
+const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de chef.fe', groupe: 'Épreuve de groupe' };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
@@ -23,7 +22,7 @@ function recompenses(d) {
     return `${XP_GROUPE.complete} XP chacun si l’objectif est atteint, sinon ${XP_GROUPE.participation} XP de participation${d.multiple ? ` · ${XP_GROUPE.supplementaire} XP par coloriage supplémentaire` : ''}`;
   }
   const titre = d.titre_gagnant ? ` · titre « ${d.titre_gagnant} »` : '';
-  if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Chef·fe des coloristes`;
+  if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Chef.fe des coloristes`;
   if (d.genre === 'modo') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, badge de l’épreuve et un fragment de relique${titre}`;
   return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP et le sceau de la cheffe${titre}`;
 }
@@ -85,7 +84,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
           <Avatar x={{ user_id: d.createur_id, a_avatar: d.a_avatar, avatar_maj: d.avatar_maj }} taille={28} />
           <small>
             Créée par <Pseudo x={{ pseudo: d.choisi_par, name: d.nom_createur, role: d.role_createur }} />
-            <span style={{ color: couleurPoste(d.role_createur), fontWeight: 700 }}> · {ROLE[d.role_createur] || 'Coloriste'}</span>
+            <span style={{ color: couleurPoste(d.role_createur), fontWeight: 700 }}> · {nomPoste(d.role_createur, d.genre_createur)}</span>
           </small>
         </Link>
       )}
@@ -113,7 +112,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
       {d.cloture && !groupe && (
         <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}>
           <Trophy size={16} aria-hidden="true" />
-          {d.j_ai_gagne ? 'Bravo, tu as gagné cette épreuve !' : d.nom_gagnant ? `Gagnant·e : ${d.nom_gagnant}` : 'Épreuve terminée sans gagnant·e'}
+          {d.j_ai_gagne ? 'Bravo, tu as gagné cette épreuve !' : d.nom_gagnant ? `Gagnant.e : ${d.nom_gagnant}` : 'Épreuve terminée sans gagnant.e'}
         </small>
       )}
       {d.cloture && groupe && (
@@ -121,13 +120,13 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
       )}
 
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {!d.je_participe && !termine && <button type="button" className="btn" style={petit} onClick={participer}>Participer</button>}
+        {!d.je_participe && !termine && <button type="button" className="btn" style={petit} onClick={participer}>S’inscrire</button>}
         {peutEnvoyer && (
           <button type="button" className="btn" style={petit} onClick={() => setChoix(true)}>
             {groupe && d.mes_envois ? <><Plus size={16} aria-hidden="true" /> Ajouter un coloriage</> : <><ImageIcon size={16} aria-hidden="true" /> {d.ma_page ? 'Changer mon coloriage' : 'Envoyer mon coloriage'}</>}
           </button>
         )}
-        {d.je_participe && <span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Je participe</span>}
+        {d.je_participe && <span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Inscrit.e</span>}
         {!groupe && d.coloriages > 0 && (
           <button type="button" className="btn alt" style={petit} onClick={() => setVerdict(!verdict)}>
             <Gavel size={16} aria-hidden="true" /> {verdict ? 'Masquer' : termine ? 'Voir les coloriages' : 'Rendre mon verdict'}

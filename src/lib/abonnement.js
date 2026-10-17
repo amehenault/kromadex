@@ -58,16 +58,19 @@ export const AVANTAGES = {
 
 const actif = (date) => Boolean(date && new Date(date) > new Date());
 
-// Une personne est Kromadex+ si elle est l'Invocatrice, si l'Invocatrice le lui offre (jusqu'à une date),
+// Kromadex+ offert par l'Invocatrice : actif sans date limite, ou jusqu'à la date choisie
+export const offertActif = (u) => Boolean(u?.plus_offert && (!u.plus_offert_jusqu || new Date(u.plus_offert_jusqu) > new Date()));
+
+// Une personne est Kromadex+ si elle est l'Invocatrice, si l'Invocatrice le lui offre (avec ou sans date limite),
 // ou si sa période payée n'est pas finie (même après une annulation)
 export function estPlus(u) {
   if (!u) return false;
-  if (u.role === 'admin' || actif(u.plus_offert_jusqu)) return true;
+  if (u.role === 'admin' || offertActif(u)) return true;
   return actif(u.plus_jusqu) && u.plus_statut !== 'aucun';
 }
 
 export async function abonnementDe(userId) {
-  const [u] = await sql`SELECT id, email, role, plus_statut, plus_jusqu, plus_formule, plus_offert_jusqu FROM users WHERE id = ${userId}`;
+  const [u] = await sql`SELECT id, email, role, plus_statut, plus_jusqu, plus_formule, plus_offert, plus_offert_jusqu FROM users WHERE id = ${userId}`;
   return u ? { ...u, plus: estPlus(u) } : null;
 }
 
@@ -77,7 +80,7 @@ export async function parcheminDuMois(userId) {
   if (!abo?.plus) return;
   await sql`
     INSERT INTO recompenses (user_id, genre, detail, source, image, xp, victoire)
-    VALUES (${userId}, 'parchemin', 'de Kromadex+', ${`plus:${premierDuMoisQuebec().slice(0, 7)}`}, '', 0, false)
+    VALUES (${userId}, 'parchemin', '', ${`plus:${premierDuMoisQuebec().slice(0, 7)}`}, '', 0, false)
     ON CONFLICT (user_id, genre, source) DO NOTHING`;
 }
 
@@ -100,9 +103,9 @@ async function utilisation(userId, cle, contexte = {}) {
     return n;
   }
   if (cle === 'bingos') {
-    // Bingos du mois où la personne a déjà mis au moins un coloriage, sans compter celui-ci
+    // Bingos du mois auxquels la personne est inscrite, sans compter celui-ci
     const [{ n }] = await sql`
-      SELECT count(DISTINCT c.bingo_id)::int AS n FROM bingo_cases c JOIN bingos b ON b.id = c.bingo_id
+      SELECT count(*)::int AS n FROM bingo_inscriptions c JOIN bingos b ON b.id = c.bingo_id
       WHERE c.user_id = ${userId} AND b.id <> ${contexte.bingoId ?? -1}
         AND COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) >= ${debut}::date`;
     return n;
@@ -130,9 +133,9 @@ export async function verifierLimite(userId, cle, contexte) {
   const nom = max > 1 ? limite.plusieurs : limite.un;
   const par = limite.periode === 'annee' ? 'par année' : 'par mois';
   const message = max === 0
-    ? `Les ${limite.plusieurs} sont réservé${limite.f ? 'es' : 's'} à Kromadex+. Découvre l’abonnement dans ton profil (Gérer l’abonnement).`
+    ? `Les ${limite.plusieurs} sont réservé${limite.f ? 'es' : 's'} à Kromadex+. Découvre l’abonnement en cliquant ici.`
     : abo?.plus
       ? `Tu as atteint la limite de ${max} ${nom} ${par}.`
-      : `La version gratuite permet ${max} ${nom} ${par}. Passe à Kromadex+ pour en profiter davantage (Profil > Gérer l’abonnement).`;
+      : `La version gratuite permet ${max} ${nom} ${par}. Avec Kromadex+, profites-en davantage. Découvre l’abonnement en cliquant ici.`;
   return NextResponse.json({ error: message, plus: !abo?.plus }, { status: 402 });
 }

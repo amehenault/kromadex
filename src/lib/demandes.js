@@ -29,6 +29,7 @@ export const STATUTS_DEMANDE = [
 ];
 export const nomStatut = (v) => STATUTS_DEMANDE.find((s) => s.valeur === v)?.label || v;
 
-// Résolues, ajoutées et refusées sont archivées (jamais supprimées)
+// Résolues, ajoutées et refusées sont archivées, puis supprimées 30 jours après leur archivage
 export const STATUTS_ARCHIVES = ['resolue', 'ajoutee', 'refusee'];
+export const JOURS_ARCHIVES = 30;
 export const estArchivee = (statut) => STATUTS_ARCHIVES.includes(statut);

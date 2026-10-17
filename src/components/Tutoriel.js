@@ -2,81 +2,102 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Sparkles, Plus, BookOpen, Users, Trophy, Grid3x3, Swords, Compass, Map, Crown, HelpCircle, ArrowLeft, ArrowRight, X,
+  Sparkles, Star, Map, Plus, BookOpen, Dices, Users, Mail, Trophy, Grid3x3, Swords, Compass, Crown, HelpCircle, Rocket,
+  ArrowLeft, ArrowRight, X,
 } from 'lucide-react';
 
 // Présentation de Kromadex : un écran par grande fonctionnalité.
 // S'ouvre une seule fois après l'inscription, et se revoit depuis la page Aide.
+// Les textes finissent par un point ; les points de liste, jamais.
 const ECRANS = [
   {
     icone: Sparkles, titre: 'Bienvenue dans Kromadex',
-    texte: 'Ton carnet de coloriages et une communauté de coloristes. Chaque coloriage, épreuve ou combat te fait gagner des XP pour monter de niveau.',
+    texte: 'Ton application pour rassembler tes coloriages et tisser des liens avec d’autres coloristes.',
+  },
+  {
+    icone: Star, titre: 'XP et niveaux',
+    texte: 'Tes XP te font monter de niveau et débloquent des titres spéciaux.',
+    points: ['Ton titre s’affiche sur ton profil'],
+  },
+  {
+    icone: Map, titre: 'Quêtes',
+    texte: 'Elles se complètent toutes seules en utilisant l’appli.',
+    points: ['Tu peux les consulter sur ton profil'],
   },
   {
     icone: Plus, titre: 'Ajouter un coloriage',
-    texte: 'Le bouton + du menu du bas : ta photo, le tome et la page, tes codes couleurs et un mémo privé.',
-    points: ['Publie-le dans la communauté si tu veux le partager', 'Ajoute des mots-clefs pour retrouver une page facilement'],
+    texte: 'Le bouton + du menu du bas te permet d’ajouter un coloriage et tous ses détails : une photo, le tome ou le livre dans lequel il se trouve, le numéro de page, les codes couleurs et même un mémo privé.',
+    points: ['Publie-le dans la communauté pour que les autres coloristes voient tes talents', 'Ajoute des mots-clefs pour retrouver une page facilement et t’aider dans les différentes épreuves'],
   },
   {
     icone: BookOpen, titre: 'Ta bibliothèque',
-    texte: 'Ajoute tes tomes (coloriage mystère) et tes livres (Cozy colo) : ta progression se remplit toute seule.',
-    points: ['Ma collection : tes crayons et feutres', 'La Roue du destin choisit pour toi une page pas encore faite'],
+    texte: 'Ajoute tes tomes de coloriage mystère et tes livres de Cozy colo pour suivre ta progression, qui se remplit toute seule.',
+    points: ['Dans Ma collection, tu peux ajouter les différents crayons que tu possèdes'],
+  },
+  {
+    icone: Dices, titre: 'Roue du Destin',
+    texte: 'Elle te permet de choisir un coloriage au hasard parmi ta collection.',
+    points: ['Tu peux aussi manipuler le Destin et choisir un tome ou un livre précis'],
   },
   {
     icone: Users, titre: 'La communauté',
-    texte: 'Le fil des coloriages publiés : J’aime, commentaires, abonnements et recherche de codes couleurs.',
-    points: ['Les missives : les nouvelles de Kromadex, dans ton profil', 'Un point rouge t’indique quand il y a du nouveau à lire'],
+    texte: 'C’est le fil des coloriages publiés : tu peux interagir avec chaque publication, t’abonner à d’autres coloristes et même voir les codes couleurs utilisés.',
+    points: ['Plus tu interagis, plus tu fais vivre la communauté'],
+  },
+  {
+    icone: Mail, titre: 'Les missives',
+    texte: 'Elles se trouvent dans ton profil et racontent les nouvelles de Kromadex.',
+    points: ['Un point rouge t’indique lorsqu’il y a du nouveau à lire'],
   },
   {
     icone: Trophy, titre: 'Les épreuves',
-    texte: 'Un thème, un coloriage, puis l’Assemblée (les membres) rend son verdict. Les coloriages sont anonymes.',
+    texte: 'Ce sont des challenges de coloriage avec certaines contraintes. Tu peux y remporter des XP, des badges et différentes récompenses.',
     points: [
-      'Épreuve mensuelle officielle : la personne gagnante devient Chef·fe des coloristes',
-      'Épreuves des Sentinelles et des Chef·fes',
-      'Épreuves de groupe : un objectif à atteindre ensemble',
+      'Épreuves mensuelles : chaque mois, je crée une épreuve. Les participations sont individuelles. La personne gagnante devient Chef.fe des coloristes pour un mois et choisit la thématique d’une prochaine épreuve',
+      'Épreuves des Sentinelles et des Chef.fes : ces deux rôles de la communauté peuvent créer une épreuve sur la thématique de leur choix',
+      'Épreuves de groupe : tous les coloristes peuvent créer des épreuves communautaires',
     ],
   },
   {
     icone: Grid3x3, titre: 'Les bingos',
-    texte: 'Une grille de 3 x 3 cases par mois. Ajoute un coloriage dans chaque case qui correspond : lignes et grille complète donnent des XP.',
+    texte: 'Chaque mois, il y a deux grilles de bingo de 3 x 3. Tu ajoutes un coloriage dans chaque case qui correspond à ses critères.',
+    points: ['Tu peux évidemment gagner des XP'],
   },
   {
     icone: Swords, titre: 'Les combats',
     points: [
-      'Duel chromatique : tu invites une personne que tu suis (et qui te suit) sur un même thème',
-      'Joute ouverte : tu lances un appel, quelqu’un l’accepte librement',
-      'Tournoi du royaume : 8 ou 16 coloristes, ronde après ronde jusqu’à la finale',
+      'Duel chromatique : tu invites une personne que tu suis (et qui te suit) à faire un coloriage sur le même thème',
+      'Joute ouverte : tu lances un appel au Destin et quelqu’un peut l’accepter librement',
+      'Tournoi du royaume : 8 ou 16 coloristes s’affrontent ronde après ronde jusqu’à la finale',
     ],
-    texte: 'Des coloristes s’affrontent sur un thème, l’Assemblée choisit le gagnant.',
   },
   {
     icone: Compass, titre: 'Les aventures',
-    texte: 'Des activités spéciales avec des contraintes à respecter, à faire avec les coloriages de tes tomes et livres.',
+    texte: 'Ce sont des activités spéciales avec des contraintes à respecter, qui te donnent des XP et plusieurs récompenses à la clef.',
     points: [
-      'Expédition : courte, liée à une fête, un seul coloriage',
-      'Épopée : 2 semaines, toute la communauté s’unit pour vaincre un dragon',
-      'Prophétie : 1 par année, des étapes secrètes révélées chaque semaine',
+      'Expédition : généralement de courte durée, elle est liée à une fête et demande peu de coloriages',
+      'Épopée : elle dure 2 semaines, et la communauté s’unit pour vaincre un dragon qui sème la terreur dans un royaume. Plusieurs coloriages devront être soumis',
+      'Prophétie : il n’y en a qu’une par année, et différentes étapes sont dévoilées chaque semaine',
     ],
-  },
-  {
-    icone: Map, titre: 'XP, niveaux et quêtes',
-    texte: 'Tes XP te font monter de niveau et débloquent des titres. Les quêtes se complètent toutes seules en utilisant l’appli.',
-    points: ['Reviens plusieurs jours de suite pour un bonus de série', 'Tes récompenses s’affichent sur ton profil'],
   },
   {
     icone: Crown, titre: 'Les rôles',
     texte: 'La couleur d’un pseudo montre le rôle de la personne.',
     roles: [
-      ['var(--coloriste)', 'Coloriste', 'tout le monde au départ'],
-      ['var(--chef)', 'Chef·fe des coloristes', 'a gagné l’épreuve du mois'],
-      ['var(--sentinelle)', 'Sentinelle du Kromadex', 'veille sur la communauté'],
+      ['var(--coloriste)', 'Coloriste', 'les membres de l’Assemblée'],
+      ['var(--chef)', 'Chef.fe des coloristes', 'a gagné une épreuve mensuelle'],
+      ['var(--sentinelle)', 'Sentinelle', 'veille sur la communauté'],
       ['var(--admin)', 'Invocatrice des couleurs', 'la créatrice de Kromadex'],
-      ['var(--couleur-secondaire)', 'Pionnière ou Pionnier', 'a testé Kromadex avant tout le monde, en plus de son rôle'],
+      ['var(--noir)', 'Pionnière ou Pionnier', 'a testé Kromadex avant tout le monde'],
     ],
   },
   {
     icone: HelpCircle, titre: 'Besoin d’aide ?',
-    texte: 'Profil > Aide et demandes : pose une question, signale un bug ou propose une idée. Tu peux revoir cette présentation à tout moment depuis cette page.',
+    texte: 'Dans ton profil, tu trouveras Aide et demandes. Tu pourras y poser une question, signaler un bug ou proposer une idée. Tu peux aussi revoir cette présentation à tout moment depuis cette même page.',
+  },
+  {
+    icone: Rocket, titre: 'Bonne découverte',
+    texte: 'Je te laisse explorer les contrées de Kromadex et ses différentes ressources.',
   },
 ];
 

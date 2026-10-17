@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, BookOpen, Tag, X } from 'lucide-react';
 
-// Barre de recherche de l'accueil : tomes et livres par nom ou par mot-clé (ex. « Stitch »)
+// Barre de recherche de l'accueil : tomes et livres par nom ou par mot-clef (ex. « Stitch »)
 export default function RechercheAccueil() {
   const [q, setQ] = useState('');
   const [resultats, setResultats] = useState(null);
@@ -22,8 +22,8 @@ export default function RechercheAccueil() {
     <div style={{ marginBottom: 'var(--espace-3)' }}>
       <div style={{ position: 'relative' }}>
         <Search size={18} aria-hidden="true" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--texte-secondaire)' }} />
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Rechercher un tome, un livre ou un mot-clé"
-          placeholder="Rechercher un tome, un livre ou un mot-clé" style={{ width: '100%', paddingLeft: '40px', paddingRight: q ? '44px' : undefined, margin: 0 }} />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Rechercher un tome, un livre ou un mot-clef"
+          placeholder="Rechercher un tome, un livre ou un mot-clef" style={{ width: '100%', paddingLeft: '40px', paddingRight: q ? '44px' : undefined, margin: 0 }} />
         {q && (
           <button type="button" aria-label="Effacer la recherche" onClick={() => setQ('')}
             style={{ position: 'absolute', right: 0, top: 0, width: '44px', height: '44px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--texte-secondaire)' }}>

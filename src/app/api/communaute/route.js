@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { mesTypesVisibles } from '@/lib/visibilite';
+import { ajouterCodes } from '@/lib/palettesServeur';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,13 @@ export async function GET(req) {
       FROM pages p JOIN users u ON u.id = p.user_id
       WHERE p.publiee AND p.id = ${id}`;
     if (!fiche) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
-    // Coloriage consulté (quêtes « Première découverte », « Chasseur·se d'inspiration »)
+    // Palette dont s'inspire le coloriage, avec les codes de crayons et les packs utilisés
+    const [pal] = await sql`
+      SELECT pa.id, pa.nom, pa.couleurs, pa.packs,
+             COALESCE((SELECT json_agg(trim(concat_ws(' ', mb.brand_name, mb.sub_type, mb.range_name))) FROM marker_brands mb WHERE mb.id = ANY(pa.packs)), '[]') AS noms_packs
+      FROM pages p JOIN palettes pa ON pa.id = p.palette_id WHERE p.id = ${id}`;
+    fiche.palette = pal ? (await ajouterCodes([pal]))[0] : null;
+    // Coloriage consulté (quêtes « Première découverte », « Chasseur.se d'inspiration »)
     if (String(fiche.auteur_id) !== String(moi)) {
       await sql`INSERT INTO vues (user_id, genre, cible) VALUES (${moi}, 'fiche', ${id}) ON CONFLICT DO NOTHING`;
     }

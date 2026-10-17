@@ -293,7 +293,7 @@ export default function MesTomes({ tomes }) {
       </div>
 
       {menu && (
-        <div style={feuille} onClick={() => setMenu(null)}>
+        <div data-feuille style={feuille} onClick={() => setMenu(null)}>
           <div
             style={panneau}
             onClick={(e) => e.stopPropagation()}
@@ -360,7 +360,7 @@ export default function MesTomes({ tomes }) {
       )}
 
       {edition && (
-        <div style={feuille} onClick={() => setEdition(null)}>
+        <div data-feuille style={feuille} onClick={() => setEdition(null)}>
           <div
             style={panneau}
             onClick={(e) => e.stopPropagation()}

@@ -78,7 +78,7 @@ export default function CatalogueTomesPage() {
   );
 
   const q = recherche.trim().toLowerCase();
-  // Tomes trouvés par mot-clé (ex. « stitch » trouve les livres où Stitch apparaît)
+  // Tomes trouvés par mot-clef (ex. « stitch » trouve les livres où Stitch apparaît)
   const [parMotCle, setParMotCle] = useState(new Set());
   useEffect(() => {
     if (q.length < 2) { setParMotCle(new Set()); return; }
@@ -153,7 +153,7 @@ export default function CatalogueTomesPage() {
           <Search size={16} style={{ position: 'absolute', left: '10px', color: 'var(--texte-secondaire)' }} />
           <input
             type="search"
-            placeholder="Rechercher par nom ou mot-clé (ex. Stitch)"
+            placeholder="Rechercher par nom ou mot-clef (ex. Stitch)"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             style={{ width: '100%', paddingLeft: '32px' }}

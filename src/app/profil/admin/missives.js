@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { Send, Trash2, Check, X, Pin } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import { jourQuebec, ajouterJours } from '@/lib/temps';
+import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import Pseudo from '@/components/Pseudo';
 
-const STATUT = { publiee: 'Publiée', en_attente: "En attente de l'admin", refusee: 'Refusée' };
+const STATUT = { publiee: 'Publiée', en_attente: "En attente de l’Invocatrice des couleurs", refusee: 'Refusée' };
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 
 // Écrire des missives : l'admin publie directement, la modo envoie à l'admin pour approbation
@@ -18,6 +19,13 @@ export default function Missives({ role }) {
   const [epingler, setEpingler] = useState(false);
   const [echeance, setEcheance] = useState(() => ajouterJours(jourQuebec(), 7));
   const [message, setMessage] = useState('');
+  // Brouillon automatique dès qu'on commence à écrire la missive
+  const brouillon = useBrouillon('missive', { titre, contenu, commentaires, epingler, echeance }, Boolean(titre.trim() || contenu.trim()));
+  function reprendre(d) {
+    if (!d) return;
+    setTitre(d.titre || ''); setContenu(d.contenu || ''); setCommentaires(d.commentaires !== false);
+    setEpingler(Boolean(d.epingler)); if (d.echeance) setEcheance(d.echeance);
+  }
   const estAdmin = role === 'admin';
 
   async function charger() {
@@ -29,8 +37,8 @@ export default function Missives({ role }) {
   async function publier(e) {
     e.preventDefault();
     const r = await envoyer('/api/missives', 'POST', { titre, contenu, commentaires, epingleeJusqu: epingler ? echeance : null });
-    setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée' : "Missive envoyée à l'admin pour approbation") : r.error);
-    if (r.ok) { setTitre(''); setContenu(''); setEpingler(false); charger(); }
+    setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée' : "Missive envoyée à l’Invocatrice des couleurs pour approbation") : r.error);
+    if (r.ok) { setTitre(''); setContenu(''); setEpingler(false); brouillon.effacer(); charger(); }
   }
 
   async function decider(m, statut) {
@@ -53,12 +61,13 @@ export default function Missives({ role }) {
 
   return (
     <div style={colonne}>
+      <BandeauBrouillon nom="de missive" brouillon={brouillon} onReprendre={reprendre} />
       <form onSubmit={publier} className="carte" style={colonne}>
         <b>Nouvelle missive</b>
         <p style={aide}>
           {estAdmin
             ? "Elle s'ajoute aux Missives, avec une pastille pour chaque membre tant qu'elle n'est pas lue. Épinglée, elle s'affiche aussi en entier sur l'accueil jusqu'à la date choisie."
-            : "L'admin la relit et l'approuve avant qu'elle s'affiche sur l'accueil des membres."}
+            : "L’Invocatrice des couleurs la relit et l’approuve avant qu’elle s’affiche pour les membres."}
         </p>
         <label style={champ}>Titre
           <input value={titre} onChange={(e) => setTitre(e.target.value)} maxLength={120} placeholder="ex. L'épreuve d'octobre est lancée !" />
@@ -80,7 +89,7 @@ export default function Missives({ role }) {
           </label>
         )}
         <button type="submit" className="btn" disabled={!titre.trim()} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>
-          <Send size={16} /> {estAdmin ? 'Envoyer à tout le monde' : "Envoyer à l'admin"}
+          <Send size={16} /> {estAdmin ? 'Envoyer à tout le monde' : "Envoyer à l’Invocatrice des couleurs"}
         </button>
         {message && <small>{message}</small>}
       </form>

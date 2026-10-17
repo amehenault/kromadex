@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function ParametresPage() {
   const user = await getUser();
   if (!user) redirect('/login');
-  const [u] = await sql`SELECT role, pionnier, cadre, notifs, genre,
+  const [u] = await sql`SELECT role, pionnier, cadre, notifs, genre, title, unlocked_titles,
       EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'relique') AS relique
     FROM users WHERE id = ${user.id}`;
   return (
@@ -22,6 +22,9 @@ export default async function ParametresPage() {
       notifs={u.notifs || {}}
       cadres={cadresDebloques(u)}
       cadre={u.cadre}
+      role={u.role}
+      titre={u.title || ''}
+      titres={(u.unlocked_titles || []).filter((t) => t !== 'Coloriste débutant')}
     />
   );
 }

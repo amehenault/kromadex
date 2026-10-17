@@ -56,7 +56,7 @@ export default function ListeAventures() {
               {!a.terminee && <TempsRestant fin={a.fin_instant} />}
               {(a.mes_soumissions > 0 || a.inscrit) && (
                 <small style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: 'var(--btn)' }}>
-                  <Check size={14} aria-hidden="true" /> {a.mes_soumissions ? `${a.mes_soumissions} coloriage${a.mes_soumissions > 1 ? 's' : ''} soumis` : 'Inscrit·e'}
+                  <Check size={14} aria-hidden="true" /> {a.mes_soumissions ? `${a.mes_soumissions} coloriage${a.mes_soumissions > 1 ? 's' : ''} soumis` : 'Inscrit.e'}
                 </small>
               )}
             </span>

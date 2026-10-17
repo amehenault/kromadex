@@ -514,3 +514,48 @@ alter table users add column if not exists pionnier boolean not null default fal
 alter table users add column if not exists cadre text;
 -- Notifications push voulues, par type (une clé absente = activée)
 alter table users add column if not exists notifs jsonb not null default '{}'
+;
+-- Mots-clefs perso d'un coloriage (tome perso hors catalogue) ; ceux d'un tome du catalogue sont partagés dans mots_cles
+alter table pages add column if not exists mots_cles text[] not null default '{}'
+;
+-- Kromadex+ offert par l'Invocatrice : sans date limite si plus_offert_jusqu est vide ; raison = note pour elle-même
+alter table users add column if not exists plus_offert boolean not null default false;
+alter table users add column if not exists plus_offert_raison text not null default '';
+alter table users add column if not exists plus_offert_le timestamptz
+;
+-- Tirages de la Roue du Destin (résumé des participations dans Mes statistiques)
+create table if not exists roue_tirages (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  tome text not null,
+  page_no text not null,
+  tire_le timestamptz not null default now()
+)
+;
+-- Joute : nombre de coloristes choisi par la personne qui la lance (2, 3 ou 4) ; le verdict commence quand c'est complet
+alter table combats add column if not exists places int not null default 4
+;
+-- Quête du Destin : un tirage ajouté aux quêtes (14 jours pour colorier la page, 10 XP à la fin, sinon la quête disparaît)
+alter table roue_tirages add column if not exists quete_le timestamptz;
+alter table roue_tirages add column if not exists termine_le timestamptz
+;
+-- Inscription à un bingo (on s'inscrit avant d'ajouter ses coloriages ; la version gratuite permet 1 bingo par mois)
+create table if not exists bingo_inscriptions (
+  bingo_id int not null references bingos(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  cree_le timestamptz not null default now(),
+  primary key (bingo_id, user_id)
+)
+;
+-- Brouillons enregistrés automatiquement pendant la création (bingo, épreuve, aventure, missive)
+create table if not exists brouillons (
+  user_id uuid not null references users(id) on delete cascade,
+  cle text not null,
+  donnees jsonb not null,
+  maj_le timestamptz not null default now(),
+  primary key (user_id, cle)
+)
+;
+-- Palettes : packs de crayons choisis (vide = sans pack précis) ; coloriage inspiré d'une palette
+alter table palettes add column if not exists packs int[] not null default '{}';
+alter table pages add column if not exists palette_id int references palettes(id) on delete set null

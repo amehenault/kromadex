@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
-import { verifierLimite } from '@/lib/abonnement';
 import { prevenir } from '@/lib/push';
 
 // Ajouter un coloriage à une case de bingo ({ bingoId, case, pageId }), ou le retirer ({ bingoId, case } sans coloriage).
@@ -26,8 +25,9 @@ export async function POST(req) {
   if (!isId(String(pageId))) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
   const [p] = await sql`SELECT 1 FROM pages WHERE id = ${pageId} AND user_id = ${user.id} AND image_b64 IS NOT NULL`;
   if (!p) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
-  const limite = await verifierLimite(user.id, 'bingos', { bingoId: b.id });
-  if (limite) return limite;
+  // Il faut d'abord s'inscrire au bingo (c'est là que la limite de la version gratuite s'applique)
+  const [inscrit] = await sql`SELECT 1 FROM bingo_inscriptions WHERE bingo_id = ${b.id} AND user_id = ${user.id}`;
+  if (!inscrit) return NextResponse.json({ error: 'Inscris-toi d’abord à ce bingo' }, { status: 403 });
   await sql`INSERT INTO bingo_cases (bingo_id, user_id, case_no, page_id) VALUES (${b.id}, ${user.id}, ${n}, ${pageId})
     ON CONFLICT (bingo_id, user_id, case_no) DO UPDATE SET page_id = EXCLUDED.page_id, valide = NULL, valide_par = NULL`;
   prevenir('validation', { postes: ['admin', 'modo'] }, { titre: 'Case de bingo à valider', texte: 'Un coloriage attend ta validation.', lien: '/profil/admin?onglet=validation' }, user.id);

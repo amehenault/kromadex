@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { lirePublication } from '@/lib/pages';
+import { lirePublication, lirePalette } from '@/lib/pages';
 import { retirerXP } from '@/lib/series';
 
 export async function PUT(req, { params }) {
@@ -19,6 +19,9 @@ export async function PUT(req, { params }) {
     const codes = formData.get('codes');
     const file = formData.get('image');
     const pub = lirePublication(formData);
+    // Palette dont s'inspire le coloriage (gardée telle quelle si le champ n'est pas envoyé)
+    const changePalette = formData.has('palette_id');
+    const paletteId = changePalette ? await lirePalette(formData, user.id) : null;
 
     if (file && typeof file === 'object' && file.size > 0) {
       const bytes = await file.arrayBuffer();
@@ -57,6 +60,7 @@ export async function PUT(req, { params }) {
       `;
     }
 
+    if (changePalette) await sql`UPDATE pages SET palette_id = ${paletteId} WHERE id = ${id} AND user_id = ${user.id}`;
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     revalidatePath('/');
     revalidatePath(`/pages/${id}`);

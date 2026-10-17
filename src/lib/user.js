@@ -5,7 +5,7 @@ export const calculateLevel = calculerNiveau;
 
 export async function getUserProfile(userId) {
   const users = await sql`
-    SELECT id, email, xp, level, role, cheffe_expires_at, title, unlocked_titles, pseudo, name, genre, types_pratiques, types_vus, pionnier, cadre,
+    SELECT id, email, xp, level, role, cheffe_expires_at, title, unlocked_titles, pseudo, name, genre, types_pratiques, types_vus, pionnier, cadre, plus_offert, plus_offert_jusqu,
       (avatar_b64 IS NOT NULL) AS a_avatar, avatar_maj
     FROM users
     WHERE id = ${userId}

@@ -42,3 +42,12 @@ export function lirePublication(f) {
   const publiee = f.get('publiee') === '1' && TYPES.includes(type);
   return { publiee, type: TYPES.includes(type) ? type : '' };
 }
+
+// Palette dont s'inspire un coloriage (palette_id) : la sienne ou une palette partagée, sinon aucune
+export async function lirePalette(f, userId) {
+  const { sql } = await import('@/lib/db');
+  const id = parseInt(f.get('palette_id'), 10);
+  if (!id) return null;
+  const [p] = await sql`SELECT id FROM palettes WHERE id = ${id} AND (user_id = ${userId} OR partagee)`;
+  return p ? p.id : null;
+}

@@ -57,7 +57,7 @@ export async function rendreParchemin(userId) {
     WHERE id = (SELECT id FROM recompenses WHERE user_id = ${userId} AND genre = 'parchemin' AND utilise ORDER BY cree_le DESC LIMIT 1)`;
 }
 
-// Podium de l'Assemblée : les gagnant·es des 30 derniers jours, classé·es selon les XP de leurs victoires
+// Podium de l'Assemblée : les gagnant.es des 30 derniers jours, classé.es selon les XP de leurs victoires
 // (clés victoire:... du journal d'XP), avec les récompenses gagnées pendant cette période
 export async function podium() {
   return sql`

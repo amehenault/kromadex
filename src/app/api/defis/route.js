@@ -8,7 +8,7 @@ import { cloturerEpreuves } from '@/lib/clotures';
 import { ajouterJours } from '@/lib/temps';
 import { verifierLimite } from '@/lib/abonnement';
 
-// Une épreuve dure un mois moins un jour : les gagnant·es sont annoncé·es le dernier jour du mois
+// Une épreuve dure un mois moins un jour : les gagnant.es sont annoncé.es le dernier jour du mois
 const veilleFinDuMois = (iso) => ajouterJours(finDuMois(iso), -1);
 // Réglages de la récompense : titre exclusif, image du badge, sceau de la cheffe (1 à 6)
 const reglages = (c) => ({
@@ -46,7 +46,7 @@ export async function GET(req) {
            to_char(d.debut, 'YYYY-MM-DD') AS debut, to_char(d.fin, 'YYYY-MM-DD') AS fin,
            (((d.fin + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant,
            (d.debut > (now() AT TIME ZONE 'America/Toronto')::date) AS programme,
-           d.choisi_par AS createur_id, u.pseudo AS choisi_par, u.name AS nom_createur, u.role AS role_createur,
+           d.choisi_par AS createur_id, u.pseudo AS choisi_par, u.name AS nom_createur, u.role AS role_createur, u.genre AS genre_createur,
            (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM defi_participations p WHERE p.defi_id = d.id) AS participants,
            (SELECT count(*)::int FROM defi_participations p WHERE p.defi_id = d.id AND p.page_id IS NOT NULL) AS coloriages,

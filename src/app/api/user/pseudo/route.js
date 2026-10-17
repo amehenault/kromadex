@@ -5,14 +5,13 @@ import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } fr
 
 export const dynamic = 'force-dynamic';
 
-// Disponibilité d'un pseudo pendant la saisie (?q=)
+// Disponibilité d'un pseudo pendant la saisie (?q=), aussi pendant l'inscription (sans compte)
 export async function GET(req) {
   const user = await getUser();
-  if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const pseudo = nettoyerPseudo(new URL(req.url).searchParams.get('q'));
   const erreur = erreurPseudo(pseudo);
   if (erreur) return NextResponse.json({ libre: false, erreur });
-  if (await pseudoPris(pseudo, user.id)) return NextResponse.json({ libre: false, erreur: MESSAGE_PRIS });
+  if (await pseudoPris(pseudo, user?.id)) return NextResponse.json({ libre: false, erreur: MESSAGE_PRIS });
   return NextResponse.json({ libre: true });
 }
 

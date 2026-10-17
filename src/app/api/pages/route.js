@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { lirePublication } from '@/lib/pages';
+import { lirePublication, lirePalette } from '@/lib/pages';
 import { accorderSerie, accorderXP } from '@/lib/series';
 import { XP_PAGE } from '@/lib/niveaux';
 
@@ -19,6 +19,7 @@ export async function POST(req) {
     const codesRaw = formData.get('codes');
     const file = formData.get('image');
     const pub = lirePublication(formData);
+    const paletteId = await lirePalette(formData, user.id);
 
     let codes = '[]';
     if (codesRaw) {
@@ -41,9 +42,9 @@ export async function POST(req) {
     }
 
     const [nouvelle] = await sql`
-      INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type, publiee, type_coloriage, publiee_le)
+      INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type, publiee, type_coloriage, publiee_le, palette_id)
       VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${memo}, ${codes}::jsonb, ${base64}, ${imageType},
-              ${pub.publiee}, ${pub.type}, ${pub.publiee ? new Date().toISOString() : null})
+              ${pub.publiee}, ${pub.type}, ${pub.publiee ? new Date().toISOString() : null}, ${paletteId})
       RETURNING id
     `;
 

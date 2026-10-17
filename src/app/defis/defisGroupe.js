@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { CATEGORIES_DEFI } from '@/lib/defis';
 import CarteDefi from './carteDefi';
+import TexteErreur from '@/components/TexteErreur';
 
 const dansJours = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: dansJours(0), fin: dansJours(30), objectif: '', multiple: false });
@@ -63,7 +64,7 @@ export default function DefisGroupe({ defis, monId, onChange }) {
             <button type="submit" className="btn" disabled={occupe || !form.titre.trim() || !(Number(form.objectif) >= 1)} style={{ flex: 1, minHeight: '44px' }}>{form.id ? 'Enregistrer' : 'Créer l’épreuve'}</button>
             <button type="button" className="btn alt" onClick={() => setForm(null)}>Annuler</button>
           </div>
-          {erreur && <small style={{ color: 'var(--danger)' }}>{erreur}</small>}
+          {erreur && <small style={{ color: 'var(--danger)' }}><TexteErreur texte={erreur} /></small>}
         </form>
       )}
 

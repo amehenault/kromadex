@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Dices, Compass, BookOpen, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Dices, Compass, BookOpen, Pencil, Map, Check } from 'lucide-react';
 
 const auHasard = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Pages encore à faire d'un tome (le nombre total doit être connu)
@@ -13,6 +14,9 @@ const pagesLibres = (t) => {
 
 // Mode libre : un tome au hasard puis une page non faite. Mode guidé : on choisit le tome.
 export default function Roue({ tomes }) {
+  const router = useRouter();
+  const [tirage, setTirage] = useState(null); // id du tirage noté
+  const [enQuete, setEnQuete] = useState(false);
   const [mode, setMode] = useState('libre');
   const [tomeChoisi, setTomeChoisi] = useState('');
   const [angle, setAngle] = useState(0);
@@ -23,7 +27,7 @@ export default function Roue({ tomes }) {
   const admissibles = tomes.filter((t) => pagesLibres(t).length > 0);
 
   function lancer() {
-    setMessage(''); setResultat(null);
+    setMessage(''); setResultat(null); setTirage(null); setEnQuete(false);
     let tome;
     if (mode === 'libre') {
       if (!admissibles.length) {
@@ -42,7 +46,25 @@ export default function Roue({ tomes }) {
     const page = auHasard(pagesLibres(tome));
     setTourne(true);
     setAngle((a) => a + 1440 + Math.floor(Math.random() * 360));
-    setTimeout(() => { setTourne(false); setResultat({ tome, page }); }, 2200);
+    setTimeout(() => {
+      setTourne(false); setResultat({ tome, page });
+      // Le tirage est gardé (résumé des participations, quêtes du Destin)
+      fetch('/api/roue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tome: tome.nom, page }) })
+        .then((r) => r.json()).then((d) => d?.id && setTirage(d.id)).catch(() => {});
+    }, 2200);
+  }
+
+  // Ajouter le tirage aux quêtes (14 jours pour le colorier et gagner 10 XP)
+  async function ajouterQuete() {
+    if (!tirage) return false;
+    const r = await fetch('/api/roue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quete: tirage }) });
+    if (r.ok) setEnQuete(true);
+    return r.ok;
+  }
+  // Commencer : la page s'ajoute aussi aux quêtes, puis on ouvre un nouveau coloriage prérempli
+  async function commencer() {
+    await ajouterQuete();
+    router.push(`/pages/new?tome=${encodeURIComponent(resultat.tome.nom)}&page=${resultat.page}`);
   }
 
   const onglet = (cle, label, Icone) => (
@@ -58,7 +80,7 @@ export default function Roue({ tomes }) {
         <Link href="/coloriages" className="btn alt" aria-label="Retour à mes coloriages" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} aria-hidden="true" />
         </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>La Roue du destin</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Roue du Destin</h2>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: 'var(--espace-3)' }}>
@@ -103,6 +125,12 @@ export default function Roue({ tomes }) {
         </button>
       </div>
 
+      {/* Rappel du fonctionnement des quêtes du Destin */}
+      <p style={{ margin: '0 0 var(--espace-3)', fontSize: '0.88rem', color: 'var(--texte-secondaire)', background: 'var(--accent-doux)', borderRadius: 'var(--rayon-m)', padding: '10px 12px' }}>
+        Tu as 14 jours pour réaliser la page choisie par le Destin et gagner 10 XP, sinon cette quête disparaîtra.
+        Tu peux consulter le résultat de la Roue du Destin via ton Profil, dans la section Quêtes.
+      </p>
+
       {message && <p className="carte" style={{ margin: 0 }}>{message}</p>}
 
       {resultat && (
@@ -114,10 +142,20 @@ export default function Roue({ tomes }) {
             <small style={{ color: 'var(--texte-secondaire)' }}>Ton prochain coloriage</small>
             <b style={{ display: 'block', fontSize: '1.1rem', overflowWrap: 'anywhere' }}>{resultat.tome.nom}</b>
             <b style={{ display: 'block', fontSize: '1.6rem' }}>Page {resultat.page}</b>
-            <Link href={`/pages/new?tome=${encodeURIComponent(resultat.tome.nom)}&page=${resultat.page}`} className="btn"
-              style={{ marginTop: '6px', minHeight: '42px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Pencil size={16} aria-hidden="true" /> Commencer
-            </Link>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+              <button type="button" className="btn" onClick={commencer} style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Pencil size={16} aria-hidden="true" /> Commencer
+              </button>
+              {enQuete ? (
+                <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: 'var(--btn)', minHeight: '44px' }}>
+                  <Check size={16} aria-hidden="true" /> Ajoutée à tes quêtes
+                </small>
+              ) : (
+                <button type="button" className="btn alt" onClick={ajouterQuete} disabled={!tirage} style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Map size={16} aria-hidden="true" /> Ajouter à mes quêtes
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

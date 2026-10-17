@@ -6,9 +6,10 @@ import { useFuseau, TempsRestant } from '@/components/Fuseau';
 import { formaterInstant } from '@/lib/temps';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import Pseudo from '@/components/Pseudo';
+import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
-const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef·fe' };
+const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef.fe' };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '', titre_gagnant: '', image: '', sceau: 1 });
 const DOSSIER_BADGE = { officiel: 'epreuve/mensuelles', modo: 'epreuve/sentinelles' };
 
@@ -25,6 +26,8 @@ export default function Defis({ role, monId }) {
   const estAdmin = role === 'admin';
   const fuseau = useFuseau();
   const genre = estAdmin ? 'officiel' : role; // 'modo' ou 'cheffe'
+  // Brouillon automatique dès qu'on commence à écrire l'épreuve
+  const brouillon = useBrouillon('epreuve', form, Boolean(form.titre.trim() || form.description.trim()));
 
   async function charger() {
     const res = await fetch('/api/defis?gestion=1');
@@ -38,7 +41,7 @@ export default function Defis({ role, monId }) {
     setMessage(r.ok
       ? (r.debut ? `Épreuve enregistrée, active à partir du ${jour(r.debut)}` : 'Épreuve enregistrée')
       : r.error);
-    if (r.ok) { setForm(vide()); charger(); }
+    if (r.ok) { setForm(vide()); brouillon.effacer(); charger(); }
   }
 
   function enregistrer(e) {
@@ -65,10 +68,11 @@ export default function Defis({ role, monId }) {
       ? `Tu as jusqu’au ${formaterInstant(delai.limite, fuseau)} pour créer ton épreuve de cheffe. Elle commence dès que tu l’enregistres et dure jusqu’à la fin de ton mandat.`
       : 'Le délai de 7 jours après ta nomination est passé : tu ne peux plus créer d’épreuve de cheffe pour ce mandat.';
   const titreForm = estAdmin ? (form.id ? "Modifier l'épreuve officielle" : 'Nouvelle épreuve officielle')
-    : role === 'modo' ? 'Mon épreuve de sentinelle du mois' : 'Mon épreuve de chef·fe';
+    : role === 'modo' ? 'Mon épreuve de sentinelle du mois' : 'Mon épreuve de chef.fe';
 
   return (
     <div style={colonne}>
+      <BandeauBrouillon nom="d’épreuve" brouillon={brouillon} onReprendre={(d) => d && setForm({ ...vide(), ...d })} />
       <form onSubmit={enregistrer} className="carte" style={colonne}>
         <b>{titreForm}</b>
         <p style={aide}>
@@ -129,7 +133,7 @@ export default function Defis({ role, monId }) {
 
       {visibles.length > 0 && (
         <div className="carte" style={colonne}>
-          <b>{estAdmin ? 'Épreuves officielles, de sentinelle et de chef·fe' : 'Mes épreuves'}</b>
+          <b>{estAdmin ? 'Épreuves officielles, de sentinelle et de chef.fe' : 'Mes épreuves'}</b>
           {visibles.map((d) => (
             <div key={d.id} style={ligneCarte}>
               <small style={{ ...aide, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
@@ -153,7 +157,7 @@ export default function Defis({ role, monId }) {
       )}
 
       {choixDepart && (
-        <div onClick={() => setChoixDepart(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <div data-feuille onClick={() => setChoixDepart(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div role="dialog" aria-label="Début de l'épreuve" onClick={(e) => e.stopPropagation()}
             style={{ width: '100%', maxWidth: '520px', background: 'var(--fond-carte)', borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', padding: 'var(--espace-4)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <b>Veux-tu que cette épreuve soit active dès aujourd'hui ou le 1er du mois prochain ?</b>

@@ -50,12 +50,19 @@ export async function vueVerdict(activite, userId) {
   const a = lireActivite(activite);
   const l = a && (await lice(a));
   if (!l) return null;
-  const pages = l.entrees.length
+  let pages = l.entrees.length
     ? await sql`
         SELECT id, OCTET_LENGTH(image_b64) AS img_size, user_id = ${userId} AS a_moi
         FROM pages WHERE id = ANY(${l.entrees.map((e) => e.page_id)})
         ORDER BY md5(id::text || ${String(userId)})`
     : [];
+  // Combats et matchs de tournoi : « Coloriste 1, 2… » dans l'ordre de soumission, le même pour tout le monde
+  const numerote = a.genre !== 'epreuve';
+  if (numerote) {
+    const ordre = [...l.entrees].sort((x, y) => new Date(x.soumis_le) - new Date(y.soumis_le)).map((e) => String(e.page_id));
+    pages = [...pages].sort((x, y) => ordre.indexOf(String(x.id)) - ordre.indexOf(String(y.id)))
+      .map((p) => ({ ...p, numero: ordre.indexOf(String(p.id)) + 1 }));
+  }
   const [mien] = await sql`SELECT page_id, changements FROM verdicts WHERE activite = ${activite} AND user_id = ${userId}`;
   const [{ total }] = await sql`SELECT count(*)::int AS total FROM verdicts WHERE activite = ${activite}`;
   const participant = l.exclus.includes(String(userId));
@@ -63,7 +70,8 @@ export async function vueVerdict(activite, userId) {
     activite,
     ouvert: l.ouvert,
     fin: l.fin,
-    fiches: pages.map((p) => ({ id: p.id, img_size: p.img_size, a_moi: p.a_moi })),
+    numerote,
+    fiches: pages.map((p) => ({ id: p.id, img_size: p.img_size, a_moi: p.a_moi, numero: p.numero || null })),
     monVerdict: mien?.page_id || null,
     peutChanger: !mien || mien.changements < 1,
     total,
@@ -95,7 +103,7 @@ export async function rendreVerdict(activite, userId, pageId) {
   return { ok: true };
 }
 
-// Gagnant·e d'après les verdicts. Égalité : le coloriage soumis le premier l'emporte.
+// Gagnant.e d'après les verdicts. Égalité : le coloriage soumis le premier l'emporte.
 // sansVote : 'aucun' (pas de gagnant sans verdict) ou 'premier' (le premier soumis l'emporte, pour les tournois)
 export async function gagnantVerdict(activite, entrees, { sansVote = 'aucun', egalite = 'premier' } = {}) {
   if (!entrees.length) return null;

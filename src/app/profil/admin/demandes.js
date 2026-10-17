@@ -6,7 +6,7 @@ import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 import Pseudo from '@/components/Pseudo';
 
 // Demandes envoyées depuis la page Aide, en 3 catégories.
-// Les demandes à traiter passent en premier ; résolues, ajoutées et refusées sont archivées (jamais supprimées).
+// Les demandes à traiter passent en premier ; résolues, ajoutées et refusées sont archivées, puis supprimées après 30 jours.
 export default function Demandes() {
   const [demandes, setDemandes] = useState([]);
   const [groupe, setGroupe] = useState('questions');
@@ -55,6 +55,7 @@ export default function Demandes() {
           <Archive size={16} aria-hidden="true" /> Archivées
         </button>
       </div>
+      {archives && <small style={aide}>Les demandes archivées sont supprimées automatiquement 30 jours après leur archivage.</small>}
       {message && <small>{message}</small>}
 
       {visibles.map((d) => {

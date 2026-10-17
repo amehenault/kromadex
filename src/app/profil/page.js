@@ -4,14 +4,13 @@ import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
+import { typesVisibles } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
-import { parcheminDuMois } from '@/lib/abonnement';
+import { parcheminDuMois, offertActif } from '@/lib/abonnement';
 import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
-import MesTomes from './mesTomes';
 import { listerMesTomes } from '@/lib/mesTomes';
 import {
   Settings,
@@ -30,6 +29,7 @@ import {
   Map,
   Swords,
   ChevronRight,
+  TrendingUp,
   Paintbrush,
   Compass,
   CalendarClock,
@@ -38,8 +38,10 @@ import {
 import { recompensesDe } from '@/lib/recompensesServeur';
 import { rappelsDuJour } from '@/lib/planification';
 import MesRecompenses from '@/components/MesRecompenses';
+import Inventaire, { OBJETS } from '@/components/Inventaire';
 import { verifierQuetes } from '@/lib/quetes';
-import BoutonDeconnexion from './boutonDeconnexion';
+import { quetesDestin } from '@/lib/quetesDestin';
+import QuetesDuDestin from '@/components/QuetesDuDestin';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +53,8 @@ export default async function ProfilPage() {
   // Quêtes : les XP des quêtes terminées sont donnés ici aussi (avant de lire le profil),
   // puis on garde les 2 quêtes non terminées les plus avancées (en pourcentage, puis le moins de reste)
   const { liste: quetes } = await verifierQuetes(authUser.id);
+  // Quêtes du Destin (Roue du Destin) en cours
+  const destin = (await quetesDestin(authUser.id)).filter((q) => !q.termine_le);
 
   const profile = await getUserProfile(authUser.id);
   // Pastilles : missives non lues et réponses de l'Invocatrice pas encore vues
@@ -69,21 +73,11 @@ export default async function ProfilPage() {
   // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
   const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
-  // Tomes du profil avec leur progression automatique
+  // Nombre de tomes et livres (la progression détaillée est dans la page Ma progression)
   const mesTomes = await listerMesTomes(authUser.id);
-  // Ma progression : tomes (coloriage mystère) et livres (Cozy colo) commencés séparés, puis les non commencés.
-  // Un tome perso ou d'un autre type va avec les tomes, sauf pour une personne qui ne voit que le Cozy colo.
   const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
   const voitMystere = visibles.includes('mystere');
   const voitCozy = visibles.includes('cozy');
-  const estLivre = (t) => t.type === 'cozy' || (t.type !== 'mystere' && voitCozy && !voitMystere);
-  const nonCommences = voitMystere && !voitCozy ? 'Tomes non commencés'
-    : voitCozy && !voitMystere ? 'Livres non commencés' : 'Tomes et livres non commencés';
-  const groupesProgression = [
-    { cle: 'tomes', titre: 'Tomes commencés', tomes: mesTomes.filter((t) => t.faites > 0 && !estLivre(t)) },
-    { cle: 'livres', titre: 'Livres commencés', tomes: mesTomes.filter((t) => t.faites > 0 && estLivre(t)) },
-    { cle: 'non', titre: nonCommences, tomes: mesTomes.filter((t) => !t.faites) },
-  ].filter((g) => g.tomes.length);
   const prochesQuetes = quetes
     .filter((q) => !q.terminee)
     .sort((a, b) => b.valeur / b.objectif - a.valeur / a.objectif || (a.objectif - a.valeur) - (b.objectif - b.valeur))
@@ -91,8 +85,8 @@ export default async function ProfilPage() {
 
   const xpActuel = profile?.xp || 0;
   const niv = progressionNiveau(xpActuel);
-  const nomAffiche =
-    profile?.name || profile?.pseudo || authUser.email;
+  // Nom affiché : seulement celui choisi par la personne (le pseudo s'affiche à part, juste en dessous)
+  const nomAffiche = profile?.name || '';
   const pseudoAffiche = profile?.pseudo;
   const role = profile?.role || 'coloriste';
 
@@ -152,6 +146,18 @@ export default async function ProfilPage() {
           <Settings size={16} aria-hidden="true" />
         </Link>
       </div>
+
+      {/* Mémo de l'Invocatrice : activités à planifier */}
+      {rappels.length > 0 && (
+        <Link href="/activites-a-venir" className="carte"
+          style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: 'var(--espace-3)', border: '2px solid var(--danger)', color: 'inherit', textDecoration: 'none' }}>
+          {rappels.map((r) => (
+            <span key={r.cle} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--danger)', fontWeight: 700, fontSize: '0.92rem' }}>
+              <AlertTriangle size={18} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: '1px' }} /> <span>{r.texte}</span>
+            </span>
+          ))}
+        </Link>
+      )}
 
       {/* En-tête : avatar, nom, poste, niveau */}
       <div
@@ -221,15 +227,17 @@ export default async function ProfilPage() {
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
-          <b
-            style={{
-              display: 'block',
-              fontSize: '1.15rem',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            {nomAffiche}
-          </b>
+          {nomAffiche && (
+            <b
+              style={{
+                display: 'block',
+                fontSize: '1.15rem',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {nomAffiche}
+            </b>
+          )}
 
           {/* Pseudo dans la couleur du poste, modifiable à tout moment */}
           <ModifierPseudo pseudo={pseudoAffiche || ''} role={role} />
@@ -242,8 +250,8 @@ export default async function ProfilPage() {
             }}
           >
             {/* Pionnière ou Pionnier s'ajoute au poste (l'Invocatrice garde seulement son titre) */}
-            {profile?.pionnier && role !== 'admin' && <span style={{ color: 'var(--couleur-secondaire)' }}>{nomPionnier(profile?.genre)} · </span>}
-            {nomPoste(role)}
+            {profile?.pionnier && role !== 'admin' && <>{nomPionnier(profile?.genre)} · </>}
+            {nomPoste(role, profile?.genre)}
           </small>
 
           {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
@@ -267,10 +275,22 @@ export default async function ProfilPage() {
             {titreNiveau(niv.niveau, profile?.genre)}
           </Link>
 
-          {/* Titre spécial attribué par l'admin (ex. Chef des coloristes) */}
+          {/* Titre spécial choisi par la personne dans ses Paramètres (ex. Cheffe des coloristes) */}
           {profile?.title && profile.title !== 'Coloriste débutant' && (
             <small style={{ display: 'block', fontWeight: 600, color: 'var(--texte-secondaire)' }}>
               {profile.title}
+            </small>
+          )}
+
+          {/* Kromadex+ offert par l'Invocatrice : jusqu'à quand */}
+          {role !== 'admin' && offertActif(profile) && (
+            <small style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px', fontWeight: 600 }}>
+              <img src="/kromadex-plus.svg" alt="Kromadex+" style={{ height: '14px', width: 'auto' }} />
+              <span>
+                offert par l’Invocatrice des couleurs · {profile.plus_offert_jusqu
+                  ? `valable jusqu’au ${new Date(new Date(profile.plus_offert_jusqu) - 1).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Toronto' })}`
+                  : 'sans date de fin'}
+              </span>
             </small>
           )}
         </div>
@@ -374,19 +394,9 @@ export default async function ProfilPage() {
         </div>
       </div>
 
-      {/* Mémo de l'Invocatrice : activités à planifier */}
-      {rappels.length > 0 && (
-        <Link href="/activites-a-venir" className="carte"
-          style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: 'var(--espace-3)', border: '2px solid var(--danger)', color: 'inherit', textDecoration: 'none' }}>
-          {rappels.map((r) => (
-            <span key={r.cle} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--danger)', fontWeight: 700, fontSize: '0.92rem' }}>
-              <AlertTriangle size={18} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: '1px' }} /> <span>{r.texte}</span>
-            </span>
-          ))}
-        </Link>
-      )}
+      <MesRecompenses recompenses={recompenses.filter((r) => !OBJETS.includes(r.genre))} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
 
-      <MesRecompenses recompenses={recompenses} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
+      <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} />
 
       {/* Les 2 quêtes les plus proches d'être réussies */}
       {prochesQuetes.length > 0 && (
@@ -416,22 +426,22 @@ export default async function ProfilPage() {
         </div>
       )}
 
+      {/* Pages choisies par la Roue du Destin, à colorier */}
+      {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
+
       {/* Accès rapides */}
       <div className="profil-acces">
         {['admin', 'modo'].includes(role) && (
           <Link
             href="/profil/admin"
-            className={
-              role === 'admin'
-                ? 'btn profil-acces-admin'
-                : 'btn profil-acces-lien'
-            }
+            className="btn profil-acces-admin"
           >
             <Shield size={22} aria-hidden="true" />
             <span>
               {role === 'admin' ? 'Espace de l’Invocatrice' : 'Espace sentinelle'}
               {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
             </span>
+            {role === 'admin' && nonLus.demandes > 0 && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 
@@ -452,7 +462,7 @@ export default async function ProfilPage() {
           >
             <Trophy size={22} aria-hidden="true" />
             <span>
-              Créer mon épreuve de chef·fe
+              Créer mon épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
               {profile?.cheffe_expires_at && (
                 <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
                   Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
@@ -462,14 +472,33 @@ export default async function ProfilPage() {
           </Link>
         )}
 
-        {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) */}
-        <Link
+        {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
+        {role !== 'admin' && <Link
           href="/kromadex-plus"
           className="btn profil-acces-lien"
           aria-label="Kromadex+ : gérer l’abonnement"
         >
           <img src="/kromadex-plus.svg" alt="" style={{ height: '22px', width: 'auto', maxWidth: '100%' }} />
           <span>Gérer l’abonnement</span>
+        </Link>}
+
+        {role !== 'admin' && (
+          <Link
+            href="/aide"
+            className="btn profil-acces-lien"
+          >
+            <HelpCircle size={22} aria-hidden="true" />
+            <span>Aide et demandes</span>
+            {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
+          </Link>
+        )}
+
+        <Link
+          href="/profil/progression"
+          className="btn profil-acces-lien"
+        >
+          <TrendingUp size={22} aria-hidden="true" />
+          <span>{voitMystere && voitCozy ? 'Mes tomes et mes livres' : voitCozy ? 'Mes livres' : 'Mes tomes'}</span>
         </Link>
 
         <Link
@@ -493,7 +522,7 @@ export default async function ProfilPage() {
           className="btn profil-acces-lien"
         >
           <BookOpen size={22} aria-hidden="true" />
-          <span>{nomBibliotheque(typesVisibles(profile?.types_pratiques, profile?.types_vus))}</span>
+          <span>{voitMystere && voitCozy ? 'Ajouter un tome ou un livre' : voitCozy ? 'Ajouter un livre' : 'Ajouter un tome'}</span>
         </Link>
 
         {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo */}
@@ -503,7 +532,7 @@ export default async function ProfilPage() {
             className="btn profil-acces-lien"
           >
             <Paintbrush size={22} aria-hidden="true" />
-            <span>Suggestions de palettes de couleurs</span>
+            <span>Palettes de couleurs</span>
           </Link>
         )}
 
@@ -539,7 +568,7 @@ export default async function ProfilPage() {
           <span>Combats</span>
         </Link>
 
-        <Link
+        {role !== 'admin' && <Link
           href="/missives"
           className="btn profil-acces-lien"
           aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
@@ -547,7 +576,7 @@ export default async function ProfilPage() {
           <Mail size={22} aria-hidden="true" />
           <span>Missives</span>
           {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
-        </Link>
+        </Link>}
 
         <Link
           href={`/membre/${authUser.id}`}
@@ -557,37 +586,14 @@ export default async function ProfilPage() {
           <span>Mon profil public et mes abonnés</span>
         </Link>
 
-        <Link
-          href="/aide"
-          className="btn profil-acces-lien"
-        >
-          <HelpCircle size={22} aria-hidden="true" />
-          <span>Aide et demandes</span>
-          {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
-        </Link>
-
-        <Link
-          href="/parametres"
-          className="btn profil-acces-lien"
-        >
-          <Settings size={22} aria-hidden="true" />
-          <span>Paramètres</span>
-        </Link>
-
-        <BoutonDeconnexion />
       </div>
 
-      {/* Progression automatique : tomes commencés, livres commencés, puis non commencés, chacun dans son encadré */}
-      <h3 style={{ margin: '0 0 var(--espace-3)' }}>Ma progression</h3>
-      {groupesProgression.length ? groupesProgression.map((g) => (
-        <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
-          <h4 style={{ margin: '0 0 var(--espace-3)', fontSize: '1rem' }}>{g.titre}</h4>
-          <MesTomes tomes={g.tomes} />
-        </div>
-      )) : (
-        <div className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
-          <MesTomes tomes={[]} />
-        </div>
+      {/* Supprimer son compte (dans Paramètres, avec confirmation et mot de passe) */}
+      {role !== 'admin' && (
+        <Link href="/parametres#supprimer-compte"
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '44px', color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 600 }}>
+          Supprimer mon compte
+        </Link>
       )}
     </div>
   );

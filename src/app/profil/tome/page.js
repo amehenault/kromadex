@@ -26,7 +26,7 @@ export default async function TomePage({ searchParams }) {
   ]);
 
   const titre = cat?.nom || nom;
-  // On ne peut ajouter des mots-clés qu'aux tomes du catalogue qu'on possède
+  // On ne peut ajouter des mots-clefs qu'aux tomes du catalogue qu'on possède
   const possede = cat ? (await sql`SELECT 1 FROM user_tomes WHERE user_id = ${uid} AND tome_id = ${cat.id}`).length > 0 : false;
   const couverture = couv
     ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(couv.updated_at).getTime()}`

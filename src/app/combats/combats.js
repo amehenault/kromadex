@@ -6,11 +6,12 @@ import { Avatar, nomAuteur } from '@/app/communaute/outils';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
-import Verdict from '@/components/Verdict';
+import Verdict, { PastilleColoriste } from '@/components/Verdict';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { COMBATS, XP_COMBATS, THEMES_DUEL, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE } from '@/lib/activites';
 import Tournois from './tournois';
 import Pseudo from '@/components/Pseudo';
+import TexteErreur from '@/components/TexteErreur';
 
 const nomType = (v) => TYPES_COLORIAGE.find((t) => t.valeur === v)?.label || '';
 const nomTheme = (v) => THEMES_DUEL.find((t) => t.valeur === v)?.label || '';
@@ -20,7 +21,8 @@ const STATUT = {
 };
 
 // Combats : duels chromatiques et joutes ouvertes. Les coloriages restent anonymes pendant le verdict.
-export default function Combats({ inviter }) {
+// integre : affiché dans l'onglet Combats des Épreuves (sans titre ni marge de page)
+export default function Combats({ inviter, integre }) {
   const [onglet, setOnglet] = useState('combats');
   const [combats, setCombats] = useState(null);
   const [abonnements, setAbonnements] = useState([]);
@@ -71,10 +73,21 @@ export default function Combats({ inviter }) {
         </div>
         <b style={{ overflowWrap: 'anywhere' }}>{nomTheme(c.theme_type)} : {c.theme}</b>
         <small style={{ color: 'var(--texte-secondaire)' }}>
-          {STATUT[c.statut]} · {c.coloriages} coloriage{c.coloriages > 1 ? 's' : ''}{c.genre === 'joute' ? ` · ${c.participants} / ${COMBATS.maxJoute} coloristes` : ''}
+          {STATUT[c.statut]} · {c.coloriages} coloriage{c.coloriages > 1 ? 's' : ''}{c.genre === 'joute' ? ` · ${c.participants} / ${c.places || COMBATS.maxJoute} coloristes` : ''}
         </small>
-        {/* Les participant·es voient qui est dans le combat ; les autres membres, jamais */}
-        {c.adversaires?.length > 0 && (
+        {/* Joute : anonyme pour tout le monde, chaque personne est « Coloriste N » */}
+        {c.coloristes?.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {c.coloristes.map((x) => (
+              <span key={x.numero} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <PastilleColoriste n={x.numero} taille={24} />
+                <small style={{ color: 'var(--texte-secondaire)' }}>{x.moi ? '(toi)' : ''}{x.soumis ? ' · coloriage soumis' : ''}</small>
+              </span>
+            ))}
+          </div>
+        )}
+        {/* Duel : les deux personnes se connaissent ; les autres membres ne voient jamais qui participe */}
+        {c.genre === 'duel' && c.adversaires?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {c.adversaires.map((u) => (
               <span key={u.user_id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -115,13 +128,15 @@ export default function Combats({ inviter }) {
   const termines = liste.filter((c) => ['termine', 'refuse', 'annule'].includes(c.statut));
 
   return (
-    <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} aria-hidden="true" />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Combats</h2>
-      </div>
+    <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: integre ? 0 : 'var(--espace-3)' }}>
+      {!integre && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
+          <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <ArrowLeft size={16} aria-hidden="true" />
+          </Link>
+          <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Combats</h2>
+        </div>
+      )}
       <div role="tablist" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: 'var(--espace-3)' }}>
         {[['combats', 'Duels et joutes', Swords], ['tournois', 'Tournois', Crown]].map(([cle, label, Icone]) => (
           <button key={cle} type="button" role="tab" aria-selected={onglet === cle} className={onglet === cle ? 'btn' : 'btn alt'} onClick={() => setOnglet(cle)}
@@ -145,7 +160,7 @@ export default function Combats({ inviter }) {
             style={{ width: '100%', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 700, marginTop: '10px' }}>
             <Plus size={18} aria-hidden="true" /> Lancer un combat
           </button>
-          {erreur && !form && !choix && <small style={{ color: 'var(--danger)', display: 'block', marginTop: '6px' }}>{erreur}</small>}
+          {erreur && !form && !choix && <small style={{ color: 'var(--danger)', display: 'block', marginTop: '6px' }}><TexteErreur texte={erreur} /></small>}
 
           {invitations.length > 0 && <>{titre('Invitations reçues')}{invitations.map((c) => carte(c, [
             <button key="a" type="button" className="btn" style={petit} onClick={() => action({ action: 'accepter', id: c.id })}>Accepter le duel</button>,
@@ -184,7 +199,7 @@ export default function Combats({ inviter }) {
           <small style={{ color: 'var(--texte-secondaire)' }}>
             {form.genre === 'duel'
               ? `Tu invites une personne que tu suis et qui te suit. Elle a ${COMBATS.joursAcceptation} jours pour accepter, puis vous réalisez chacun un coloriage sur le même thème.`
-              : `Tu publies ton coloriage et tu lances un appel : jusqu’à ${COMBATS.maxJoute - 1} coloristes peuvent relever le défi avec un coloriage sur le même thème.`}
+              : `Tu publies ton coloriage et tu lances un appel : les coloristes qui relèvent le défi soumettent un coloriage sur le même thème. Tout est anonyme, et le verdict commence dès que la joute est complète.`}
           </small>
           <label style={champ}>Type de coloriage
             <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
@@ -196,10 +211,17 @@ export default function Combats({ inviter }) {
               {THEMES_DUEL.map((t) => <option key={t.valeur} value={t.valeur}>{t.label}</option>)}
             </select>
           </label>
-          <label style={champ}>{nomTheme(form.themeType)} choisi·e
+          <label style={champ}>{nomTheme(form.themeType)} choisi.e
             <input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} maxLength={80}
               placeholder={THEMES_DUEL.find((t) => t.valeur === form.themeType)?.aide} />
           </label>
+          {form.genre === 'joute' && (
+            <label style={champ}>Nombre de coloristes (toi comprise ou compris)
+              <select value={form.places || 4} onChange={(e) => setForm({ ...form, places: Number(e.target.value) })}>
+                {[2, 3, 4].map((n) => <option key={n} value={n}>{n} coloristes</option>)}
+              </select>
+            </label>
+          )}
           {form.genre === 'duel' && (
             <label style={champ}>Adversaire
               <select value={form.inviteId} onChange={(e) => setForm({ ...form, inviteId: e.target.value })}>
@@ -213,7 +235,7 @@ export default function Combats({ inviter }) {
           <button type="button" className="btn" onClick={creer} disabled={!form.theme.trim() || (form.genre === 'duel' && !form.inviteId)} style={{ minHeight: '48px', fontWeight: 700 }}>
             {form.genre === 'duel' ? 'Envoyer l’invitation' : 'Choisir mon coloriage'}
           </button>
-          {erreur && <small style={{ color: 'var(--danger)' }}>{erreur}</small>}
+          {erreur && <small style={{ color: 'var(--danger)' }}><TexteErreur texte={erreur} /></small>}
         </Feuille>
       )}
       {choix && (

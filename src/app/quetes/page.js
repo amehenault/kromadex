@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft, Compass, Palette, Heart, MessageCircle, BookOpen, Flame, CheckCircle2, Sparkles } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { CATEGORIES_QUETES, verifierQuetes } from '@/lib/quetes';
+import { quetesDestin } from '@/lib/quetesDestin';
+import QuetesDuDestin from '@/components/QuetesDuDestin';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +15,7 @@ export default async function QuetesPage() {
   const user = await getUser();
   if (!user) redirect('/login');
   const { liste, nouvelles } = await verifierQuetes(user.id);
+  const destin = await quetesDestin(user.id);
   const faites = liste.filter((q) => q.terminee).length;
   const xpGagnes = liste.filter((q) => q.terminee).reduce((s, q) => s + q.xp, 0);
 
@@ -35,6 +38,9 @@ export default async function QuetesPage() {
           {nouvelles.map((q) => <small key={q.id}>{q.titre} : +{q.xp} XP</small>)}
         </div>
       )}
+
+      {/* Pages tirées par la Roue du Destin (14 jours pour les colorier) */}
+      <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} />
 
       {CATEGORIES_QUETES.map((c) => {
         const Icone = ICONES[c.icone];

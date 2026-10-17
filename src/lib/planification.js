@@ -9,7 +9,12 @@ export { quand, texteRappel } from '@/lib/planificationTexte';
 //  - 1 mois avant chaque expédition (une par fête) ;
 //  - 2 mois avant chaque épopée (janvier, mars, juillet, septembre) et avant la prophétie (mai ou novembre :
 //    dès qu'une des deux est planifiée, il n'y a plus de rappel pour l'autre).
-// Tant qu'une activité n'est pas planifiée, le rappel revient chaque jour.
+// Tant qu'une activité n'est pas planifiée, le rappel reste affiché dans le profil de l'Invocatrice.
+// Notification push : tous les jours quand une activité est en retard (début dans JOURS_RETARD jours ou moins),
+// sinon aux 2 jours tant qu'elle n'est pas planifiée.
+// Les rappels ne commencent qu'à partir de DEBUT_RAPPELS.
+export const DEBUT_RAPPELS = '2026-11-01';
+export const JOURS_RETARD = 7;
 
 const PREAVIS = { mois: 14, expedition: 30, epopee: 61, prophetie: 61 };
 const iso = (a, m, j = 1) => `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
@@ -28,7 +33,7 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
   const liste = [];
   const ajouter = (x) => {
     const jours = ecart(aujourdhui, x.debut);
-    const rappel = !x.planifiee && jours <= x.preavis;
+    const rappel = !x.planifiee && jours <= x.preavis && aujourdhui >= DEBUT_RAPPELS;
     if (x.debut <= horizon || rappel) liste.push({ ...x, jours, rappel });
   };
 
@@ -77,7 +82,14 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
   return liste.sort((x, y) => x.debut.localeCompare(y.debut));
 }
 
-// Rappels du jour : les activités pas encore planifiées dont le préavis est commencé
+// Rappels du jour : les activités pas encore planifiées dont le préavis est commencé (en retard = 7 jours ou moins avant le début)
 export async function rappelsDuJour() {
-  return (await activitesAVenir()).filter((a) => a.rappel).map((a) => ({ ...a, texte: texteRappel(a) }));
+  return (await activitesAVenir()).filter((a) => a.rappel).map((a) => ({ ...a, enRetard: a.jours <= JOURS_RETARD, texte: texteRappel(a) }));
+}
+
+// Notification du jour : tous les jours s'il y a un retard, sinon un jour sur deux
+export function notifierAujourdhui(rappels, aujourdhui = jourQuebec()) {
+  if (!rappels.length) return false;
+  if (rappels.some((r) => r.enRetard)) return true;
+  return Math.round(new Date(`${aujourdhui}T12:00:00Z`).getTime() / 86400000) % 2 === 0;
 }

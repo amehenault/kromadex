@@ -21,7 +21,7 @@ export default function Quetes() {
   async function enregistrer(e) {
     e.preventDefault();
     const r = await envoyer('/api/quetes', 'POST', form);
-    setMessage(r.ok ? 'Quête enregistrée ✓' : r.error);
+    setMessage(r.ok ? 'Quête enregistrée' : r.error);
     if (r.ok) { setForm(vide()); charger(); }
   }
 

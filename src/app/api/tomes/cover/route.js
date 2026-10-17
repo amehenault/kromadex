@@ -4,7 +4,7 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-const DEFAULT_COVER_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400" fill="none"><rect width="300" height="400" fill="%239BD7C6"/><rect x="20" y="20" width="260" height="360" rx="12" fill="%23DEF2EC" stroke="%230E322A" stroke-width="3"/><text x="150" y="180" font-family="sans-serif" font-size="60" text-anchor="middle">📚</text><text x="150" y="240" font-family="sans-serif" font-size="18" font-weight="bold" fill="%230E322A" text-anchor="middle">KROMADEX</text><text x="150" y="265" font-family="sans-serif" font-size="13" fill="%23358B76" text-anchor="middle">Aucune couverture</text></svg>`;
+const DEFAULT_COVER_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400" fill="none"><rect width="300" height="400" fill="%239BD7C6"/><rect x="20" y="20" width="260" height="360" rx="12" fill="%23DEF2EC" stroke="%230E322A" stroke-width="3"/><text x="150" y="240" font-family="sans-serif" font-size="18" font-weight="bold" fill="%230E322A" text-anchor="middle">KROMADEX</text><text x="150" y="265" font-family="sans-serif" font-size="13" fill="%23358B76" text-anchor="middle">Aucune couverture</text></svg>`;
 
 export async function GET(req) {
   try {

@@ -9,6 +9,7 @@ const DUREES = [
   { jours: 3, label: 'Suspendre 3 jours' },
   { jours: 7, label: 'Suspendre 7 jours' },
   { jours: 30, label: 'Suspendre 30 jours' },
+  { jours: 36500, label: 'Bannir définitivement' },
 ];
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -46,14 +47,14 @@ export default function Moderation({ role, monId }) {
     const libelle = DUREES.find((d) => d.jours === jours).label.toLowerCase();
     if (!confirm(`Confirmer : ${libelle} pour ${nom(cible)} ?`)) return;
     const r = await envoyer('/api/moderation', 'POST', { userId: cible.id, motif, jours });
-    setMessage(r.ok ? 'Avertissement envoyé ✓' : r.error);
+    setMessage(r.ok ? 'Avertissement envoyé' : r.error);
     if (r.ok) { setCible(null); setMotif(''); setJours(0); setRecherche(''); charger(); }
   }
 
   async function lever(u) {
     if (!confirm(`Lever la suspension de ${nom(u)} ?`)) return;
     const r = await envoyer('/api/moderation', 'POST', { userId: u.id, lever: true });
-    setMessage(r.ok ? 'Suspension levée ✓' : r.error);
+    setMessage(r.ok ? 'Suspension levée' : r.error);
     charger();
   }
 

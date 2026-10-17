@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
+import { mesTypesVisibles } from '@/lib/visibilite';
 
 export const dynamic = 'force-dynamic';
 
-const TYPES = ['mystere', 'cozy', 'autre'];
 
 // Coloriages publiés.
 //  ?vue=fil&type=&avant=   : derniers coloriages publiés (20 à la fois)
@@ -18,7 +18,9 @@ export async function GET(req) {
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const q = new URL(req.url).searchParams;
   const vue = q.get('vue') || 'fil';
-  const type = TYPES.includes(q.get('type')) ? q.get('type') : null;
+  // Seuls les types que la personne fait ou veut voir sont proposés
+  const visibles = await mesTypesVisibles(user.id);
+  const type = visibles.includes(q.get('type')) ? q.get('type') : null;
   const tome = String(q.get('tome') || '').slice(0, 60);
   const moi = user.id;
 
@@ -26,7 +28,7 @@ export async function GET(req) {
     const tomes = await sql`
       SELECT min(p.tome) AS tome, count(*)::int AS n, min(c.couverture) AS couverture
       FROM pages p LEFT JOIN tome_catalog c ON lower(c.nom) = lower(p.tome)
-      WHERE p.publiee AND p.tome <> '' AND (${type}::text IS NULL OR p.type_coloriage = ${type})
+      WHERE p.publiee AND p.tome <> '' AND p.type_coloriage = ANY(${type ? [type] : visibles})
       GROUP BY lower(p.tome) ORDER BY min(p.tome)`;
     return NextResponse.json({ tomes });
   }
@@ -51,6 +53,10 @@ export async function GET(req) {
       FROM pages p JOIN users u ON u.id = p.user_id
       WHERE p.publiee AND p.id = ${id}`;
     if (!fiche) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
+    // Coloriage consulté (quêtes « Première découverte », « Chasseur·se d'inspiration »)
+    if (String(fiche.auteur_id) !== String(moi)) {
+      await sql`INSERT INTO vues (user_id, genre, cible) VALUES (${moi}, 'fiche', ${id}) ON CONFLICT DO NOTHING`;
+    }
     return NextResponse.json({ fiche });
   }
 
@@ -67,8 +73,9 @@ export async function GET(req) {
   }
 
   // Fil : par défaut, seulement les types que la personne veut voir
-  const [prefs] = await sql`SELECT types_vus FROM users WHERE id = ${moi}`;
-  const vus = type ? [type] : prefs?.types_vus?.length ? prefs.types_vus : TYPES;
+  // ?suivis=1 : seulement les membres que je suis, tous types confondus
+  const suivis = q.get('suivis') === '1';
+  const vus = type ? [type] : visibles;
   const avant = q.get('avant') && !isNaN(Date.parse(q.get('avant'))) ? q.get('avant') : null;
   const fiches = await sql`
     SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
@@ -78,6 +85,7 @@ export async function GET(req) {
     FROM pages p JOIN users u ON u.id = p.user_id
     WHERE p.publiee AND p.type_coloriage = ANY(${vus})
       AND (${avant}::timestamptz IS NULL OR p.publiee_le < ${avant}::timestamptz)
+      AND (${suivis}::boolean IS NOT TRUE OR p.user_id IN (SELECT suivi FROM abonnements WHERE suiveur = ${moi}))
     ORDER BY p.publiee_le DESC LIMIT 20`;
   return NextResponse.json({ fiches });
 }

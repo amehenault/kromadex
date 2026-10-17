@@ -5,6 +5,7 @@ import { toPng } from 'html-to-image';
 import SymbolPicker from './SymbolPicker';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
+import { X, Camera, AlertTriangle } from 'lucide-react';
 
 const NOUVEAU = '__nouveau__';
 const uid = () => crypto.randomUUID();
@@ -184,7 +185,7 @@ function Groupe({ g, maj, retirer, enExport }) {
               <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
               <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
             </div>
-            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => retirerLigne(r.id)}>✕</button>
+            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => retirerLigne(r.id)}><X size={14} aria-hidden="true" /></button>
           </div>
         )}
       </div>
@@ -199,7 +200,7 @@ function Groupe({ g, maj, retirer, enExport }) {
         ) : (
           <input placeholder="Sous-catégorie" aria-label="Nom de la sous-catégorie" value={g.name} onChange={(e) => maj({ ...g, name: e.target.value })} />
         )}
-        <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}>✕</button>
+        <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}><X size={14} aria-hidden="true" /></button>
       </div>
 
       <div className="grille-codes-deux-colonnes">
@@ -307,7 +308,7 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
     });
 
     if (res.ok) { 
-      window.location.href = '/'; 
+      window.location.href = '/coloriages'; 
       return; 
     }
     
@@ -327,7 +328,7 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
       });
 
       if (res.ok) {
-        window.location.href = '/';
+        window.location.href = '/coloriages';
       } else {
         const json = await res.json().catch(() => ({}));
         alert(`Erreur de suppression : ${json.error || res.statusText}`);
@@ -342,8 +343,8 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
   return (
     <>
       <div className="barre">
-        <button className="btn alt" onClick={() => window.location.href = '/'}>Retour</button>
-        <button type="button" className="btn alt" onClick={exporterEnImage}>Exporter en image 📷</button>
+        <button className="btn alt" onClick={() => window.location.href = '/coloriages'}>Retour</button>
+        <button type="button" className="btn alt" onClick={exporterEnImage}><Camera size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />Exporter en image</button>
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim() || (publiee && !typeFinal)}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
@@ -359,7 +360,8 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
           fontWeight: 'bold',
           textAlign: 'center'
         }}>
-          ⚠️ {erreurServeur || erreur}
+          <AlertTriangle size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+          {erreurServeur || erreur}
         </div>
       )}
 
@@ -438,7 +440,7 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
                         {TYPES_COLORIAGE.map((t) => (
                           <button key={t.valeur} type="button" onClick={() => setTypeColo(t.valeur)}
                             className={typeFinal === t.valeur ? 'btn' : 'btn alt'}
-                            style={{ minHeight: '40px', borderRadius: '999px', fontSize: '0.85rem' }}>
+                            style={{ minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem' }}>
                             {t.label}
                           </button>
                         ))}

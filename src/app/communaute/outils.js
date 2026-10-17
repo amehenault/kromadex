@@ -33,7 +33,7 @@ export function BoutonJaime({ aime, likes, onClick, petit }) {
       style={{
         display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'transparent', cursor: 'pointer',
         color: aime ? '#e0457b' : 'var(--texte-secondaire)', fontWeight: 700, padding: petit ? '4px' : '6px 8px',
-        minHeight: '36px', fontSize: petit ? '0.8rem' : '0.9rem',
+        minHeight: '44px', fontSize: petit ? '0.8rem' : '0.9rem',
       }}>
       <Heart size={petit ? 16 : 20} fill={aime ? '#e0457b' : 'none'} /> {likes || 0}
     </button>

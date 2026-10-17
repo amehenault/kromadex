@@ -19,7 +19,7 @@ export default function Titres() {
   async function creer(e) {
     e.preventDefault();
     const r = await envoyer('/api/roles', 'POST', { name: nom, description: condition });
-    setMessage(r.ok ? 'Titre enregistré ✓' : r.error);
+    setMessage(r.ok ? 'Titre enregistré' : r.error);
     if (r.ok) { setNom(''); setCondition(''); charger(); }
   }
 

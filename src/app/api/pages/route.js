@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { lirePublication } from '@/lib/pages';
+import { accorderSerie, accorderXP } from '@/lib/series';
+import { XP_PAGE } from '@/lib/niveaux';
 
 export async function POST(req) {
   try {
@@ -38,14 +40,20 @@ export async function POST(req) {
       imageType = file.type || 'image/jpeg';
     }
 
-    await sql`
+    const [nouvelle] = await sql`
       INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type, publiee, type_coloriage, publiee_le)
       VALUES (${user.id}, ${title}, ${tome}, ${page_no}, ${memo}, ${codes}::jsonb, ${base64}, ${imageType},
               ${pub.publiee}, ${pub.type}, ${pub.publiee ? new Date().toISOString() : null})
+      RETURNING id
     `;
+
+    // Une page de coloriage terminée rapporte 100 XP (une seule fois par fiche)
+    await accorderXP(user.id, `page:${nouvelle.id}`, XP_PAGE).catch(() => {});
 
     // Un tome masqué redevient visible dès qu'on y enregistre une fiche
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
+    // Série de coloriage : bonus d'XP à chaque tranche de 7 jours consécutifs
+    await accorderSerie(user.id, 'coloriage').catch(() => {});
     revalidatePath('/');
     return NextResponse.json({ success: true });
   } catch (err) {

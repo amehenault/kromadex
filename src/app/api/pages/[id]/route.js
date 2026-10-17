@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { lirePublication } from '@/lib/pages';
+import { retirerXP } from '@/lib/series';
 
 export async function PUT(req, { params }) {
   try {
@@ -73,10 +74,14 @@ export async function DELETE(req, { params }) {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-    await sql`
-      DELETE FROM pages 
+    const supprimee = await sql`
+      DELETE FROM pages
       WHERE id = ${id} AND user_id = ${user.id}
+      RETURNING id
     `;
+
+    // Les XP gagnés en ajoutant ce coloriage sont retirés
+    if (supprimee.length) await retirerXP(user.id, `page:${id}`).catch(() => {});
 
     revalidatePath('/');
     return NextResponse.json({ success: true });

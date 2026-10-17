@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Pin, MessageCircle, Send, Trash2 } from 'lucide-react';
 import { Avatar, BoutonJaime, nomAuteur, poster } from './outils';
 
@@ -69,7 +70,7 @@ export default function MissivesEpinglees({ monId }) {
             <BoutonJaime aime={m.aime} likes={m.likes} onClick={() => aimer(m)} />
             {(m.commentaires || m.nb_commentaires > 0) && (
               <button type="button" onClick={() => ouvrir(m)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', fontWeight: 700, minHeight: '36px' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', fontWeight: 700, minHeight: '44px' }}>
                 <MessageCircle size={20} /> {m.nb_commentaires}
               </button>
             )}
@@ -116,14 +117,14 @@ function Commentaires({ missive, monId, onNombre }) {
       {liste === null && <small style={{ color: 'var(--texte-secondaire)' }}>Chargement…</small>}
       {liste?.map((c) => (
         <div key={c.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-          <Avatar x={c} taille={28} />
+          <Link href={`/membre/${c.user_id}`} aria-label={`Profil de ${nomAuteur(c)}`}><Avatar x={c} taille={28} /></Link>
           <div style={{ flex: 1, minWidth: 0, background: 'var(--carte)', borderRadius: 'var(--rayon-m)', padding: '6px 10px' }}>
-            <small style={{ fontWeight: 700 }}>{nomAuteur(c)}</small>
+            <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}>{nomAuteur(c)}</Link>
             <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.texte}</p>
           </div>
           {String(c.user_id) === monId && (
             <button type="button" aria-label="Retirer mon commentaire" onClick={() => retirer(c)}
-              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', minHeight: '36px' }}>
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', minHeight: '44px' }}>
               <Trash2 size={16} />
             </button>
           )}

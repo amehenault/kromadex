@@ -79,7 +79,7 @@ export default function PhotoProfil() {
       if (res.ok) {
         setApercu(a);
         setAUnePhoto(true);
-        setMessage('Photo enregistrée ✓');
+        setMessage('Photo enregistrée');
         router.refresh();
       } else {
         setMessage(d.error || 'Erreur, réessaie.');
@@ -198,7 +198,7 @@ export default function PhotoProfil() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              minHeight: '36px',
+              minHeight: '44px',
               fontSize: '0.85rem',
             }}
           >

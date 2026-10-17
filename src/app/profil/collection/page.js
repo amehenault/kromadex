@@ -349,7 +349,7 @@ export default function CollectionCrayonsPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0 10px'
             }}>
               <h3 style={{ margin: 0 }}>Ajouter un coffret</h3>
-              <button type="button" className="btn alt" aria-label="Fermer" onClick={fermerModal} style={{ minHeight: '40px', minWidth: '40px', justifyContent: 'center' }}>
+              <button type="button" className="btn alt" aria-label="Fermer" onClick={fermerModal} style={{ minHeight: '44px', minWidth: '44px', justifyContent: 'center' }}>
                 <X size={18} />
               </button>
             </div>

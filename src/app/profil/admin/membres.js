@@ -1,14 +1,15 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Crown } from 'lucide-react';
+import { Search, Crown, CalendarPlus } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
+import { NOMS_POSTES } from '@/lib/postes';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
-  { valeur: 'cheffe', label: 'Cheffe des coloristes (1 mois)' },
-  { valeur: 'modo', label: 'Modératrice' },
+  { valeur: 'cheffe', label: 'Chef·fe des coloristes (1 mois)' },
+  { valeur: 'modo', label: 'Sentinelle du Kromadex' },
 ];
-const NOM_POSTE = { admin: 'Admin', modo: 'Modératrice', cheffe: 'Cheffe des coloristes', coloriste: 'Coloriste' };
+const NOM_POSTE = NOMS_POSTES;
 
 // Attribuer manuellement les postes et les titres
 export default function Membres({ role }) {
@@ -38,15 +39,16 @@ export default function Membres({ role }) {
 
   async function modifier(id, corps) {
     const r = await envoyer('/api/roles', 'PUT', { targetUserId: id, ...corps });
-    setMessage(r.ok ? 'Enregistré ✓' : r.error);
+    setMessage(r.ok ? 'Enregistré' : r.error);
     charger();
   }
 
   return (
     <div className="carte" style={colonne}>
       <p style={aide}>
-        Tout le monde est <b>coloriste</b> par défaut. La <b>cheffe des coloristes</b> est la gagnante du défi mensuel :
-        elle garde son poste 1 mois et choisit le défi du mois suivant. Le poste d'<b>admin</b> est unique.
+        Tout le monde est <b>coloriste</b> par défaut. Le ou la <b>chef·fe des coloristes</b> a gagné une épreuve mensuelle :
+        le poste dure 1 mois, avec 7 jours après la nomination pour créer son épreuve. Les <b>sentinelles du Kromadex</b> modèrent.
+        Le poste d'<b>Invocatrice originelle</b> est unique.
       </p>
       <div style={{ position: 'relative' }}>
         <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--texte-secondaire)' }} />
@@ -54,8 +56,8 @@ export default function Membres({ role }) {
       </div>
       <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
         <option value="tous">Tous les postes</option>
-        <option value="admin">Admin</option>
-        <option value="modo">Modératrices</option>
+        <option value="admin">Invocatrice originelle</option>
+        <option value="modo">Sentinelles du Kromadex</option>
         <option value="cheffe">Cheffes</option>
         <option value="coloriste">Coloristes</option>
       </select>
@@ -78,8 +80,16 @@ export default function Membres({ role }) {
                   {POSTES.map((p) => <option key={p.valeur} value={p.valeur}>{p.label}</option>)}
                 </select>
               </label>
-              {u.role === 'cheffe' && u.cheffe_expires_at && (
-                <small style={aide}>Cheffe jusqu'au {new Date(u.cheffe_expires_at).toLocaleDateString('fr-CA')}</small>
+              {u.role === 'cheffe' && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                  <small style={aide}>
+                    {u.cheffe_expires_at ? `Cheffe jusqu'au ${new Date(u.cheffe_expires_at).toLocaleDateString('fr-CA')}, puis retour automatique à Coloriste` : 'Cheffe'}
+                  </small>
+                  <button type="button" className="btn alt" style={{ minHeight: '44px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => modifier(u.id, { prolonger: true })}>
+                    <CalendarPlus size={14} aria-hidden="true" /> Prolonger d'un mois
+                  </button>
+                </div>
               )}
               <label style={champ}>Titre affiché
                 <select value={u.title || ''} onChange={(e) => e.target.value && modifier(u.id, { title: e.target.value })}>

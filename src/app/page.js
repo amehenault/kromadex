@@ -1,27 +1,20 @@
 import { redirect } from 'next/navigation';
-import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import Library from '@/components/Library';
 import Annonces from '@/components/Annonces';
+import AccueilOnglets from '@/components/AccueilOnglets';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Accueil : annonces, puis deux onglets, Défis et Communauté
 export default async function Accueil() {
   const user = await getUser();
   if (!user) redirect('/login');
 
-  const pages = await sql`
-    SELECT id, title, tome, page_no, memo, codes, image_type IS NOT NULL AS has_image, OCTET_LENGTH(image_b64) AS img_size
-    FROM pages 
-    WHERE user_id = ${user.id} 
-    ORDER BY created_at DESC
-  `;
-
   return (
     <>
       <Annonces />
-      <Library pages={JSON.parse(JSON.stringify(pages))} />
+      <AccueilOnglets monId={String(user.id)} />
     </>
   );
 }

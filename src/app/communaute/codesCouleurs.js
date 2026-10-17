@@ -1,13 +1,18 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search } from 'lucide-react';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from './outils';
 import { CodesLecture } from './ficheDetail';
+import useTypesVisibles from '@/components/useTypesVisibles';
 
 // Codes couleurs des autres : type de coloriage, puis tome, puis numéro de page
 export default function CodesCouleurs() {
   const [type, setType] = useState('mystere');
+  const visibles = useTypesVisibles();
+  // Si le type affiché n'est pas visible pour la personne, on passe au premier type visible
+  useEffect(() => { if (!visibles.includes(type)) setType(visibles[0]); }, [visibles]);
   const [tomes, setTomes] = useState(null);
   const [recherche, setRecherche] = useState('');
   const [tome, setTome] = useState(null);
@@ -40,7 +45,7 @@ export default function CodesCouleurs() {
 
   const retour = (texte, action) => (
     <button type="button" className="btn alt" onClick={action}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '40px', marginBottom: '10px' }}>
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', marginBottom: '10px' }}>
       <ArrowLeft size={16} /> {texte}
     </button>
   );
@@ -60,7 +65,7 @@ export default function CodesCouleurs() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{f.title}</b>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Avatar x={f} taille={20} /> <small>{nomAuteur(f)}</small>
+                    <Link href={`/membre/${f.auteur_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'inherit' }}><Avatar x={f} taille={20} /> <small>{nomAuteur(f)}</small></Link>
                   </span>
                 </div>
                 <BoutonJaime aime={f.aime} likes={f.likes} onClick={() => aimer(f)} />
@@ -103,9 +108,9 @@ export default function CodesCouleurs() {
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-        {TYPES_COLORIAGE.map((t) => (
+        {TYPES_COLORIAGE.filter((t) => visibles.includes(t.valeur)).map((t) => (
           <button key={t.valeur} type="button" className={type === t.valeur ? 'btn' : 'btn alt'} onClick={() => setType(t.valeur)}
-            style={{ flex: '0 0 auto', minHeight: '36px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 12px' }}>
+            style={{ flex: '0 0 auto', minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 12px' }}>
             {t.label}
           </button>
         ))}

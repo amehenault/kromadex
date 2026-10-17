@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
-import { TYPES_DEMANDE, STATUTS_DEMANDE } from '@/lib/demandes';
+import { TYPES_DEMANDE, groupeDuType } from '@/lib/demandes';
 
 // Mes demandes, ou toutes les demandes pour l'admin (?tout=1)
 export async function GET(req) {
@@ -11,7 +11,7 @@ export async function GET(req) {
     const demandes = await sql`
       SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.email
       FROM demandes d JOIN users u ON u.id = d.user_id
-      ORDER BY (d.statut = 'nouvelle') DESC, d.cree_le DESC LIMIT 200`;
+      ORDER BY array_position(ARRAY['nouvelle', 'en_cours'], d.statut) NULLS LAST, d.cree_le ASC LIMIT 500`;
     return NextResponse.json({ demandes });
   }
   const demandes = await sql`
@@ -41,12 +41,15 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Admin : changer le statut et répondre
+// Admin : changer le statut et répondre (résolue, ajoutée et refusée = archivée, jamais supprimée)
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const { id, statut, reponse } = await req.json().catch(() => ({}));
-  if (!STATUTS_DEMANDE.some((s) => s.valeur === statut)) return NextResponse.json({ error: 'Statut invalide' }, { status: 400 });
+  // Le statut doit exister pour la catégorie de la demande (ex. « Résolue » pour un bug, « Ajoutée » pour un tome)
+  const [d] = await sql`SELECT type FROM demandes WHERE id = ${Number(id)}`;
+  if (!d) return NextResponse.json({ error: 'Demande introuvable' }, { status: 404 });
+  if (!groupeDuType(d.type).statuts.includes(statut)) return NextResponse.json({ error: 'Statut invalide pour cette demande' }, { status: 400 });
   const texte = String(reponse || '').trim().slice(0, 2000);
   await sql`
     UPDATE demandes

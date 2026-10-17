@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { X } from 'lucide-react';
 import { Glyph } from '@/components/SymbolPicker';
 import { Avatar, BoutonJaime, nomAuteur, nomType, imagePage, poster } from './outils';
+import CommentairesFiche from './commentairesFiche';
 
 // Codes couleurs en lecture seule : sous-catégories, puis symbole + code de chaque couleur
 export function CodesLecture({ codes }) {
@@ -51,7 +53,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
         borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', padding: 'var(--espace-3)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'sticky', top: 0 }}>
-          <button type="button" className="btn alt" aria-label="Fermer" onClick={onFermer} style={{ minWidth: '40px', minHeight: '40px', justifyContent: 'center', display: 'inline-flex', alignItems: 'center' }}>
+          <button type="button" className="btn alt" aria-label="Fermer" onClick={onFermer} style={{ minWidth: '44px', minHeight: '44px', justifyContent: 'center', display: 'inline-flex', alignItems: 'center' }}>
             <X size={18} />
           </button>
         </div>
@@ -59,11 +61,11 @@ export default function FicheDetail({ id, onFermer, onLike }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <img src={imagePage(fiche)} alt="" style={{ width: '100%', borderRadius: 'var(--rayon-m)', background: 'var(--carte)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Avatar x={fiche} taille={32} />
+              <Link href={`/membre/${fiche.auteur_id}`} aria-label={`Profil de ${nomAuteur(fiche)}`}><Avatar x={fiche} taille={32} /></Link>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{fiche.title}</b>
                 <small style={{ color: 'var(--texte-secondaire)' }}>
-                  {nomAuteur(fiche)} · {nomType(fiche.type_coloriage)}
+                  <Link href={`/membre/${fiche.auteur_id}`} style={{ color: 'inherit' }}>{nomAuteur(fiche)}</Link> · {nomType(fiche.type_coloriage)}
                 </small>
               </div>
               <BoutonJaime aime={fiche.aime} likes={fiche.likes} onClick={aimer} />
@@ -72,6 +74,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
               <small style={{ fontWeight: 700 }}>{fiche.tome}{fiche.page_no ? ` · page ${fiche.page_no}` : ''}</small>
             )}
             <div className="carte"><b style={{ display: 'block', marginBottom: '8px' }}>Codes couleurs</b><CodesLecture codes={fiche.codes} /></div>
+            <CommentairesFiche pageId={fiche.id} />
           </div>
         )}
       </div>

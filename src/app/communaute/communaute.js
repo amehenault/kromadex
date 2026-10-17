@@ -7,18 +7,20 @@ import Fil from './fil';
 import CodesCouleurs from './codesCouleurs';
 
 // Communauté : missives épinglées en haut, puis le fil des coloriages et la recherche de codes couleurs
-export default function Communaute({ monId }) {
+export default function Communaute({ monId, integre }) {
   const [onglet, setOnglet] = useState('fil');
   const ONGLETS = [['fil', 'Coloriages', Images], ['codes', 'Codes couleurs', Palette]];
 
   return (
-    <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
-        <Link href="/" className="btn alt" aria-label="Retour à l'accueil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Communauté</h2>
-      </div>
+    <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: integre ? 0 : 'var(--espace-3)' }}>
+      {!integre && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
+          <Link href="/" className="btn alt" aria-label="Retour à l'accueil" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <ArrowLeft size={16} />
+          </Link>
+          <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Communauté</h2>
+        </div>
+      )}
 
       <MissivesEpinglees monId={monId} />
 

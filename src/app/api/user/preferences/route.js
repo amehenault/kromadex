@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
-import { VALEURS_TYPES } from '@/lib/typesColoriage';
+import { VALEURS_TYPES, typesVisibles } from '@/lib/typesColoriage';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,10 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const [r] = await sql`SELECT types_pratiques, types_vus FROM users WHERE id = ${user.id}`;
-  return NextResponse.json({ typesPratiques: r?.types_pratiques || [], typesVus: r?.types_vus || [] });
+  return NextResponse.json({
+    typesPratiques: r?.types_pratiques || [], typesVus: r?.types_vus || [],
+    typesVisibles: typesVisibles(r?.types_pratiques, r?.types_vus),
+  });
 }
 
 export async function POST(req) {

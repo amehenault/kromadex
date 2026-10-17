@@ -48,7 +48,7 @@ export default function Preferences() {
 
     setMessage(
       res.ok
-        ? 'Préférences enregistrées ✓'
+        ? 'Préférences enregistrées'
         : 'Erreur, réessaie.'
     );
   }

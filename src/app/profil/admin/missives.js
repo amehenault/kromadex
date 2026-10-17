@@ -23,7 +23,7 @@ export default function Missives({ role }) {
   async function publier(e) {
     e.preventDefault();
     const r = await envoyer('/api/missives', 'POST', { titre, contenu, commentaires });
-    setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée ✓' : "Missive envoyée à l'admin pour approbation ✓") : r.error);
+    setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée' : "Missive envoyée à l'admin pour approbation") : r.error);
     if (r.ok) { setTitre(''); setContenu(''); charger(); }
   }
 
@@ -50,7 +50,7 @@ export default function Missives({ role }) {
             : "L'admin la relit et l'approuve avant qu'elle s'affiche sur l'accueil des membres."}
         </p>
         <label style={champ}>Titre
-          <input value={titre} onChange={(e) => setTitre(e.target.value)} maxLength={120} placeholder="ex. Le défi d'octobre est lancé !" />
+          <input value={titre} onChange={(e) => setTitre(e.target.value)} maxLength={120} placeholder="ex. L'épreuve d'octobre est lancée !" />
         </label>
         <label style={champ}>Message
           <textarea rows={6} value={contenu} onChange={(e) => setContenu(e.target.value)} maxLength={4000} />

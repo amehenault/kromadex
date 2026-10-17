@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 
-// Postes : coloriste (par défaut), cheffe (gagnante du défi mensuel, 1 mois), modo, admin (unique)
+// Postes (noms affichés dans lib/postes.js) : coloriste, cheffe (1 mois), modo, admin (unique)
 export const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
-  { valeur: 'cheffe', label: 'Cheffe des coloristes (1 mois)' },
-  { valeur: 'modo', label: 'Modératrice' },
+  { valeur: 'cheffe', label: 'Chef·fe des coloristes (1 mois)' },
+  { valeur: 'modo', label: 'Sentinelle du Kromadex' },
 ];
 
 // Vérifie la session et le poste. Renvoie { profil } ou { erreur: NextResponse }
@@ -20,10 +20,5 @@ export async function exigerPoste(...postes) {
   return { profil };
 }
 
-// Premier jour du mois, au format AAAA-MM-01 (décalage en mois possible)
-export function premierDuMois(decalage = 0) {
-  const d = new Date();
-  d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() + decalage);
-  return d.toISOString().slice(0, 7) + '-01';
-}
+// Premier jour du mois au Québec, au format AAAA-MM-01 (décalage en mois possible)
+export { premierDuMoisQuebec as premierDuMois } from '@/lib/temps';

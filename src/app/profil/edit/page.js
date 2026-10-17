@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Preferences from './preferences';
 import PhotoProfil from './photoProfil';
+import APropos from './apropos';
 import { ArrowLeft } from 'lucide-react';
 
 export default function EditProfilPage() {
@@ -74,6 +75,8 @@ export default function EditProfilPage() {
       </div>
 
       <PhotoProfil />
+
+      <APropos />
 
       <Preferences />
 

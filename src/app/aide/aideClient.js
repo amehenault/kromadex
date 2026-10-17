@@ -12,7 +12,7 @@ const AIDE_TEXTE = {
   crayons: 'Donne la marque, le nom du kit, le nombre de couleurs et si possible un lien.',
   fonctionnalite: "Décris l'idée et ce qu'elle t'aiderait à faire.",
 };
-const COULEUR_STATUT = { nouvelle: 'var(--texte-secondaire)', en_cours: 'var(--btn)', traitee: 'var(--btn-save)', refusee: 'var(--danger)' };
+const COULEUR_STATUT = { nouvelle: 'var(--texte-secondaire)', en_cours: 'var(--btn)', resolue: 'var(--btn-save)', ajoutee: 'var(--btn-save)', refusee: 'var(--danger)' };
 
 // Page Aide : envoyer une demande et suivre les réponses
 export default function AideClient() {
@@ -40,7 +40,7 @@ export default function AideClient() {
     const res = await fetch('/api/demandes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, message }) });
     const d = await res.json().catch(() => ({}));
     setOccupe(false);
-    if (res.ok) { setRetour('Merci ! Ta demande est envoyée ✓'); setMessage(''); setType(''); charger(); }
+    if (res.ok) { setRetour('Merci ! Ta demande est envoyée'); setMessage(''); setType(''); charger(); }
     else setRetour(d.error || 'Erreur, réessaie.');
   }
 

@@ -13,5 +13,5 @@ export const ligneCarte = {
 export const champ = { display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem', fontWeight: 600, minWidth: 0 };
 export const dateStyle = { width: '100%', minWidth: 0, boxSizing: 'border-box', padding: '8px 6px' };
 export const actions = { display: 'flex', gap: '8px', flexWrap: 'wrap' };
-export const petitBtn = { minHeight: '36px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' };
+export const petitBtn = { minHeight: '44px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' };
 export const aide = { color: 'var(--texte-secondaire)', margin: 0, fontSize: '0.85rem' };

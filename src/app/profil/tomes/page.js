@@ -2,11 +2,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search, Plus, Check } from 'lucide-react';
-import { typeVisible } from '@/lib/typesColoriage';
+import { nomBibliotheque, VALEURS_TYPES } from '@/lib/typesColoriage';
 
 const TYPES = [
-  { valeur: 'mystere', label: 'Coloriages mystères' },
-  { valeur: 'cozy', label: 'Cozy colo' },
+  { valeur: 'mystere', label: 'Tomes (coloriages mystères)' },
+  { valeur: 'cozy', label: 'Livres (Cozy colo)' },
 ];
 
 export default function CatalogueTomesPage() {
@@ -19,7 +19,8 @@ export default function CatalogueTomesPage() {
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(null);
   const [progression, setProgression] = useState({});
-  const [typesVus, setTypesVus] = useState([]);
+  // Types visibles selon les préférences : tomes (mystère), livres (Cozy) ou les deux
+  const [visibles, setVisibles] = useState(VALEURS_TYPES);
 
   useEffect(() => {
     async function charger() {
@@ -27,9 +28,10 @@ export default function CatalogueTomesPage() {
         const [res, pref] = await Promise.all([fetch('/api/tomes/catalog'), fetch('/api/user/preferences')]);
         if (pref.ok) {
           const p = await pref.json();
-          setTypesVus(p.typesVus || []);
-          // Onglet de départ : le premier type que la personne veut voir
-          const premier = TYPES.find((t) => typeVisible(t.valeur, p.typesVus));
+          const v = p.typesVisibles || VALEURS_TYPES;
+          setVisibles(v);
+          // Onglet de départ : le premier type que la personne voit
+          const premier = TYPES.find((t) => v.includes(t.valeur));
           if (premier) setType(premier.valeur);
         }
         if (res.ok) {
@@ -85,6 +87,7 @@ export default function CatalogueTomesPage() {
 
   const puce = (actif) => ({
     flex: '0 0 auto',
+    minHeight: '44px',
     padding: '7px 14px',
     borderRadius: '999px',
     fontSize: '0.85rem',
@@ -112,7 +115,7 @@ export default function CatalogueTomesPage() {
           <ArrowLeft size={16} />
         </Link>
         <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
-          <BookOpen size={22} /> Mes tomes
+          <BookOpen size={22} /> {nomBibliotheque(visibles)}
         </h2>
       </div>
 
@@ -123,7 +126,7 @@ export default function CatalogueTomesPage() {
         display: 'flex', flexDirection: 'column', gap: '8px'
       }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))', gap: '6px' }}>
-          {TYPES.filter((t) => typeVisible(t.valeur, typesVus)).map((t) => (
+          {TYPES.filter((t) => visibles.includes(t.valeur)).map((t) => (
             <button
               key={t.valeur}
               type="button"
@@ -205,7 +208,7 @@ export default function CatalogueTomesPage() {
                 className={possede ? 'btn alt' : 'btn'}
                 disabled={enCours === Number(t.id)}
                 onClick={() => basculer(t)}
-                style={{ marginTop: 'auto', fontSize: '0.75rem', padding: '7px 6px', minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                style={{ marginTop: 'auto', fontSize: '0.75rem', padding: '7px 6px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
               >
                 {possede ? 'Retirer' : <><Plus size={13} /> Je l'ai</>}
               </button>

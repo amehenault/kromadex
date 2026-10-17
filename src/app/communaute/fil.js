@@ -1,12 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from './outils';
 import FicheDetail from './ficheDetail';
+import useTypesVisibles from '@/components/useTypesVisibles';
 
 // Fil des coloriages publiés, 2 colonnes, filtrable par type
 export default function Fil() {
   const [type, setType] = useState('');
+  const visibles = useTypesVisibles();
   const [fiches, setFiches] = useState([]);
   const [fin, setFin] = useState(false);
   const [charge, setCharge] = useState(false);
@@ -15,7 +18,9 @@ export default function Fil() {
   async function charger(reinit) {
     setCharge(true);
     const avant = !reinit && fiches.length ? `&avant=${encodeURIComponent(fiches.at(-1).publiee_le)}` : '';
-    const r = await fetch(`/api/communaute?vue=fil${type ? `&type=${type}` : ''}${avant}`);
+    // type : '' (mes types), 'suivis' (membres que je suis) ou un type de coloriage
+    const filtre = type === 'suivis' ? '&suivis=1' : type ? `&type=${type}` : '';
+    const r = await fetch(`/api/communaute?vue=fil${filtre}${avant}`);
     const d = r.ok ? (await r.json()).fiches || [] : [];
     setFiches((l) => (reinit ? d : [...l, ...d]));
     setFin(d.length < 20);
@@ -30,13 +35,14 @@ export default function Fil() {
     if (r) majLike(f.id, r);
   }
 
-  const puce = (actif) => ({ flex: '0 0 auto', minHeight: '36px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 12px' });
+  const puce = (actif) => ({ flex: '0 0 auto', minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 12px' });
 
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
         <button type="button" className={!type ? 'btn' : 'btn alt'} style={puce()} onClick={() => setType('')}>Mes types</button>
-        {TYPES_COLORIAGE.map((t) => (
+        <button type="button" className={type === 'suivis' ? 'btn' : 'btn alt'} style={puce()} onClick={() => setType('suivis')}>Abonnements</button>
+        {TYPES_COLORIAGE.filter((t) => visibles.includes(t.valeur)).map((t) => (
           <button key={t.valeur} type="button" className={type === t.valeur ? 'btn' : 'btn alt'} style={puce()} onClick={() => setType(t.valeur)}>{t.label}</button>
         ))}
       </div>
@@ -56,10 +62,11 @@ export default function Fil() {
                 </small>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', minWidth: 0 }}>
+                <Link href={`/membre/${f.auteur_id}`} onClick={(e) => e.stopPropagation()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
                   <Avatar x={f} taille={20} />
                   <small style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nomAuteur(f)}</small>
-                </span>
+                </Link>
                 <BoutonJaime aime={f.aime} likes={f.likes} onClick={() => aimer(f)} petit />
               </div>
             </div>
@@ -69,7 +76,9 @@ export default function Fil() {
 
       {!charge && !fiches.length && (
         <p style={{ color: 'var(--texte-secondaire)', textAlign: 'center' }}>
-          Aucun coloriage publié pour l'instant. Coche « Publier dans la communauté » dans une de tes fiches pour partager le tien !
+          {type === 'suivis'
+            ? "Les membres que tu suis n'ont rien publié pour l'instant. Touche le nom d'un membre pour voir son profil et le suivre."
+            : 'Aucun coloriage publié pour l\'instant. Coche « Publier dans la communauté » dans une de tes fiches pour partager le tien !'}
         </p>
       )}
       {!fin && fiches.length > 0 && (

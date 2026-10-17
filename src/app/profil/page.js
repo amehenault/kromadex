@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/auth';
+import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
+import { titreNiveau } from '@/lib/titres';
+import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
 import Link from 'next/link';
 import MesTomes from './mesTomes';
 import { listerMesTomes } from '@/lib/mesTomes';
@@ -15,14 +18,23 @@ import {
   Shield,
   Trophy,
   HelpCircle,
+  Users,
+  BarChart3,
+  Newspaper,
+  Images,
+  Map,
+  Swords,
+  ChevronRight,
 } from 'lucide-react';
+import { verifierQuetes } from '@/lib/quetes';
+import BoutonDeconnexion from './boutonDeconnexion';
 
 export const dynamic = 'force-dynamic';
 
 const NOM_POSTE = {
-  admin: 'Admin',
-  modo: 'Modératrice',
-  cheffe: 'Cheffe des coloristes',
+  admin: 'Invocatrice originelle',
+  modo: 'Sentinelle du Kromadex',
+  cheffe: 'Chef·fe des coloristes',
   coloriste: 'Coloriste',
 };
 
@@ -31,10 +43,23 @@ export default async function ProfilPage() {
 
   if (!authUser) redirect('/login');
 
+  // Quêtes : les XP des quêtes terminées sont donnés ici aussi (avant de lire le profil),
+  // puis on garde les 2 quêtes non terminées les plus avancées (en pourcentage, puis le moins de reste)
+  const { liste: quetes } = await verifierQuetes(authUser.id);
+
   const profile = await getUserProfile(authUser.id);
+
+  // Admin : nombre de demandes d'aide à traiter (nouvelles ou en cours)
+  const demandesATraiter = profile?.role === 'admin'
+    ? (await sql`SELECT count(*)::int AS n FROM demandes WHERE statut IN ('nouvelle', 'en_cours')`)[0].n
+    : 0;
 
   // Tomes du profil avec leur progression automatique
   const mesTomes = await listerMesTomes(authUser.id);
+  const prochesQuetes = quetes
+    .filter((q) => !q.terminee)
+    .sort((a, b) => b.valeur / b.objectif - a.valeur / a.objectif || (a.objectif - a.valeur) - (b.objectif - b.valeur))
+    .slice(0, 2);
 
   const xpActuel = profile?.xp || 0;
   const niv = progressionNiveau(xpActuel);
@@ -199,13 +224,17 @@ export default async function ProfilPage() {
             {NOM_POSTE[role]}
           </small>
 
-          <small
+          {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
+          <Link
+            href="/titres"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              marginTop: '2px',
+              minHeight: '44px',
               fontWeight: 600,
+              fontSize: '0.85rem',
+              color: 'inherit',
             }}
           >
             <Sparkles
@@ -213,8 +242,15 @@ export default async function ProfilPage() {
               aria-hidden="true"
               style={{ flexShrink: 0 }}
             />
-            {profile?.title || 'Coloriste débutant'}
-          </small>
+            {titreNiveau(niv.niveau, profile?.genre)}
+          </Link>
+
+          {/* Titre spécial attribué par l'admin (ex. Chef des coloristes) */}
+          {profile?.title && profile.title !== 'Coloriste débutant' && (
+            <small style={{ display: 'block', fontWeight: 600, color: 'var(--texte-secondaire)' }}>
+              {profile.title}
+            </small>
+          )}
         </div>
       </div>
 
@@ -240,14 +276,14 @@ export default async function ProfilPage() {
               fontWeight: 600,
             }}
           >
-            {xpActuel} / {niv.suivant} XP
+            {niv.max ? `${xpActuel} XP` : `${xpActuel} / ${niv.suivant} XP`}
           </small>
         </div>
 
         <div
           className="profil-xp-barre"
           role="progressbar"
-          aria-label="Progression vers le niveau suivant"
+          aria-label={niv.max ? 'Niveau maximum atteint' : 'Progression vers le niveau suivant'}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={niv.pct}
@@ -259,8 +295,9 @@ export default async function ProfilPage() {
         </div>
 
         <small className="profil-xp-restant">
-          Encore {niv.suivant - xpActuel} XP avant le niveau{' '}
-          {niv.niveau + 1}
+          {niv.max
+            ? 'Niveau maximum atteint'
+            : `Encore ${niv.reste} XP avant le niveau ${niv.niveau + 1}`}
         </small>
 
         <div
@@ -315,6 +352,34 @@ export default async function ProfilPage() {
         </div>
       </div>
 
+      {/* Les 2 quêtes les plus proches d'être réussies */}
+      {prochesQuetes.length > 0 && (
+        <div className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <h3 style={{ margin: 0 }}>Mes quêtes</h3>
+            <Link href="/quetes" aria-label="Voir toutes les quêtes"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', minHeight: '44px', fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}>
+              Toutes <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+          </div>
+          {prochesQuetes.map((q) => (
+            <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                <b style={{ fontSize: '0.92rem' }}>{q.titre}</b>
+                <small style={{ flex: '0 0 auto', fontWeight: 700 }}>+{q.xp} XP</small>
+              </div>
+              <small style={{ color: 'var(--texte-secondaire)' }}>{q.description}</small>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="profil-xp-barre" style={{ flex: 1, margin: 0 }}>
+                  <div className="profil-xp-remplissage" style={{ width: `${Math.round((q.valeur / q.objectif) * 100)}%` }} />
+                </div>
+                <small style={{ flex: '0 0 auto', fontWeight: 700 }}>{q.valeur} / {q.objectif}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Accès rapides */}
       <div className="profil-acces">
         {['admin', 'modo'].includes(role) && (
@@ -328,7 +393,8 @@ export default async function ProfilPage() {
           >
             <Shield size={22} aria-hidden="true" />
             <span>
-              {role === 'admin' ? 'Espace admin' : 'Espace modo'}
+              {role === 'admin' ? 'Espace de l’Invocatrice' : 'Espace sentinelle'}
+              {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
             </span>
           </Link>
         )}
@@ -339,9 +405,24 @@ export default async function ProfilPage() {
             className="btn profil-acces-lien"
           >
             <Trophy size={22} aria-hidden="true" />
-            <span>Choisir le prochain défi</span>
+            <span>
+              Créer mon épreuve de chef·fe
+              {profile?.cheffe_expires_at && (
+                <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
+                  Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
+                </small>
+              )}
+            </span>
           </Link>
         )}
+
+        <Link
+          href="/coloriages"
+          className="btn profil-acces-lien"
+        >
+          <Images size={22} aria-hidden="true" />
+          <span>Mes coloriages</span>
+        </Link>
 
         <Link
           href="/profil/collection"
@@ -356,7 +437,47 @@ export default async function ProfilPage() {
           className="btn profil-acces-lien"
         >
           <BookOpen size={22} aria-hidden="true" />
-          <span>Mes tomes de coloriage</span>
+          <span>{nomBibliotheque(typesVisibles(profile?.types_pratiques, profile?.types_vus))}</span>
+        </Link>
+
+        <Link
+          href="/statistiques"
+          className="btn profil-acces-lien"
+        >
+          <BarChart3 size={22} aria-hidden="true" />
+          <span>Mes statistiques</span>
+        </Link>
+
+        <Link
+          href="/quetes"
+          className="btn profil-acces-lien"
+        >
+          <Map size={22} aria-hidden="true" />
+          <span>Quêtes</span>
+        </Link>
+
+        <Link
+          href="/combats"
+          className="btn profil-acces-lien"
+        >
+          <Swords size={22} aria-hidden="true" />
+          <span>Combats</span>
+        </Link>
+
+        <Link
+          href="/nouveautes"
+          className="btn profil-acces-lien"
+        >
+          <Newspaper size={22} aria-hidden="true" />
+          <span>Nouveautés</span>
+        </Link>
+
+        <Link
+          href={`/membre/${authUser.id}`}
+          className="btn profil-acces-lien"
+        >
+          <Users size={22} aria-hidden="true" />
+          <span>Mon profil public et mes abonnés</span>
         </Link>
 
         <Link
@@ -366,6 +487,8 @@ export default async function ProfilPage() {
           <HelpCircle size={22} aria-hidden="true" />
           <span>Aide et demandes</span>
         </Link>
+
+        <BoutonDeconnexion />
       </div>
 
       {/* Progression automatique de chaque tome */}

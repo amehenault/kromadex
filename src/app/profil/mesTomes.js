@@ -272,8 +272,8 @@ export default function MesTomes({ tomes }) {
                   position: 'absolute',
                   top: '6px',
                   right: '6px',
-                  width: '36px',
-                  height: '36px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '50%',
                   border: 'none',
                   background: 'rgba(255,255,255,0.92)',
@@ -389,8 +389,8 @@ export default function MesTomes({ tomes }) {
                 aria-label="Fermer"
                 onClick={() => setEdition(null)}
                 style={{
-                  minWidth: '40px',
-                  minHeight: '40px',
+                  minWidth: '44px',
+                  minHeight: '44px',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}

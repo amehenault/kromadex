@@ -5,7 +5,7 @@ export const calculateLevel = calculerNiveau;
 
 export async function getUserProfile(userId) {
   const users = await sql`
-    SELECT id, email, xp, level, role, cheffe_expires_at, title, unlocked_titles, pseudo, name,
+    SELECT id, email, xp, level, role, cheffe_expires_at, title, unlocked_titles, pseudo, name, genre, types_pratiques, types_vus,
       (avatar_b64 IS NOT NULL) AS a_avatar, avatar_maj
     FROM users
     WHERE id = ${userId}
@@ -18,7 +18,7 @@ export async function getUserProfile(userId) {
   if (user.role === 'cheffe' && user.cheffe_expires_at && new Date(user.cheffe_expires_at) < new Date()) {
     await sql`
       UPDATE users
-      SET role = 'coloriste', cheffe_expires_at = NULL
+      SET role = 'coloriste', cheffe_expires_at = NULL, cheffe_depuis = NULL
       WHERE id = ${userId}
     `;
     user.role = 'coloriste';
@@ -40,7 +40,8 @@ export async function addXP(userId, amount) {
   const user = await getUserProfile(userId);
   if (!user) return;
 
-  const newXP = (user.xp || 0) + amount;
+  // Un retrait d'XP (montant négatif) ne descend jamais sous 0
+  const newXP = Math.max(0, (user.xp || 0) + amount);
   const newLevel = calculateLevel(newXP);
 
   await sql`

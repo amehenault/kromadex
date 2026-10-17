@@ -1,46 +1,158 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { exigerPoste, premierDuMois } from '@/lib/roles';
+import { exigerPoste } from '@/lib/roles';
+import { jourQuebec, premierDuMoisQuebec as premierDuMois, finDuMois } from '@/lib/temps';
+import { VALEURS_CATEGORIES } from '@/lib/defis';
+import { mesTypesVisibles } from '@/lib/visibilite';
 
-// Défi du mois en cours, défi du mois prochain et historique
-export async function GET() {
-  const { erreur } = await exigerPoste();
-  if (erreur) return erreur;
-  const defis = await sql`
-    SELECT d.id, to_char(d.mois, 'YYYY-MM-DD') AS mois, d.titre, d.description, u.pseudo AS choisi_par
-    FROM defis d LEFT JOIN users u ON u.id = d.choisi_par
-    ORDER BY d.mois DESC LIMIT 24`;
-  return NextResponse.json({ defis, moisActuel: premierDuMois(0), moisProchain: premierDuMois(1) });
+const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
+const aujourdhui = () => jourQuebec();
+
+// Délai de la cheffe : 7 jours après sa nomination pour créer son épreuve (une seule par mandat)
+async function delaiCheffe(userId) {
+  const [u] = await sql`
+    SELECT COALESCE(cheffe_depuis, cheffe_expires_at - interval '1 month') AS depuis,
+           to_char(cheffe_expires_at, 'YYYY-MM-DD') AS fin_mandat
+    FROM users WHERE id = ${userId} AND role = 'cheffe'`;
+  if (!u?.depuis) return { ouvert: false, deja: false, limite: null, finMandat: null };
+  const limite = new Date(new Date(u.depuis).getTime() + 7 * 86400000);
+  const [d] = await sql`SELECT 1 FROM defis WHERE genre = 'cheffe' AND choisi_par = ${userId} AND cree_le >= ${u.depuis}`;
+  return { ouvert: Date.now() <= limite.getTime(), deja: !!d, limite: limite.toISOString(), finMandat: u.fin_mandat };
 }
 
-// Créer ou modifier le défi d'un mois (un seul défi par mois).
-// L'admin choisit n'importe quel mois, la modo le mois en cours ou un mois à venir,
-// la cheffe seulement le défi du mois prochain.
-export async function POST(req) {
-  const { profil, erreur } = await exigerPoste('admin', 'modo', 'cheffe');
+// Épreuves en cours (les épreuves programmées n'apparaissent qu'à leur date de début).
+// ?gestion=1 : toutes les épreuves officielles, de modo et de cheffe (espace admin)
+export async function GET(req) {
+  const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
+  const gestion = new URL(req.url).searchParams.get('gestion') === '1';
+  // Les épreuves d'un type que la personne ne fait pas ou ne veut pas voir sont cachées
+  const visibles = await mesTypesVisibles(profil.id);
+  const defis = await sql`
+    SELECT d.id, d.genre, d.categorie, to_char(d.mois, 'YYYY-MM-DD') AS mois, d.titre, d.description,
+           to_char(d.debut, 'YYYY-MM-DD') AS debut, to_char(d.fin, 'YYYY-MM-DD') AS fin,
+           (((d.fin + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant,
+           (d.debut > (now() AT TIME ZONE 'America/Toronto')::date) AS programme,
+           d.choisi_par AS createur_id, u.pseudo AS choisi_par, u.name AS nom_createur, u.role AS role_createur,
+           (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+           (SELECT count(*)::int FROM defi_participations p WHERE p.defi_id = d.id) AS participants,
+           (SELECT count(*)::int FROM defi_participations p WHERE p.defi_id = d.id AND p.page_id IS NOT NULL) AS coloriages,
+           mp.cree_le IS NOT NULL AS je_participe, mp.page_id AS ma_page
+    FROM defis d
+    LEFT JOIN users u ON u.id = d.choisi_par
+    LEFT JOIN defi_participations mp ON mp.defi_id = d.id AND mp.user_id = ${profil.id}
+    WHERE (${gestion} AND d.genre <> 'groupe')
+       OR (NOT ${gestion}
+           AND (d.categorie = 'tous' OR d.categorie = ANY(${visibles}))
+           AND d.debut <= (now() AT TIME ZONE 'America/Toronto')::date
+           AND (
+             (d.genre <> 'groupe' AND d.fin >= (now() AT TIME ZONE 'America/Toronto')::date)
+             OR (d.genre = 'groupe' AND d.fin >= (now() AT TIME ZONE 'America/Toronto')::date - 7)
+           ))
+    ORDER BY array_position(ARRAY['officiel', 'modo', 'cheffe', 'groupe'], d.genre), d.debut DESC
+    LIMIT 200`;
+  const cheffe = profil.role === 'cheffe' ? await delaiCheffe(profil.id) : null;
+  return NextResponse.json({ defis, moisActuel: premierDuMois(0), moisProchain: premierDuMois(1), aujourdhui: aujourdhui(), cheffe });
+}
 
-  const { mois, titre, description } = await req.json();
-  const m = /^\d{4}-\d{2}/.test(mois || '') ? `${mois.slice(0, 7)}-01` : null;
-  if (!m || !titre?.trim()) return NextResponse.json({ error: 'Mois et titre requis' }, { status: 400 });
-  if (profil.role === 'cheffe' && m !== premierDuMois(1)) {
-    return NextResponse.json({ error: 'La cheffe choisit seulement le défi du mois prochain' }, { status: 403 });
-  }
-  if (profil.role === 'modo' && m < premierDuMois(0)) {
-    return NextResponse.json({ error: 'Les défis des mois passés ne se modifient plus' }, { status: 403 });
+// Créer ou modifier une épreuve.
+//  officiel : l'admin seulement, programmable (dates de début et de fin libres), une par mois
+//  modo : une par modo et par mois ; commence le 1er du mois prochain,
+//         ou aujourd'hui si on est dans les 7 premiers jours du mois et qu'on le demande (depart: 'maintenant')
+//  cheffe : une par mandat, dans les 7 jours qui suivent la nomination ; commence le jour même
+//  groupe : n'importe quel membre, une par mois ; commence le jour même
+export async function POST(req) {
+  const { profil, erreur } = await exigerPoste();
+  if (erreur) return erreur;
+  const c = await req.json().catch(() => ({}));
+  const genre = c.genre || 'officiel';
+  const titre = String(c.titre || '').trim().slice(0, 100);
+  const description = String(c.description || '').slice(0, 1000);
+  const categorie = VALEURS_CATEGORIES.includes(c.categorie) ? c.categorie : 'tous';
+  if (!titre) return NextResponse.json({ error: 'Le thème de l’épreuve est requis' }, { status: 400 });
+  const ajd = aujourdhui();
+
+  if (genre === 'groupe') {
+    const fin = date(c.fin);
+    if (!fin || fin < ajd) return NextResponse.json({ error: 'Choisis une date de fin à partir d’aujourd’hui' }, { status: 400 });
+    if (c.id) {
+      const maj = await sql`UPDATE defis SET titre = ${titre}, description = ${description}, categorie = ${categorie}, fin = ${fin}
+        WHERE id = ${Number(c.id)} AND genre = 'groupe' AND choisi_par = ${profil.id} RETURNING id`;
+      if (!maj.length) return NextResponse.json({ error: 'Tu ne peux modifier que tes épreuves de groupe' }, { status: 403 });
+      return NextResponse.json({ ok: true });
+    }
+    const cree = await sql`INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par)
+      VALUES ('groupe', date_trunc('month', ${ajd}::date), ${titre}, ${description}, ${categorie}, ${ajd}, ${fin}, ${profil.id})
+      ON CONFLICT (mois, choisi_par) WHERE genre = 'groupe' DO NOTHING RETURNING id`;
+    if (!cree.length) return NextResponse.json({ error: 'Tu as déjà créé une épreuve de groupe ce mois-ci' }, { status: 409 });
+    // La personne qui crée l'épreuve y participe d'office
+    await sql`INSERT INTO defi_participations (defi_id, user_id) VALUES (${cree[0].id}, ${profil.id}) ON CONFLICT DO NOTHING`;
+    return NextResponse.json({ ok: true, id: cree[0].id });
   }
 
-  await sql`
-    INSERT INTO defis (mois, titre, description, choisi_par)
-    VALUES (${m}, ${titre.trim().slice(0, 100)}, ${String(description || '').slice(0, 1000)}, ${profil.id})
-    ON CONFLICT (mois) DO UPDATE SET titre = EXCLUDED.titre, description = EXCLUDED.description, choisi_par = EXCLUDED.choisi_par`;
+  if (genre === 'modo') {
+    if (profil.role !== 'modo') return NextResponse.json({ error: 'Réservé aux modos' }, { status: 403 });
+    const premiersJours = Number(ajd.slice(8, 10)) <= 7;
+    const debut = premiersJours && c.depart === 'maintenant' ? ajd : premierDuMois(1);
+    const mois = `${debut.slice(0, 7)}-01`;
+    await sql`
+      INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par)
+      VALUES ('modo', ${mois}, ${titre}, ${description}, ${categorie}, ${debut}, ${finDuMois(debut)}, ${profil.id})
+      ON CONFLICT (mois, choisi_par) WHERE genre = 'modo'
+      DO UPDATE SET titre = EXCLUDED.titre, description = EXCLUDED.description, categorie = EXCLUDED.categorie`;
+    return NextResponse.json({ ok: true, debut });
+  }
+
+  // Épreuve de cheffe : une par mandat, à créer dans les 7 jours qui suivent la nomination
+  // (sinon le privilège est perdu). Elle commence le jour même et dure jusqu'à la fin du mandat.
+  if (genre === 'cheffe') {
+    if (profil.role !== 'cheffe') return NextResponse.json({ error: 'Réservé aux cheffes' }, { status: 403 });
+    const delai = await delaiCheffe(profil.id);
+    if (c.id) {
+      const maj = await sql`UPDATE defis SET titre = ${titre}, description = ${description}, categorie = ${categorie}
+        WHERE id = ${Number(c.id)} AND genre = 'cheffe' AND choisi_par = ${profil.id} RETURNING id`;
+      if (!maj.length) return NextResponse.json({ error: 'Tu ne peux modifier que ton épreuve de cheffe' }, { status: 403 });
+      return NextResponse.json({ ok: true });
+    }
+    if (delai.deja) return NextResponse.json({ error: 'Tu as déjà créé ton épreuve de cheffe pour ce mandat' }, { status: 409 });
+    if (!delai.ouvert) return NextResponse.json({ error: 'Le délai de 7 jours après ta nomination est passé : tu ne peux plus créer d’épreuve de cheffe' }, { status: 403 });
+    const fin = delai.finMandat && delai.finMandat >= ajd ? delai.finMandat : finDuMois(ajd);
+    const cree = await sql`
+      INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par)
+      VALUES ('cheffe', date_trunc('month', ${ajd}::date), ${titre}, ${description}, ${categorie}, ${ajd}, ${fin}, ${profil.id})
+      ON CONFLICT (mois, choisi_par) WHERE genre = 'cheffe' DO NOTHING RETURNING id`;
+    if (!cree.length) return NextResponse.json({ error: 'Tu as déjà une épreuve de cheffe ce mois-ci' }, { status: 409 });
+    return NextResponse.json({ ok: true, debut: ajd });
+  }
+
+  // Épreuve officielle : l'admin choisit les dates (programmable)
+  if (profil.role !== 'admin') return NextResponse.json({ error: 'Réservé à l’admin' }, { status: 403 });
+  const debut = date(c.debut);
+  if (!debut) return NextResponse.json({ error: 'Choisis la date de début' }, { status: 400 });
+  const fin = date(c.fin) || finDuMois(debut);
+  if (fin < debut) return NextResponse.json({ error: 'La fin doit être après le début' }, { status: 400 });
+  const mois = `${debut.slice(0, 7)}-01`;
+  if (c.id) {
+    const maj = await sql`UPDATE defis SET titre = ${titre}, description = ${description}, categorie = ${categorie},
+        debut = ${debut}, fin = ${fin}, mois = ${mois}
+      WHERE id = ${Number(c.id)} AND genre = 'officiel' RETURNING id`.catch(() => null);
+    if (!maj) return NextResponse.json({ error: 'Il y a déjà une épreuve officielle ce mois-là' }, { status: 409 });
+    return NextResponse.json({ ok: true });
+  }
+  const cree = await sql`
+    INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par)
+    VALUES ('officiel', ${mois}, ${titre}, ${description}, ${categorie}, ${debut}, ${fin}, ${profil.id})
+    ON CONFLICT (mois) WHERE genre = 'officiel' DO NOTHING RETURNING id`;
+  if (!cree.length) return NextResponse.json({ error: 'Il y a déjà une épreuve officielle ce mois-là' }, { status: 409 });
   return NextResponse.json({ ok: true });
 }
 
+// Supprimer : l'admin peut tout supprimer, chacun peut supprimer son épreuve de modo, de cheffe ou de groupe
 export async function DELETE(req) {
-  const { erreur } = await exigerPoste('admin');
+  const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
-  const { id } = await req.json();
-  await sql`DELETE FROM defis WHERE id = ${Number(id)}`;
+  const { id } = await req.json().catch(() => ({}));
+  if (profil.role === 'admin') await sql`DELETE FROM defis WHERE id = ${Number(id)}`;
+  else await sql`DELETE FROM defis WHERE id = ${Number(id)} AND genre IN ('modo', 'cheffe', 'groupe') AND choisi_par = ${profil.id}`;
   return NextResponse.json({ ok: true });
 }

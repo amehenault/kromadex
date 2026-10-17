@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { ImagePlus, BookOpen, ArrowLeft, StickyNote } from 'lucide-react';
 
 export default function Library({ pages = [] }) {
   const [q, setQ] = useState('');
@@ -191,7 +192,8 @@ export default function Library({ pages = [] }) {
                       fileInputRef.current?.click();
                     }}
                   >
-                    🖼️ Changer l&apos;image de couverture
+                    <ImagePlus size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                    Changer l&apos;image de couverture
                   </button>
                 </div>
               )}
@@ -208,7 +210,7 @@ export default function Library({ pages = [] }) {
                     }
                   }}
                 />
-                <b>📚 {t.nom}</b>
+                <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><BookOpen size={16} aria-hidden="true" /> {t.nom}</b>
                 <small>{t.nbPages} page{t.nbPages > 1 ? 's' : ''}</small>
               </div>
             </div>
@@ -222,7 +224,8 @@ export default function Library({ pages = [] }) {
             className="btn alt" 
             onClick={() => setTomeSelectionne(null)}
           >
-            ← Retour aux tomes
+            <ArrowLeft size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+            Retour aux tomes
           </button>
           <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Tome : <b>{tomeSelectionne}</b></h2>
         </div>
@@ -246,7 +249,8 @@ export default function Library({ pages = [] }) {
               </small>
               {p.memo && (
                 <small style={{ display: 'block', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  📝 {p.memo}
+                  <StickyNote size={13} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                  {p.memo}
                 </small>
               )}
             </Link>
@@ -260,7 +264,7 @@ export default function Library({ pages = [] }) {
         </p>
       )}
 
-      <Link href="/pages/new" className="btn ajouter" aria-label="Ajouter un coloriage">+</Link>
+      {/* L'ajout d'un coloriage se fait avec le bouton + du menu du bas */}
     </>
   );
 }

@@ -1,93 +1,145 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
-import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
+import { Trash2, CalendarClock } from 'lucide-react';
+import { CATEGORIES_DEFI, nomCategorie } from '@/lib/defis';
+import { useFuseau, TempsRestant } from '@/components/Fuseau';
+import { formaterInstant } from '@/lib/temps';
+import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 
-const nomMois = (m) => new Date(`${m}T12:00:00`).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' });
+const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
+const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef·fe' };
+const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '' });
 
-// Défis mensuels : l'admin gère tous les mois, la modo crée le défi d'un mois en cours ou à venir,
-// la cheffe choisit celui du mois prochain
-export default function Defis({ role }) {
-  const [donnees, setDonnees] = useState({ defis: [], moisActuel: '', moisProchain: '' });
-  const [form, setForm] = useState({ mois: '', titre: '', description: '' });
+// Épreuves.
+//  admin : épreuve officielle, programmable (dates libres)
+//  modo : sa propre épreuve du mois ; elle commence le 1er du mois prochain,
+//         ou tout de suite si on est dans les 7 premiers jours du mois et qu'on le choisit
+//  cheffe : son épreuve, à créer dans les 7 jours qui suivent sa nomination ; elle commence tout de suite
+export default function Defis({ role, monId }) {
+  const [donnees, setDonnees] = useState({ defis: [], aujourdhui: '' });
+  const [form, setForm] = useState(vide);
+  const [choixDepart, setChoixDepart] = useState(false);
   const [message, setMessage] = useState('');
   const estAdmin = role === 'admin';
-  const choisitMois = estAdmin || role === 'modo';
+  const fuseau = useFuseau();
+  const genre = estAdmin ? 'officiel' : role; // 'modo' ou 'cheffe'
 
   async function charger() {
-    const res = await fetch('/api/defis');
-    if (!res.ok) return;
-    const d = await res.json();
-    setDonnees(d);
-    // Formulaire prérempli avec le défi du mois prochain s'il existe
-    const prochain = d.defis.find((x) => x.mois === d.moisProchain);
-    setForm((f) => (f.mois ? f : { mois: d.moisProchain, titre: prochain?.titre || '', description: prochain?.description || '' }));
+    const res = await fetch('/api/defis?gestion=1');
+    if (res.ok) setDonnees(await res.json());
   }
   useEffect(() => { charger(); }, []);
 
-  function choisirMois(mois) {
-    const existant = donnees.defis.find((x) => x.mois === mois);
-    setForm({ mois, titre: existant?.titre || '', description: existant?.description || '' });
+  async function publier(depart) {
+    setChoixDepart(false);
+    const r = await envoyer('/api/defis', 'POST', { ...form, genre, depart });
+    setMessage(r.ok
+      ? (r.debut ? `Épreuve enregistrée, active à partir du ${jour(r.debut)}` : 'Épreuve enregistrée')
+      : r.error);
+    if (r.ok) { setForm(vide()); charger(); }
   }
 
-  async function enregistrer(e) {
+  function enregistrer(e) {
     e.preventDefault();
-    const r = await envoyer('/api/defis', 'POST', form);
-    setMessage(r.ok ? 'Défi enregistré ✓' : r.error);
-    if (r.ok) charger();
+    // Modo et cheffe : dans les 7 premiers jours du mois, on demande quand l'épreuve commence
+    const premiersJours = Number((donnees.aujourdhui || '').slice(8, 10)) <= 7;
+    if (role === 'modo' && !form.id && premiersJours) { setChoixDepart(true); return; }
+    publier('mois_prochain');
   }
 
   async function supprimer(d) {
-    if (!confirm(`Supprimer le défi « ${d.titre} » ?`)) return;
+    if (!confirm(`Supprimer l'épreuve « ${d.titre} » ?`)) return;
     await envoyer('/api/defis', 'DELETE', { id: d.id });
     charger();
   }
 
-  const actuel = donnees.defis.find((x) => x.mois === donnees.moisActuel);
+  const visibles = donnees.defis.filter((d) => estAdmin || String(d.createur_id) === monId);
+  // Cheffe : 7 jours après la nomination pour créer son épreuve, une seule par mandat
+  const delai = donnees.cheffe;
+  const cheffeBloquee = role === 'cheffe' && !form.id && (!delai?.ouvert || delai?.deja);
+  const texteCheffe = !delai ? '' : delai.deja
+    ? 'Tu as déjà créé ton épreuve de cheffe pour ce mandat. Tu peux encore la modifier ci-dessous.'
+    : delai.ouvert
+      ? `Tu as jusqu’au ${formaterInstant(delai.limite, fuseau)} pour créer ton épreuve de cheffe. Elle commence dès que tu l’enregistres et dure jusqu’à la fin de ton mandat.`
+      : 'Le délai de 7 jours après ta nomination est passé : tu ne peux plus créer d’épreuve de cheffe pour ce mandat.';
+  const titreForm = estAdmin ? (form.id ? "Modifier l'épreuve officielle" : 'Nouvelle épreuve officielle')
+    : role === 'modo' ? 'Mon épreuve de sentinelle du mois' : 'Mon épreuve de chef·fe';
 
   return (
     <div style={colonne}>
-      <div className="carte" style={colonne}>
-        <small style={{ ...aide, textTransform: 'uppercase', fontWeight: 700 }}>Défi en cours</small>
-        {actuel ? (
-          <>
-            <b style={{ fontSize: '1.1rem' }}>{actuel.titre}</b>
-            {actuel.description && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{actuel.description}</p>}
-            <small style={aide}>{nomMois(actuel.mois)}{actuel.choisi_par ? ` · choisi par @${actuel.choisi_par}` : ''}</small>
-          </>
-        ) : <p style={aide}>Aucun défi pour ce mois-ci.</p>}
-      </div>
-
       <form onSubmit={enregistrer} className="carte" style={colonne}>
-        <b>{choisitMois ? 'Créer ou modifier un défi' : `Choisis le défi de ${donnees.moisProchain ? nomMois(donnees.moisProchain) : 'du mois prochain'}`}</b>
-        {choisitMois && (
-          <label style={champ}>Mois
-            <input type="month" min={estAdmin ? undefined : donnees.moisActuel.slice(0, 7)} value={form.mois.slice(0, 7)} onChange={(e) => choisirMois(`${e.target.value}-01`)} />
-          </label>
+        <b>{titreForm}</b>
+        <p style={aide}>
+          {estAdmin
+            ? "Une épreuve officielle par mois. Choisis ses dates : avec une date de début à venir, elle est programmée et n'apparaît aux membres que ce jour-là."
+            : role === 'modo'
+              ? "Ton épreuve commence le 1er du mois prochain. Pendant les 7 premiers jours du mois, tu peux aussi la lancer tout de suite."
+              : texteCheffe}
+        </p>
+        {role === 'cheffe' && delai?.ouvert && !delai?.deja && <TempsRestant fin={delai.limite} />}
+        {estAdmin && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <label style={champ}>Début
+              <input type="date" value={form.debut} onChange={(e) => setForm({ ...form, debut: e.target.value })} style={dateStyle} />
+            </label>
+            <label style={champ}>Fin (facultatif)
+              <input type="date" value={form.fin} min={form.debut || undefined} onChange={(e) => setForm({ ...form, fin: e.target.value })} style={dateStyle} />
+            </label>
+          </div>
         )}
-        <label style={champ}>Thème du défi
+        <label style={champ}>Thème de l'épreuve
           <input value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} placeholder="ex. Que des tons pastel" maxLength={100} />
+        </label>
+        <label style={champ}>Catégorie
+          <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
+            {CATEGORIES_DEFI.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
+          </select>
         </label>
         <label style={champ}>Règles et détails
           <textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} />
         </label>
-        <button type="submit" className="btn" disabled={!form.titre.trim() || !form.mois} style={{ minHeight: '44px' }}>Enregistrer le défi</button>
+        <div style={actions}>
+          <button type="submit" className="btn" disabled={!form.titre.trim() || (estAdmin && !form.debut) || cheffeBloquee} style={{ flex: 1, minHeight: '44px' }}>
+            Enregistrer l'épreuve
+          </button>
+          {form.id && <button type="button" className="btn alt" onClick={() => setForm(vide())}>Annuler</button>}
+        </div>
         {message && <small>{message}</small>}
       </form>
 
-      {estAdmin && donnees.defis.length > 0 && (
+      {visibles.length > 0 && (
         <div className="carte" style={colonne}>
-          <b>Tous les défis</b>
-          {donnees.defis.map((d) => (
+          <b>{estAdmin ? 'Épreuves officielles, de sentinelle et de chef·fe' : 'Mes épreuves'}</b>
+          {visibles.map((d) => (
             <div key={d.id} style={ligneCarte}>
-              <small style={{ ...aide, textTransform: 'capitalize' }}>{nomMois(d.mois)}</small>
+              <small style={{ ...aide, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                {d.programme && <CalendarClock size={14} aria-hidden="true" />}
+                {GENRES[d.genre]}{d.genre !== 'officiel' && d.choisi_par ? ` @${d.choisi_par}` : ''} · {d.programme ? 'programmée : ' : ''}{jour(d.debut)} au {jour(d.fin)}
+              </small>
               <b>{d.titre}</b>
+              <small>{nomCategorie(d.categorie)} · {d.participants} participant{d.participants > 1 ? 's' : ''}</small>
               <div style={actions}>
-                <button type="button" className="btn alt" style={petitBtn} onClick={() => choisirMois(d.mois)}>Modifier</button>
-                <button type="button" className="btn alt danger" style={petitBtn} onClick={() => supprimer(d)}><Trash2 size={14} /> Supprimer</button>
+                {d.genre === genre && (estAdmin || String(d.createur_id) === monId) && (
+                  <button type="button" className="btn alt" style={petitBtn}
+                    onClick={() => { setForm({ id: d.id, titre: d.titre, description: d.description, categorie: d.categorie, debut: d.debut, fin: d.fin }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                    Modifier
+                  </button>
+                )}
+                <button type="button" className="btn alt danger" style={petitBtn} onClick={() => supprimer(d)}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {choixDepart && (
+        <div onClick={() => setChoixDepart(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div role="dialog" aria-label="Début de l'épreuve" onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '520px', background: 'var(--fond-carte)', borderRadius: 'var(--rayon-l) var(--rayon-l) 0 0', padding: 'var(--espace-4)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <b>Veux-tu que cette épreuve soit active dès aujourd'hui ou le 1er du mois prochain ?</b>
+            <button type="button" className="btn" style={{ minHeight: '48px' }} onClick={() => publier('maintenant')}>Dès aujourd'hui</button>
+            <button type="button" className="btn alt" style={{ minHeight: '48px' }} onClick={() => publier('mois_prochain')}>Le 1er du mois prochain</button>
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,8 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { exigerPoste } from '@/lib/roles';
 
-const DUREES = [0, 1, 3, 7, 30];
+// 36500 jours = bannissement (définitif, mais réversible avec « Lever la suspension »)
+const DUREES = [0, 1, 3, 7, 30, 36500];
 
 // Modo et admin : membres, avertissements et suspensions en cours.
 // Tout le monde : ?miens=1 renvoie mes avertissements non lus (pour l'accueil)

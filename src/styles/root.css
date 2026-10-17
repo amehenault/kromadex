@@ -23,6 +23,16 @@
   --btn-secondaire-bordure: #a9cfc3;
   --btn-secondaire-survol: var(--accent-doux);
 
+  /* Surfaces et textes (utilisés par base.css, .carte et les écrans) */
+  --fond-page: var(--blanc);
+  --texte-principal: var(--noir);
+  --texte: var(--texte-principal);
+  --texte-secondaire: #5f6b70;
+  --carte: #ffffff;
+  --fond-carte: #ffffff;
+  --bordure: #dbe9e4;
+  --bordure-carte: var(--bordure);
+
   /* Alertes */
   --danger: #9c033b;
 
@@ -44,13 +54,4 @@
   --cible-tactile: 44px;
   --ombre: 0 4px 14px rgb(39 49 54 / 0.07);
   --largeur-max: 980px;
-}
-
-div.vide {
-  display: block;
-  width: 148px;
-  height: 198px;
-  background:
-    url("/couverture-par-defaut.jpg")
-    no-repeat center / cover !important;
 }

@@ -1,0 +1,81 @@
+// Un titre par niveau (1 à 62), au masculin et au féminin.
+// Le genre choisi au profil sert seulement à accorder le titre :
+// féminin = forme féminine ; masculin, non-binaire et autre = forme masculine.
+export const TITRES = [
+  ['Gribouilleur en herbe', 'Gribouilleuse en herbe'],
+  ['Futur barbouilleur', 'Future barbouilleuse'],
+  ['Porteur d’aiguisoir', 'Porteuse d’aiguisoir'],
+  ['Mangeur de crayon', 'Mangeuse de crayon'],
+  ['Cueilleur de couleurs', 'Cueilleuse de couleurs'],
+  ['Apprenti colorieur', 'Apprentie colorieuse'],
+  ['Spécialiste des lignes croches', 'Spécialiste des lignes croches'],
+  ['Chercheur de la mine brisée', 'Chercheuse de la mine brisée'],
+  ['Aventurier de la forêt colorée', 'Aventurière de la forêt colorée'],
+  ['Écuyer des nuanciers', 'Écuyère des nuanciers'],
+  ['Chasseur de livres', 'Chasseuse de livres'],
+  ['Dénicheur de pigments', 'Dénicheuse de pigments'],
+  ['Arpenteur du cercle chromatique', 'Arpenteuse du cercle chromatique'],
+  ['Pionnier des pigments', 'Pionnière des pigments'],
+  ['Dompteur de crayons', 'Dompteuse de crayons'],
+  ['Ravageur de crayons', 'Ravageuse de crayons'],
+  ['Dégaineur de crayons', 'Dégaineuse de crayons'],
+  ['Chevalier du feutre sec', 'Chevalière du feutre sec'],
+  ['Soldat au crayon aiguisé', 'Soldate au crayon aiguisé'],
+  ['Collectionneur de livres', 'Collectionneuse de livres'],
+  ['Fantassin au regard acéré', 'Fantassine au regard acéré'],
+  ['Bâtisseur de coloriages', 'Bâtisseuse de coloriages'],
+  ['Guerrier au cou douloureux', 'Guerrière au cou douloureux'],
+  ['Forgeron de couleurs', 'Forgeronne de couleurs'],
+  ['Vassal aux crayons baladeurs', 'Vassale aux crayons baladeurs'],
+  ['Combattant des livres sauvages', 'Combattante des livres sauvages'],
+  ['Mercenaire de la Seigneurie des pages', 'Mercenaire de la Seigneurie des pages'],
+  ['Artisan de pigments pailletés', 'Artisane de pigments pailletés'],
+  ['Maraudeur des nuances', 'Maraudeuse des nuances'],
+  ['Paladin aux mains colorées', 'Paladine aux mains colorées'],
+  ['Ravisseur de nuanciers', 'Ravisseuse de nuanciers'],
+  ['Terrassier des couvertures', 'Terrassière des couvertures'],
+  ['Buveur de pigment', 'Buveuse de pigment'],
+  ['Exterminateur des pages vides', 'Exterminatrice des pages vides'],
+  ['Seigneur des pages coloriées', 'Dame des pages coloriées'],
+  ['Évocateur de lignes droites', 'Évocatrice de lignes droites'],
+  ['Créateur de rêves', 'Créatrice de rêves'],
+  ['Inquisiteur des doigts tachés', 'Inquisitrice des doigts tachés'],
+  ['Magicien aux crayons', 'Magicienne aux crayons'],
+  ['Traqueur des pointes sèches', 'Traqueuse des pointes sèches'],
+  ['Enchanteur de couleurs', 'Enchanteresse de couleurs'],
+  ['Mage aux livres remplis', 'Mage aux livres remplis'],
+  ['Marquis des Teintes', 'Marquise des Teintes'],
+  ['Fae des crayons', 'Fae des crayons'],
+  ['Illusionniste des pages nombreuses', 'Illusionniste des pages nombreuses'],
+  ['Alchimiste des couleurs', 'Alchimiste des couleurs'],
+  ['Sorcier des pages cornées', 'Sorcière des pages cornées'],
+  ['Expert en nuancier', 'Experte en nuancier'],
+  ['Veilleur de la Mine sombre', 'Veilleuse de la Mine sombre'],
+  ['Maître des crayons', 'Maîtresse des crayons'],
+  ['Duc du comté des livres empilés', 'Duchesse du comté des livres empilés'],
+  ['Gardien des couleurs', 'Gardienne des couleurs'],
+  ['Prodige du crayon', 'Prodige du crayon'],
+  ['Protecteur des coloris', 'Protectrice des coloris'],
+  ['Capitaine du Navire des pigments', 'Capitaine du Navire des pigments'],
+  ['Diplomate des Terres colorées', 'Diplomate des Terres colorées'],
+  ['Dominateur de crayons', 'Dominatrice de crayons'],
+  ['Prince aux multiples crayons', 'Princesse aux multiples crayons'],
+  ['Tyran du Domaine des crayons', 'Tyranne du Domaine des crayons'],
+  ['Archimage des nuanciers', 'Archimage des nuanciers'],
+  ['Archonte des Collines de livres', 'Archonte des Collines de livres'],
+  ['Roi des Terres colorées', 'Reine des Terres colorées'],
+];
+
+export const GENRES = [
+  { valeur: 'feminin', label: 'Féminin' },
+  { valeur: 'masculin', label: 'Masculin' },
+  { valeur: 'non_binaire', label: 'Non-binaire' },
+  { valeur: 'autre', label: 'Autre' },
+];
+export const VALEURS_GENRES = GENRES.map((g) => g.valeur);
+
+// Titre d'un niveau selon le genre (non-binaire et autre : masculin par défaut)
+export function titreNiveau(niveau, genre) {
+  const n = Math.min(Math.max(1, Math.floor(niveau) || 1), TITRES.length);
+  return TITRES[n - 1][genre === 'feminin' ? 1 : 0];
+}

@@ -22,9 +22,16 @@ export async function PUT(req) {
   const { profil, erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
 
-  const { targetUserId, role, title } = await req.json();
+  const { targetUserId, role, title, prolonger } = await req.json();
   const [cible] = await sql`SELECT id, role FROM users WHERE id = ${targetUserId}`;
   if (!cible) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
+
+  // Garder la cheffe un mois de plus (sinon le poste est retiré automatiquement à l'échéance)
+  if (prolonger) {
+    if (cible.role !== 'cheffe') return NextResponse.json({ error: "Ce membre n'est pas cheffe" }, { status: 400 });
+    await sql`UPDATE users SET cheffe_expires_at = GREATEST(COALESCE(cheffe_expires_at, now()), now()) + interval '1 month' WHERE id = ${targetUserId}`;
+    return NextResponse.json({ success: true });
+  }
 
   if (role) {
     // Le poste d'admin est unique : on ne peut ni le donner ni le retirer
@@ -40,12 +47,14 @@ export async function PUT(req) {
       d.setMonth(d.getMonth() + 1);
       expiresAt = d.toISOString();
     }
-    await sql`UPDATE users SET role = ${role}, cheffe_expires_at = ${expiresAt} WHERE id = ${targetUserId}`;
+    // La date de nomination sert au délai de 7 jours pour créer l'épreuve de cheffe
+    await sql`UPDATE users SET role = ${role}, cheffe_expires_at = ${expiresAt},
+      cheffe_depuis = ${role === 'cheffe' ? new Date().toISOString() : null} WHERE id = ${targetUserId}`;
     // La cheffe reçoit aussi le titre qui va avec
     if (role === 'cheffe') {
       await sql`
-        UPDATE users SET unlocked_titles = COALESCE(unlocked_titles, '[]'::jsonb) || '["Chef des coloristes"]'::jsonb
-        WHERE id = ${targetUserId} AND NOT (COALESCE(unlocked_titles, '[]'::jsonb) ? 'Chef des coloristes')`;
+        UPDATE users SET unlocked_titles = COALESCE(unlocked_titles, '[]'::jsonb) || '["Chef·fe des coloristes"]'::jsonb
+        WHERE id = ${targetUserId} AND NOT (COALESCE(unlocked_titles, '[]'::jsonb) ? 'Chef·fe des coloristes')`;
     }
   }
 

@@ -1,31 +1,43 @@
 'use client';
-import { useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Map, ShieldAlert, Inbox, Newspaper } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Newspaper, Tags, ClipboardCheck, Flag } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
 import Missives from './missives';
 import Bingos from './bingos';
-import Quetes from './quetes';
+import Aventures from './aventures';
+import ValidationBingos from './validationBingos';
+import SignalementsEpreuves from './signalementsEpreuves';
 import Moderation from './moderation';
 import Demandes from './demandes';
 import Nouveautes from './nouveautes';
+import MotsCles from './motsCles';
 
 const ONGLETS = [
   { cle: 'demandes', label: 'Demandes', icone: Inbox, roles: ['admin'] },
   { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
   { cle: 'moderation', label: 'Modération', icone: ShieldAlert, roles: ['admin', 'modo'] },
+  { cle: 'motscles', label: 'Mots-clés', icone: Tags, roles: ['admin', 'modo'] },
   { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe'] },
+  { cle: 'signalements', label: 'Signalés', icone: Flag, roles: ['admin', 'modo'] },
+  { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
   { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
   { cle: 'bingos', label: 'Bingos', icone: Grid3x3, roles: ['admin'] },
-  { cle: 'quetes', label: 'Quêtes', icone: Map, roles: ['admin'] },
+  { cle: 'aventures', label: 'Aventures', icone: Compass, roles: ['admin'] },
   { cle: 'nouveautes', label: 'Nouveautés', icone: Newspaper, roles: ['admin'] },
 ];
 
 export default function EspaceAdmin({ role, monId }) {
   const onglets = ONGLETS.filter((o) => o.roles.includes(role));
   const [actif, setActif] = useState(onglets[0]?.cle);
+
+  // Lien direct vers un onglet (ex. depuis Activités à venir : /profil/admin?onglet=aventures)
+  useEffect(() => {
+    const o = new URLSearchParams(window.location.search).get('onglet');
+    if (onglets.some((x) => x.cle === o)) setActif(o);
+  }, []);
 
   return (
     <>
@@ -54,8 +66,11 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'missives' && <Missives role={role} />}
       {actif === 'titres' && <Titres />}
       {actif === 'bingos' && <Bingos />}
-      {actif === 'quetes' && <Quetes />}
+      {actif === 'aventures' && <Aventures />}
+      {actif === 'validation' && <ValidationBingos />}
+      {actif === 'signalements' && <SignalementsEpreuves />}
       {actif === 'nouveautes' && <Nouveautes />}
+      {actif === 'motscles' && <MotsCles />}
     </>
   );
 }

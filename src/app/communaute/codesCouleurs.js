@@ -10,9 +10,9 @@ import useTypesVisibles from '@/components/useTypesVisibles';
 // Codes couleurs des autres : type de coloriage, puis tome, puis numéro de page
 export default function CodesCouleurs() {
   const [type, setType] = useState('mystere');
-  const visibles = useTypesVisibles();
+  const typesVus = useTypesVisibles();
   // Si le type affiché n'est pas visible pour la personne, on passe au premier type visible
-  useEffect(() => { if (!visibles.includes(type)) setType(visibles[0]); }, [visibles]);
+  useEffect(() => { if (!typesVus.includes(type)) setType(typesVus[0]); }, [typesVus]);
   const [tomes, setTomes] = useState(null);
   const [recherche, setRecherche] = useState('');
   const [tome, setTome] = useState(null);
@@ -108,7 +108,7 @@ export default function CodesCouleurs() {
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-        {TYPES_COLORIAGE.filter((t) => visibles.includes(t.valeur)).map((t) => (
+        {TYPES_COLORIAGE.filter((t) => typesVus.includes(t.valeur)).map((t) => (
           <button key={t.valeur} type="button" className={type === t.valeur ? 'btn' : 'btn alt'} onClick={() => setType(t.valeur)}
             style={{ flex: '0 0 auto', minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 12px' }}>
             {t.label}

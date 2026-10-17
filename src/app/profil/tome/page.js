@@ -5,6 +5,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { pagesFaites } from '@/lib/mesTomes';
 import NbPagesCozy from './nbPagesCozy';
+import MotsCles from './motsCles';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,8 @@ export default async function TomePage({ searchParams }) {
   ]);
 
   const titre = cat?.nom || nom;
+  // On ne peut ajouter des mots-clés qu'aux tomes du catalogue qu'on possède
+  const possede = cat ? (await sql`SELECT 1 FROM user_tomes WHERE user_id = ${uid} AND tome_id = ${cat.id}`).length > 0 : false;
   const couverture = couv
     ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(couv.updated_at).getTime()}`
     : cat?.couverture || null;
@@ -70,6 +73,7 @@ export default async function TomePage({ searchParams }) {
             </small>
           )}
           {cat && cat.type === 'cozy' && !cat.nb_pages && <NbPagesCozy tomeId={cat.id} />}
+          {cat && <MotsCles tomeId={cat.id} possede={possede} />}
         </div>
       </div>
 

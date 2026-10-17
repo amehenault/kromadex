@@ -8,7 +8,8 @@ import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef·fe' };
-const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '' });
+const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '', titre_gagnant: '', image: '', sceau: 1 });
+const DOSSIER_BADGE = { officiel: 'epreuve/mensuelles', modo: 'epreuve/sentinelles' };
 
 // Épreuves.
 //  admin : épreuve officielle, programmable (dates libres)
@@ -71,7 +72,7 @@ export default function Defis({ role, monId }) {
         <b>{titreForm}</b>
         <p style={aide}>
           {estAdmin
-            ? "Une épreuve officielle par mois. Choisis ses dates : avec une date de début à venir, elle est programmée et n'apparaît aux membres que ce jour-là."
+            ? "Une épreuve officielle par mois. Choisis ses dates : avec une date de début à venir, elle est programmée et n'apparaît aux membres que ce jour-là. Sans date de fin, elle se termine la veille du dernier jour du mois : la personne gagnante est annoncée le dernier jour."
             : role === 'modo'
               ? "Ton épreuve commence le 1er du mois prochain. Pendant les 7 premiers jours du mois, tu peux aussi la lancer tout de suite."
               : texteCheffe}
@@ -98,6 +99,24 @@ export default function Defis({ role, monId }) {
         <label style={champ}>Règles et détails
           <textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} />
         </label>
+        {/* Récompense de la personne gagnante */}
+        <label style={champ}>Titre exclusif de la personne gagnante (facultatif)
+          <input value={form.titre_gagnant} onChange={(e) => setForm({ ...form, titre_gagnant: e.target.value })} maxLength={60} placeholder="ex. Reine des pastels" />
+          <small style={{ ...aide, fontWeight: 400 }}>Ce nouveau titre est débloqué pour la personne qui gagne l’épreuve.</small>
+        </label>
+        {DOSSIER_BADGE[genre] && (
+          <label style={champ}>Image du badge (facultatif)
+            <input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} maxLength={120} placeholder="ex. badge-pastels.png" />
+            <small style={{ ...aide, fontWeight: 400 }}>Nom du fichier dans public/recompenses-activites/{DOSSIER_BADGE[genre]}. Sans image, le badge par défaut est utilisé.</small>
+          </label>
+        )}
+        {genre === 'cheffe' && (
+          <label style={champ}>Sceau remis à la personne gagnante
+            <select value={form.sceau} onChange={(e) => setForm({ ...form, sceau: Number(e.target.value) })}>
+              {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Sceau {n}</option>)}
+            </select>
+          </label>
+        )}
         <div style={actions}>
           <button type="submit" className="btn" disabled={!form.titre.trim() || (estAdmin && !form.debut) || cheffeBloquee} style={{ flex: 1, minHeight: '44px' }}>
             Enregistrer l'épreuve
@@ -121,7 +140,7 @@ export default function Defis({ role, monId }) {
               <div style={actions}>
                 {d.genre === genre && (estAdmin || String(d.createur_id) === monId) && (
                   <button type="button" className="btn alt" style={petitBtn}
-                    onClick={() => { setForm({ id: d.id, titre: d.titre, description: d.description, categorie: d.categorie, debut: d.debut, fin: d.fin }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                    onClick={() => { setForm({ id: d.id, titre: d.titre, description: d.description, categorie: d.categorie, debut: d.debut, fin: d.fin, titre_gagnant: d.titre_gagnant || '', image: d.image || '', sceau: d.sceau || 1 }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                     Modifier
                   </button>
                 )}

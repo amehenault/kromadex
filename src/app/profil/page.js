@@ -5,6 +5,7 @@ import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
 import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
+import { couleurPoste } from '@/lib/postes';
 import Link from 'next/link';
 import MesTomes from './mesTomes';
 import { listerMesTomes } from '@/lib/mesTomes';
@@ -25,7 +26,14 @@ import {
   Map,
   Swords,
   ChevronRight,
+  Paintbrush,
+  Compass,
+  CalendarClock,
+  AlertTriangle,
 } from 'lucide-react';
+import { recompensesDe } from '@/lib/recompensesServeur';
+import { rappelsDuJour } from '@/lib/planification';
+import MesRecompenses from '@/components/MesRecompenses';
 import { verifierQuetes } from '@/lib/quetes';
 import BoutonDeconnexion from './boutonDeconnexion';
 
@@ -53,6 +61,12 @@ export default async function ProfilPage() {
   const demandesATraiter = profile?.role === 'admin'
     ? (await sql`SELECT count(*)::int AS n FROM demandes WHERE statut IN ('nouvelle', 'en_cours')`)[0].n
     : 0;
+
+  // Récompenses des activités ; une relique complète donne un cadre de profil exclusif
+  const recompenses = await recompensesDe(authUser.id);
+  const cadreRelique = recompenses.some((r) => r.genre === 'relique');
+  // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
+  const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
   // Tomes du profil avec leur progression automatique
   const mesTomes = await listerMesTomes(authUser.id);
@@ -152,7 +166,9 @@ export default async function ProfilPage() {
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--texte-secondaire)',
+              boxShadow: cadreRelique ? '0 0 0 3px #d4a017, 0 0 0 6px var(--fond-carte), 0 0 0 8px #d4a017' : 'none',
             }}
+            title={cadreRelique ? 'Cadre de la relique' : undefined}
           >
             {profile?.a_avatar ? (
               <img
@@ -217,7 +233,7 @@ export default async function ProfilPage() {
           <small
             style={{
               display: 'block',
-              color: 'var(--btn-secondaire-texte)',
+              color: couleurPoste(role),
               fontWeight: 'bold',
             }}
           >
@@ -352,6 +368,20 @@ export default async function ProfilPage() {
         </div>
       </div>
 
+      {/* Mémo de l'Invocatrice : activités à planifier */}
+      {rappels.length > 0 && (
+        <Link href="/activites-a-venir" className="carte"
+          style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: 'var(--espace-3)', border: '2px solid var(--danger)', color: 'inherit', textDecoration: 'none' }}>
+          {rappels.map((r) => (
+            <span key={r.cle} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--danger)', fontWeight: 700, fontSize: '0.92rem' }}>
+              <AlertTriangle size={18} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: '1px' }} /> <span>{r.texte}</span>
+            </span>
+          ))}
+        </Link>
+      )}
+
+      <MesRecompenses recompenses={recompenses} />
+
       {/* Les 2 quêtes les plus proches d'être réussies */}
       {prochesQuetes.length > 0 && (
         <div className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -399,6 +429,16 @@ export default async function ProfilPage() {
           </Link>
         )}
 
+        {role === 'admin' && (
+          <Link
+            href="/activites-a-venir"
+            className="btn profil-acces-lien"
+          >
+            <CalendarClock size={22} aria-hidden="true" />
+            <span>Activités à venir</span>
+          </Link>
+        )}
+
         {role === 'cheffe' && (
           <Link
             href="/profil/admin"
@@ -440,6 +480,17 @@ export default async function ProfilPage() {
           <span>{nomBibliotheque(typesVisibles(profile?.types_pratiques, profile?.types_vus))}</span>
         </Link>
 
+        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo */}
+        {(profile?.types_pratiques || []).includes('cozy') && (
+          <Link
+            href="/palettes"
+            className="btn profil-acces-lien"
+          >
+            <Paintbrush size={22} aria-hidden="true" />
+            <span>Suggestions de palettes de couleurs</span>
+          </Link>
+        )}
+
         <Link
           href="/statistiques"
           className="btn profil-acces-lien"
@@ -454,6 +505,14 @@ export default async function ProfilPage() {
         >
           <Map size={22} aria-hidden="true" />
           <span>Quêtes</span>
+        </Link>
+
+        <Link
+          href="/aventures"
+          className="btn profil-acces-lien"
+        >
+          <Compass size={22} aria-hidden="true" />
+          <span>Aventures</span>
         </Link>
 
         <Link

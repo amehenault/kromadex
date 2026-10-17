@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Trophy, Users } from 'lucide-react';
 import Defis from '@/app/defis/defis';
 import Communaute from '@/app/communaute/communaute';
+import RechercheAccueil from './RechercheAccueil';
+import Podium from './Podium';
 
 // Onglets de l'accueil : Épreuves et Communauté (le dernier onglet choisi est retenu sur l'appareil)
 export default function AccueilOnglets({ monId }) {
@@ -21,6 +23,8 @@ export default function AccueilOnglets({ monId }) {
 
   return (
     <>
+      <RechercheAccueil />
+      <Podium />
       <div role="tablist" aria-label="Accueil" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: 'var(--espace-3)' }}>
         {ONGLETS.map(([cle, label, Icone]) => (
           <button key={cle} type="button" role="tab" aria-selected={onglet === cle} onClick={() => choisir(cle)}

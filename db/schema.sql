@@ -253,6 +253,24 @@ create table if not exists combat_votes (
   primary key (combat_id, user_id)
 )
 ;
+-- Combats : duel chromatique (sur invitation) ou joute ouverte (2 à 4 coloristes).
+-- Les coloriages et les votes sont maintenant dans combat_participants et verdicts.
+alter table combats alter column page_a drop not null;
+alter table combats add column if not exists genre text not null default 'duel';
+alter table combats add column if not exists categorie text not null default 'mystere';
+alter table combats add column if not exists theme_type text not null default '';
+alter table combats add column if not exists theme text not null default '';
+alter table combats add column if not exists soumission_fin timestamptz;
+alter table combats add column if not exists verdict_fin timestamptz;
+create table if not exists combat_participants (
+  combat_id int not null references combats(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  page_id uuid references pages(id) on delete set null,
+  soumis_le timestamptz,
+  cree_le timestamptz not null default now(),
+  primary key (combat_id, user_id)
+)
+;
 create table if not exists reinitialisations (
   jeton_hash text primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -287,4 +305,177 @@ create table if not exists mot_cle_signalements (
   raison text not null check (raison in ('repetition', 'faux', 'inapproprie')),
   cree_le timestamptz not null default now(),
   primary key (mot_cle_id, user_id)
+)
+;
+create table if not exists palettes (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  nom text not null default '',
+  couleurs text[] not null,
+  partagee boolean not null default false,
+  cree_le timestamptz not null default now()
+);
+create table if not exists palette_likes (
+  user_id uuid not null references users(id) on delete cascade,
+  palette_id int not null references palettes(id) on delete cascade,
+  primary key (user_id, palette_id)
+)
+;
+-- Verdicts de l'Assemblée : un vote par personne et par activité (epreuve:12, combat:5, match:33)
+create table if not exists verdicts (
+  activite text not null,
+  user_id uuid not null references users(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  changements int not null default 0,
+  cree_le timestamptz not null default now(),
+  primary key (activite, user_id)
+);
+-- Récompenses gagnées (coffre, sceau, fragment, relique, boussole, blason, orbe, parchemin, épée, joute, insigne)
+create table if not exists recompenses (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  genre text not null,
+  detail text not null default '',
+  source text not null,
+  image text not null default '',
+  xp int not null default 0,
+  victoire boolean not null default false,
+  utilise boolean not null default false,
+  cree_le timestamptz not null default now(),
+  unique (user_id, genre, source)
+);
+create index if not exists recompenses_date_idx on recompenses (cree_le desc);
+-- Épreuves : titre et image de la récompense, sceau de la cheffe, objectif des épreuves de groupe, clôture
+alter table defis add column if not exists titre_gagnant text not null default '';
+alter table defis add column if not exists image text not null default '';
+alter table defis add column if not exists sceau int;
+alter table defis add column if not exists objectif int;
+alter table defis add column if not exists multiple boolean not null default false;
+alter table defis add column if not exists gagnant uuid;
+alter table defis add column if not exists cloture boolean not null default false;
+create table if not exists defi_envois (
+  defi_id int not null references defis(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  cree_le timestamptz not null default now(),
+  primary key (defi_id, page_id)
+);
+create table if not exists defi_signalements (
+  defi_id int not null references defis(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  traite boolean not null default false,
+  cree_le timestamptz not null default now(),
+  primary key (defi_id, page_id, user_id)
+);
+-- Bingos : validation des cases par l'admin et les sentinelles, clôture
+alter table bingo_cases add column if not exists valide boolean;
+alter table bingo_cases add column if not exists valide_par uuid;
+alter table bingos add column if not exists cloture boolean not null default false;
+-- Tournois du royaume
+create table if not exists tournois (
+  id serial primary key,
+  genre text not null check (genre in ('creatif', 'couleur', 'ambiance')),
+  titre text not null,
+  theme text not null default '',
+  categorie text not null default 'tous',
+  createur uuid references users(id) on delete set null,
+  statut text not null default 'inscriptions',
+  inscriptions_fin timestamptz not null,
+  prolonge boolean not null default false,
+  taille int,
+  ronde int not null default 0,
+  gagnant uuid,
+  termine_le timestamptz,
+  cree_le timestamptz not null default now()
+);
+create table if not exists tournoi_inscrits (
+  tournoi_id int not null references tournois(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  cree_le timestamptz not null default now(),
+  primary key (tournoi_id, user_id)
+);
+create table if not exists tournoi_matchs (
+  id serial primary key,
+  tournoi_id int not null references tournois(id) on delete cascade,
+  ronde int not null,
+  ordre int not null,
+  joueur_a uuid references users(id) on delete set null,
+  joueur_b uuid references users(id) on delete set null,
+  page_a uuid references pages(id) on delete set null,
+  page_b uuid references pages(id) on delete set null,
+  soumis_a timestamptz,
+  soumis_b timestamptz,
+  soumission_fin timestamptz not null,
+  verdict_fin timestamptz not null,
+  gagnant uuid,
+  unique (tournoi_id, ronde, ordre)
+);
+-- Expéditions, épopées et prophéties, entièrement configurables
+create table if not exists aventures (
+  id serial primary key,
+  genre text not null check (genre in ('expedition', 'epopee', 'prophetie')),
+  titre text not null,
+  description text not null default '',
+  fete text not null default '',
+  categorie text not null default 'tous',
+  debut date not null,
+  fin date not null,
+  enigme text not null default '',
+  reponse text not null default '',
+  pv int not null default 12000,
+  min_contributions int not null default 6,
+  min_attaques int not null default 12,
+  xp jsonb not null default '{}',
+  recompense text not null default '',
+  image text not null default '',
+  victoire_le timestamptz,
+  cree_le timestamptz not null default now()
+);
+create table if not exists aventure_etapes (
+  id serial primary key,
+  aventure_id int not null references aventures(id) on delete cascade,
+  ordre int not null,
+  nom text not null,
+  instructions text not null default '',
+  xp int not null default 0,
+  debut date,
+  fin date
+);
+create table if not exists aventure_contraintes (
+  id serial primary key,
+  etape_id int not null references aventure_etapes(id) on delete cascade,
+  ordre int not null default 0,
+  texte text not null,
+  genre text not null default 'obligatoire',
+  degats int not null default 0,
+  xp int not null default 0
+);
+create table if not exists aventure_inscriptions (
+  aventure_id int not null references aventures(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  enigme_ok boolean not null default false,
+  cree_le timestamptz not null default now(),
+  primary key (aventure_id, user_id)
+);
+create table if not exists aventure_soumissions (
+  id serial primary key,
+  aventure_id int not null references aventures(id) on delete cascade,
+  etape_id int not null references aventure_etapes(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  contraintes int[] not null default '{}',
+  parchemin int,
+  degats int not null default 0,
+  reussie boolean not null default false,
+  jour date not null default (now() at time zone 'America/Toronto')::date,
+  cree_le timestamptz not null default now(),
+  unique (aventure_id, page_id)
+);
+-- Notifications push (rappels des activités à planifier)
+create table if not exists push_abonnements (
+  endpoint text primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  cles jsonb not null,
+  cree_le timestamptz not null default now()
 )

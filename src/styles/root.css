@@ -23,6 +23,12 @@
   --btn-secondaire-bordure: #a9cfc3;
   --btn-secondaire-survol: var(--accent-doux);
 
+  /* Rôles */
+  --coloriste: var(--noir);
+  --chef: #a46500;
+  --sentinelle: #15a281;
+  --admin: #8a0043;
+
   /* Surfaces et textes (utilisés par base.css, .carte et les écrans) */
   --fond-page: var(--blanc);
   --texte-principal: var(--noir);

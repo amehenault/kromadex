@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ArrowLeft, Compass, Palette, Heart, MessageCircle, BookOpen, Flame, CheckCircle2, Sparkles } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { CATEGORIES_QUETES, verifierQuetes } from '@/lib/quetes';
-import QuetesFetes from './quetesFetes';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,8 +35,6 @@ export default async function QuetesPage() {
           {nouvelles.map((q) => <small key={q.id}>{q.titre} : +{q.xp} XP</small>)}
         </div>
       )}
-
-      <QuetesFetes />
 
       {CATEGORIES_QUETES.map((c) => {
         const Icone = ICONES[c.icone];

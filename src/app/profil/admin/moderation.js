@@ -123,7 +123,7 @@ export default function Moderation({ role, monId }) {
           <div key={a.id} style={ligneCarte}>
             <small style={aide}>{date(a.cree_le)}{a.par ? ` · par @${a.par}` : ''}</small>
             <b style={{ overflowWrap: 'anywhere' }}>{a.pseudo ? `@${a.pseudo}` : a.email}</b>
-            <small>{a.suspension_jours ? `Suspension de ${a.suspension_jours} jour${a.suspension_jours > 1 ? 's' : ''}` : 'Avertissement'}</small>
+            <small>{a.suspension_jours >= 36500 ? 'Bannissement' : a.suspension_jours ? `Suspension de ${a.suspension_jours} jour${a.suspension_jours > 1 ? 's' : ''}` : 'Avertissement'}</small>
             <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.motif}</p>
           </div>
         ))}

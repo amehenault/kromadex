@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Crown, CalendarPlus } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
-import { NOMS_POSTES } from '@/lib/postes';
+import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
@@ -70,7 +70,7 @@ export default function Membres({ role }) {
             {u.email} · niv. {u.level || 1} · {u.xp || 0} XP
           </small>
           {u.role === 'admin' || !estAdmin ? (
-            <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
+            <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: couleurPoste(u.role) }}>
               {u.role === 'admin' && <Crown size={14} />} {NOM_POSTE[u.role] || 'Coloriste'}{u.title ? ` · ${u.title}` : ''}
             </small>
           ) : (

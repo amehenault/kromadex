@@ -7,12 +7,13 @@ import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from '@/app/communa
 import FicheDetail from '@/app/communaute/ficheDetail';
 import { calculerNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { NOMS_POSTES } from '@/lib/postes';
+import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import MesRecompenses from '@/components/MesRecompenses';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 const POSTE = { admin: NOMS_POSTES.admin, modo: NOMS_POSTES.modo, cheffe: NOMS_POSTES.cheffe };
 
-export default function ProfilMembre({ membre, fiches: initiales, moi }) {
+export default function ProfilMembre({ membre, fiches: initiales, recompenses = [], moi }) {
   const router = useRouter();
   const [m, setM] = useState(membre);
   const [fiches, setFiches] = useState(initiales);
@@ -47,11 +48,18 @@ export default function ProfilMembre({ membre, fiches: initiales, moi }) {
 
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: 'var(--espace-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <Avatar x={m} taille={60} />
+          {/* Une relique complète donne un cadre de profil exclusif */}
+          <span title={recompenses.some((r) => r.genre === 'relique') ? 'Cadre de la relique' : undefined} style={{ borderRadius: '50%', display: 'inline-flex', flex: '0 0 auto',
+            boxShadow: recompenses.some((r) => r.genre === 'relique') ? '0 0 0 3px #d4a017, 0 0 0 6px var(--fond-carte), 0 0 0 8px #d4a017' : 'none' }}>
+            <Avatar x={m} taille={60} />
+          </span>
           <div style={{ minWidth: 0, flex: 1 }}>
             <b style={{ display: 'block', fontSize: '1.05rem', overflowWrap: 'break-word' }}>{nomAuteur(m)}</b>
             {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
-            <small style={{ display: 'block', fontWeight: 700 }}>Niveau {calculerNiveau(m.xp)}{POSTE[m.role] ? ` · ${POSTE[m.role]}` : ''}</small>
+            <small style={{ display: 'block', fontWeight: 700 }}>
+              Niveau {calculerNiveau(m.xp)}
+              {POSTE[m.role] && <span style={{ color: couleurPoste(m.role) }}> · {POSTE[m.role]}</span>}
+            </small>
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreNiveau(calculerNiveau(m.xp), m.genre)}</small>
           </div>
         </div>
@@ -87,6 +95,8 @@ export default function ProfilMembre({ membre, fiches: initiales, moi }) {
           </div>
         )}
       </div>
+
+      <MesRecompenses recompenses={recompenses} titre={moi ? 'Mes récompenses' : 'Récompenses'} />
 
       <h3 style={{ margin: '0 0 10px' }}>Coloriages publiés</h3>
       {!fiches.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage publié pour l'instant.</p>}

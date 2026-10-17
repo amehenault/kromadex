@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { NB_CASES, VALEURS_CATEGORIES_BINGO } from '@/lib/bingos';
 import { mesTypesVisibles, categoriesBingoVisibles } from '@/lib/visibilite';
+import { cloturerBingos } from '@/lib/clotures';
 
 const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
 
@@ -13,22 +14,25 @@ export async function GET(req) {
   if (erreur) return erreur;
   const gestion = new URL(req.url).searchParams.get('gestion') === '1' && profil.role === 'admin';
   const categories = categoriesBingoVisibles(await mesTypesVisibles(profil.id));
+  await cloturerBingos();
   const bingos = await sql`
     SELECT b.id, b.titre, b.cases, b.conditions, b.categorie,
            to_char(b.debut, 'YYYY-MM-DD') AS debut, to_char(b.fin, 'YYYY-MM-DD') AS fin,
            (b.debut > (now() AT TIME ZONE 'America/Toronto')::date) AS programme,
-           (((COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 1 day')::date) + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant,
-           COALESCE((SELECT json_agg(json_build_object('case', c.case_no, 'page', c.page_id))
+           (((COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant,
+           COALESCE((SELECT json_agg(json_build_object('case', c.case_no, 'page', c.page_id, 'valide', c.valide,
+                                                       'img_size', (SELECT OCTET_LENGTH(p.image_b64) FROM pages p WHERE p.id = c.page_id)))
                      FROM bingo_cases c WHERE c.bingo_id = b.id AND c.user_id = ${profil.id}), '[]') AS cochees
     FROM bingos b
     WHERE ${gestion}
-       OR (b.categorie = ANY(${categories}) AND b.debut <= (now() AT TIME ZONE 'America/Toronto')::date AND COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 1 day')::date) >= (now() AT TIME ZONE 'America/Toronto')::date)
+       OR (b.categorie = ANY(${categories}) AND b.debut <= (now() AT TIME ZONE 'America/Toronto')::date AND COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) >= (now() AT TIME ZONE 'America/Toronto')::date)
     ORDER BY b.debut DESC NULLS LAST, b.cree_le DESC LIMIT 50`;
   return NextResponse.json({ bingos });
 }
 
 // Admin : créer, modifier ou programmer un bingo (9 cases, chacune avec sa condition).
-// Deux bingos au maximum par mois (selon la date de début). Sans date de fin : fin du mois de début.
+// Deux bingos au maximum par mois (selon la date de début). Sans date de fin : la veille du dernier jour du mois,
+// pour que les XP soient versés le dernier jour.
 export async function POST(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

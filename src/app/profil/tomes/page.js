@@ -78,11 +78,21 @@ export default function CatalogueTomesPage() {
   );
 
   const q = recherche.trim().toLowerCase();
+  // Tomes trouvés par mot-clé (ex. « stitch » trouve les livres où Stitch apparaît)
+  const [parMotCle, setParMotCle] = useState(new Set());
+  useEffect(() => {
+    if (q.length < 2) { setParMotCle(new Set()); return; }
+    const minuterie = setTimeout(async () => {
+      const r = await fetch(`/api/mots-cles?q=${encodeURIComponent(q)}`).catch(() => null);
+      if (r?.ok) setParMotCle(new Set(((await r.json()).resultats || []).map((t) => Number(t.id))));
+    }, 250);
+    return () => clearTimeout(minuterie);
+  }, [q]);
   const tomesAffiches = tomes.filter((t) => {
     if (t.type !== type) return false;
     if (collection && t.collection !== collection) return false;
     if (mesTomes && !possedes.has(Number(t.id))) return false;
-    return !q || t.nom.toLowerCase().includes(q);
+    return !q || t.nom.toLowerCase().includes(q) || parMotCle.has(Number(t.id));
   });
 
   const puce = (actif) => ({
@@ -143,7 +153,7 @@ export default function CatalogueTomesPage() {
           <Search size={16} style={{ position: 'absolute', left: '10px', color: 'var(--texte-secondaire)' }} />
           <input
             type="search"
-            placeholder="Rechercher un tome..."
+            placeholder="Rechercher par nom ou mot-clé (ex. Stitch)"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             style={{ width: '100%', paddingLeft: '32px' }}

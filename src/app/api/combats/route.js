@@ -2,108 +2,141 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
-import { accorderXP } from '@/lib/series';
+import { VALEURS_TYPES } from '@/lib/typesColoriage';
+import { COMBATS, THEMES_DUEL } from '@/lib/activites';
+import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/lib/combats';
 
-// Durée des votes et récompense du coloriage gagnant
-const DUREE_VOTE = '3 days';
-const XP_VICTOIRE = 50;
+const ACTIFS = ['invitation', 'ouvert', 'soumission'];
 
-// Termine les combats dont le vote est fini et récompense le gagnant (égalité : pas de gagnant)
-async function terminerCombats() {
-  const finis = await sql`
-    UPDATE combats c SET statut = 'termine',
-      gagnant = CASE
-        WHEN v.a > v.b THEN c.createur
-        WHEN v.b > v.a THEN c.adversaire
-        ELSE NULL END
-    FROM (SELECT c2.id,
-            (SELECT count(*) FROM combat_votes x WHERE x.combat_id = c2.id AND x.choix = 'a') AS a,
-            (SELECT count(*) FROM combat_votes x WHERE x.combat_id = c2.id AND x.choix = 'b') AS b
-          FROM combats c2 WHERE c2.statut = 'en_cours' AND c2.fin <= now()) v
-    WHERE c.id = v.id
-    RETURNING c.id, c.gagnant`;
-  for (const f of finis) if (f.gagnant) await accorderXP(f.gagnant, `combat:${f.id}`, XP_VICTOIRE).catch(() => {});
-}
-
-// Combats ouverts, invitations reçues, combats en cours (votes) et terminés
+// Combats visibles : invitations, joutes ouvertes, mes combats, verdicts en cours et combats terminés.
+// On ne voit jamais qui a fait quel coloriage : les noms ne sont donnés qu'aux participant·es.
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  await terminerCombats();
+  await avancerCombats();
   const combats = await sql`
-    SELECT c.id, c.statut, c.fin, c.cree_le, c.gagnant, c.invite,
-           c.createur, ua.pseudo AS pseudo_a, ua.name AS nom_a, (ua.avatar_b64 IS NOT NULL) AS avatar_a, ua.avatar_maj AS avatar_maj_a,
-           c.adversaire, ub.pseudo AS pseudo_b, ub.name AS nom_b, (ub.avatar_b64 IS NOT NULL) AS avatar_b, ub.avatar_maj AS avatar_maj_b,
-           ui.pseudo AS pseudo_invite,
-           c.page_a, pa.title AS titre_a, OCTET_LENGTH(pa.image_b64) AS img_a,
-           c.page_b, pb.title AS titre_b, OCTET_LENGTH(pb.image_b64) AS img_b,
-           (SELECT count(*)::int FROM combat_votes v WHERE v.combat_id = c.id AND v.choix = 'a') AS votes_a,
-           (SELECT count(*)::int FROM combat_votes v WHERE v.combat_id = c.id AND v.choix = 'b') AS votes_b,
-           (SELECT v.choix FROM combat_votes v WHERE v.combat_id = c.id AND v.user_id = ${user.id}) AS mon_vote
+    SELECT c.id, c.genre, c.categorie, c.theme_type, c.theme, c.statut, c.cree_le, c.soumission_fin, c.verdict_fin,
+           c.cree_le + make_interval(days => ${COMBATS.joursAcceptation}) AS acceptation_fin,
+           c.createur = ${user.id} AS je_cree, c.invite = ${user.id} AS je_suis_invite,
+           c.gagnant = ${user.id} AS j_ai_gagne, c.gagnant IS NOT NULL AS a_gagnant,
+           (SELECT page_id FROM combat_participants p WHERE p.combat_id = c.id AND p.user_id = c.gagnant) AS page_gagnante,
+           (SELECT count(*)::int FROM combat_participants p WHERE p.combat_id = c.id) AS participants,
+           (SELECT count(*)::int FROM combat_participants p WHERE p.combat_id = c.id AND p.page_id IS NOT NULL) AS coloriages,
+           mp.user_id IS NOT NULL AS je_participe, mp.page_id AS ma_page,
+           CASE WHEN mp.user_id IS NOT NULL OR c.invite = ${user.id} THEN
+             (SELECT json_agg(json_build_object('user_id', u.id, 'pseudo', u.pseudo, 'name', u.name, 'a_avatar', u.avatar_b64 IS NOT NULL,
+                                                'avatar_maj', u.avatar_maj, 'soumis', p.page_id IS NOT NULL))
+              FROM combat_participants p JOIN users u ON u.id = p.user_id WHERE p.combat_id = c.id AND p.user_id <> ${user.id})
+           END AS adversaires,
+           CASE WHEN c.createur = ${user.id} AND c.invite IS NOT NULL THEN (SELECT pseudo FROM users WHERE id = c.invite) END AS pseudo_invite
     FROM combats c
-    JOIN users ua ON ua.id = c.createur JOIN pages pa ON pa.id = c.page_a
-    LEFT JOIN users ub ON ub.id = c.adversaire LEFT JOIN pages pb ON pb.id = c.page_b
-    LEFT JOIN users ui ON ui.id = c.invite
-    WHERE c.statut IN ('ouvert', 'en_cours')
-       OR (c.statut = 'termine' AND c.fin > now() - interval '30 days')
-       OR (c.statut = 'refuse' AND c.createur = ${user.id} AND c.cree_le > now() - interval '7 days')
-    ORDER BY c.statut, c.fin NULLS FIRST, c.cree_le DESC LIMIT 200`;
-  return NextResponse.json({ combats, moi: String(user.id) });
+    LEFT JOIN combat_participants mp ON mp.combat_id = c.id AND mp.user_id = ${user.id}
+    WHERE c.genre IN ('duel', 'joute') AND (
+          c.statut IN ('ouvert', 'verdict')
+       OR (c.statut IN ('invitation', 'soumission') AND (mp.user_id IS NOT NULL OR c.invite = ${user.id}))
+       OR (c.statut = 'termine' AND c.verdict_fin > now() - interval '30 days')
+       OR (c.statut IN ('refuse', 'annule') AND mp.user_id IS NOT NULL AND c.cree_le > now() - interval '20 days'))
+    ORDER BY c.cree_le DESC LIMIT 200`;
+  return NextResponse.json({ combats });
 }
 
-// Actions : creer, accepter, refuser, annuler, voter
+// Actions : creer, accepter, refuser, annuler, soumettre, quitter
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  await avancerCombats();
   const b = await req.json().catch(() => ({}));
   const moi = user.id;
-  const pagePubliee = async (id) => isId(String(id || '')) && (await sql`SELECT 1 FROM pages WHERE id = ${id} AND user_id = ${moi} AND publiee`).length > 0;
+  const erreur = (message, status = 400) => NextResponse.json({ error: message }, { status });
+
+  // Un de mes coloriages, du type demandé par le combat
+  const monColoriage = async (pageId, categorie) => {
+    if (!isId(String(pageId || ''))) return null;
+    const [p] = await sql`SELECT id, COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') AS type_coloriage FROM pages WHERE id = ${pageId} AND user_id = ${moi} AND image_b64 IS NOT NULL`;
+    return p && p.type_coloriage === categorie ? p : null;
+  };
 
   if (b.action === 'creer') {
-    if (!(await pagePubliee(b.pageId))) return NextResponse.json({ error: 'Choisis un de tes coloriages publiés' }, { status: 400 });
-    let invite = null;
-    if (b.inviteId) {
-      if (!isId(String(b.inviteId)) || String(b.inviteId) === String(moi)) return NextResponse.json({ error: 'Invitation impossible' }, { status: 400 });
+    const genre = b.genre === 'joute' ? 'joute' : 'duel';
+    const categorie = VALEURS_TYPES.includes(b.categorie) ? b.categorie : null;
+    if (!categorie) return erreur('Choisis le type de coloriage');
+    const themeType = THEMES_DUEL.some((t) => t.valeur === b.themeType) ? b.themeType : null;
+    const theme = String(b.theme || '').trim().slice(0, 80);
+    if (!themeType || !theme) return erreur('Choisis le thème (couleur, personnage ou ambiance) et écris-le');
+    const [{ n }] = await sql`SELECT count(*)::int AS n FROM combats WHERE createur = ${moi} AND statut = ANY(${ACTIFS})`;
+    if (n >= 3) return erreur('Tu as déjà 3 combats en attente', 429);
+
+    if (genre === 'duel') {
+      if (!isId(String(b.inviteId || '')) || String(b.inviteId) === String(moi)) return erreur('Choisis la personne à défier');
       const [u] = await sql`SELECT id FROM users WHERE id = ${b.inviteId}`;
-      if (!u) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
-      invite = u.id;
+      if (!u) return erreur('Membre introuvable', 404);
+      if (!(await seSuiventMutuellement(moi, u.id))) return erreur('Pour un duel, vous devez vous suivre mutuellement', 403);
+      const [c] = await sql`
+        INSERT INTO combats (genre, createur, invite, categorie, theme_type, theme, statut, soumission_fin)
+        VALUES ('duel', ${moi}, ${u.id}, ${categorie}, ${themeType}, ${theme}, 'invitation', now() + make_interval(days => ${COMBATS.joursSoumission}))
+        RETURNING id`;
+      await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi})`;
+      return NextResponse.json({ ok: true, id: c.id });
     }
-    const [{ n }] = await sql`SELECT count(*)::int AS n FROM combats WHERE createur = ${moi} AND statut = 'ouvert'`;
-    if (n >= 3) return NextResponse.json({ error: 'Tu as déjà 3 combats en attente' }, { status: 429 });
-    await sql`INSERT INTO combats (createur, page_a, invite) VALUES (${moi}, ${b.pageId}, ${invite})`;
-    return NextResponse.json({ ok: true });
+    // Joute : on lance l'appel avec son coloriage
+    const page = await monColoriage(b.pageId, categorie);
+    if (!page) return erreur('Choisis un de tes coloriages du bon type');
+    const [c] = await sql`
+      INSERT INTO combats (genre, createur, categorie, theme_type, theme, statut, soumission_fin)
+      VALUES ('joute', ${moi}, ${categorie}, ${themeType}, ${theme}, 'ouvert', now() + make_interval(days => ${COMBATS.joursSoumission}))
+      RETURNING id`;
+    await sql`INSERT INTO combat_participants (combat_id, user_id, page_id, soumis_le) VALUES (${c.id}, ${moi}, ${page.id}, now())`;
+    return NextResponse.json({ ok: true, id: c.id });
   }
 
   const [c] = await sql`SELECT * FROM combats WHERE id = ${Number(b.id)}`;
-  if (!c) return NextResponse.json({ error: 'Combat introuvable' }, { status: 404 });
+  if (!c) return erreur('Combat introuvable', 404);
+  const [moiDedans] = await sql`SELECT page_id FROM combat_participants WHERE combat_id = ${c.id} AND user_id = ${moi}`;
 
   if (b.action === 'accepter') {
-    if (c.statut !== 'ouvert' || String(c.createur) === String(moi) || (c.invite && String(c.invite) !== String(moi))) {
-      return NextResponse.json({ error: 'Tu ne peux pas accepter ce combat' }, { status: 403 });
-    }
-    if (!(await pagePubliee(b.pageId))) return NextResponse.json({ error: 'Choisis un de tes coloriages publiés' }, { status: 400 });
-    const maj = await sql`UPDATE combats SET adversaire = ${moi}, page_b = ${b.pageId}, statut = 'en_cours', fin = now() + ${DUREE_VOTE}::interval
-      WHERE id = ${c.id} AND statut = 'ouvert' RETURNING id`;
-    if (!maj.length) return NextResponse.json({ error: 'Quelqu’un a déjà accepté ce combat' }, { status: 409 });
+    if (c.statut !== 'invitation' || String(c.invite) !== String(moi)) return erreur('Tu ne peux pas accepter ce duel', 403);
+    const maj = await sql`UPDATE combats SET statut = 'soumission' WHERE id = ${c.id} AND statut = 'invitation' RETURNING id`;
+    if (!maj.length) return erreur('Ce duel n’est plus en attente', 409);
+    await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true });
   }
   if (b.action === 'refuser') {
-    if (c.statut !== 'ouvert' || String(c.invite) !== String(moi)) return NextResponse.json({ error: 'Impossible' }, { status: 403 });
+    if (c.statut !== 'invitation' || String(c.invite) !== String(moi)) return erreur('Impossible', 403);
     await sql`UPDATE combats SET statut = 'refuse' WHERE id = ${c.id}`;
     return NextResponse.json({ ok: true });
   }
   if (b.action === 'annuler') {
-    if (String(c.createur) !== String(moi) || !['ouvert', 'refuse'].includes(c.statut)) return NextResponse.json({ error: 'Impossible' }, { status: 403 });
+    if (String(c.createur) !== String(moi)) return erreur('Impossible', 403);
+    const [{ autres }] = await sql`SELECT count(*)::int AS autres FROM combat_participants WHERE combat_id = ${c.id} AND user_id <> ${moi}`;
+    const annulable = c.statut === 'invitation' || (c.statut === 'ouvert' && !autres) || ['refuse', 'annule'].includes(c.statut);
+    if (!annulable) return erreur('Le combat a déjà commencé', 403);
     await sql`DELETE FROM combats WHERE id = ${c.id}`;
     return NextResponse.json({ ok: true });
   }
-  if (b.action === 'voter') {
-    if (c.statut !== 'en_cours' || new Date(c.fin) <= new Date()) return NextResponse.json({ error: 'Le vote est terminé' }, { status: 403 });
-    if ([String(c.createur), String(c.adversaire)].includes(String(moi))) return NextResponse.json({ error: 'Tu ne peux pas voter pour ton propre combat' }, { status: 403 });
-    if (!['a', 'b'].includes(b.choix)) return NextResponse.json({ error: 'Choix invalide' }, { status: 400 });
-    await sql`INSERT INTO combat_votes (combat_id, user_id, choix) VALUES (${c.id}, ${moi}, ${b.choix})
-      ON CONFLICT (combat_id, user_id) DO UPDATE SET choix = EXCLUDED.choix`;
+  if (b.action === 'soumettre') {
+    const page = await monColoriage(b.pageId, c.categorie);
+    if (!page) return erreur('Choisis un de tes coloriages du bon type');
+    if (c.genre === 'duel') {
+      if (c.statut !== 'soumission' || !moiDedans) return erreur('Tu ne peux pas soumettre de coloriage à ce duel', 403);
+    } else {
+      if (c.statut !== 'ouvert') return erreur('Cette joute n’accepte plus de coloriage', 403);
+      if (!moiDedans) {
+        const [{ n }] = await sql`SELECT count(*)::int AS n FROM combat_participants WHERE combat_id = ${c.id}`;
+        if (n >= COMBATS.maxJoute) return erreur('Cette joute est complète', 409);
+      }
+    }
+    const [deja] = await sql`SELECT 1 FROM combat_participants WHERE combat_id = ${c.id} AND page_id = ${page.id} AND user_id <> ${moi}`;
+    if (deja) return erreur('Ce coloriage est déjà dans ce combat');
+    await sql`
+      INSERT INTO combat_participants (combat_id, user_id, page_id, soumis_le) VALUES (${c.id}, ${moi}, ${page.id}, now())
+      ON CONFLICT (combat_id, user_id) DO UPDATE SET page_id = EXCLUDED.page_id, soumis_le = now()`;
+    await verifierDepartVerdict(c.id);
     return NextResponse.json({ ok: true });
   }
-  return NextResponse.json({ error: 'Action inconnue' }, { status: 400 });
+  if (b.action === 'quitter') {
+    if (c.genre !== 'joute' || c.statut !== 'ouvert' || String(c.createur) === String(moi) || !moiDedans) return erreur('Impossible', 403);
+    await sql`DELETE FROM combat_participants WHERE combat_id = ${c.id} AND user_id = ${moi}`;
+    return NextResponse.json({ ok: true });
+  }
+  return erreur('Action inconnue');
 }

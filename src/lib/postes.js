@@ -16,3 +16,12 @@ export const PLURIELS_POSTES = {
   admin: 'Invocatrice',
 };
 export const nomPoste = (role) => NOMS_POSTES[role] || NOMS_POSTES.coloriste;
+
+// Couleur de chaque poste (variables définies dans root.css)
+export const COULEURS_POSTES = {
+  coloriste: 'var(--coloriste)',
+  cheffe: 'var(--chef)',
+  modo: 'var(--sentinelle)',
+  admin: 'var(--admin)',
+};
+export const couleurPoste = (role) => COULEURS_POSTES[role] || COULEURS_POSTES.coloriste;

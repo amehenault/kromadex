@@ -1,16 +1,17 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trophy, Grid3x3, Users } from 'lucide-react';
+import { ArrowLeft, Trophy, Grid3x3, Users, Compass } from 'lucide-react';
 import CarteDefi from './carteDefi';
 import Bingo from './bingo';
 import DefisGroupe from './defisGroupe';
+import ListeAventures from '@/app/aventures/liste';
 
 // Rôle de la personne qui crée chaque genre d'épreuve, pour le tri
 const ROLE_DU_GENRE = { officiel: 'admin', modo: 'modo', cheffe: 'cheffe', groupe: 'communaute' };
 const FILTRES_ROLE = [['tous', 'Toutes'], ['admin', 'Invocatrice'], ['modo', 'Sentinelles'], ['cheffe', 'Chef·fes'], ['communaute', 'Communauté']];
 
-// Épreuves en cours (triables par rôle), bingos du mois, épreuves de groupe
+// Épreuves en cours (triables par rôle), bingos du mois, épreuves de groupe, aventures
 export default function Defis({ monId, integre }) {
   const [onglet, setOnglet] = useState('mois');
   const [donnees, setDonnees] = useState(null);
@@ -27,7 +28,7 @@ export default function Defis({ monId, integre }) {
   }
   useEffect(() => { charger(); }, []);
 
-  const ONGLETS = [['mois', 'En cours', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users]];
+  const ONGLETS = [['mois', 'En cours', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users], ['aventures', 'Aventures', Compass]];
   // Tri par rôle de la personne qui a créé l'épreuve
   const duMois = (donnees?.defis || []).filter((d) => role === 'tous' || ROLE_DU_GENRE[d.genre] === role);
   const groupe = (donnees?.defis || []).filter((d) => d.genre === 'groupe');
@@ -43,7 +44,7 @@ export default function Defis({ monId, integre }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px', marginBottom: 'var(--espace-3)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px', marginBottom: 'var(--espace-3)' }}>
         {ONGLETS.map(([cle, label, Icone]) => (
           <button key={cle} type="button" onClick={() => setOnglet(cle)} className={onglet === cle ? 'btn' : 'btn alt'}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', minHeight: '54px', padding: '6px 4px', fontSize: '0.85rem', minWidth: 0 }}>
@@ -77,6 +78,7 @@ export default function Defis({ monId, integre }) {
       )}
 
       {donnees && onglet === 'groupe' && <DefisGroupe defis={groupe} monId={monId} onChange={charger} />}
+      {onglet === 'aventures' && <ListeAventures />}
     </div>
   );
 }

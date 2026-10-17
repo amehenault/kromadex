@@ -60,7 +60,7 @@ export default function Bingos() {
           </label>
         </div>
         <p style={aide}>
-          Deux bingos par mois au maximum. Avec une date de début à venir, le bingo est programmé : il apparaît aux membres ce jour-là. Sans date de fin, il dure jusqu'à la fin du mois.
+          Deux bingos par mois au maximum. Avec une date de début à venir, le bingo est programmé : il apparaît aux membres ce jour-là. Sans date de fin, il se termine la veille du dernier jour du mois : les cases validées rapportent leurs XP le dernier jour.
         </p>
 
         <small style={aide}>Touche une case pour écrire sa tâche et sa condition ({remplies} / {NB_CASES}).</small>
@@ -102,7 +102,7 @@ export default function Bingos() {
             <small style={aide}>{nomCategorieBingo(b.categorie)}</small>
             <small style={{ ...aide, display: 'flex', alignItems: 'center', gap: '4px' }}>
               {b.programme && <CalendarClock size={14} aria-hidden="true" />}
-              {b.programme ? 'Programmé : ' : ''}{b.debut ? jour(b.debut) : '?'}{b.fin ? ` au ${jour(b.fin)}` : ' jusqu’à la fin du mois'}
+              {b.programme ? 'Programmé : ' : ''}{b.debut ? jour(b.debut) : '?'}{b.fin ? ` au ${jour(b.fin)}` : ' jusqu’à la veille du dernier jour du mois'}
             </small>
             <div style={actions}>
               <button type="button" className="btn alt" style={petitBtn}

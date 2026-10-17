@@ -65,6 +65,14 @@ export async function retirerXP(userId, cle) {
   return r?.xp || 0;
 }
 
+// Pénalité : retire des XP une seule fois pour une clé donnée (ex. penalite:epreuve:<id>)
+export async function penaliserXP(userId, cle, xp) {
+  if (!(xp > 0)) return false;
+  const ok = await sql`INSERT INTO xp_journal (user_id, cle, xp) VALUES (${userId}, ${cle}, ${-xp}) ON CONFLICT DO NOTHING RETURNING 1`;
+  if (ok.length) await addXP(userId, -xp);
+  return ok.length > 0;
+}
+
 // Donne les bonus de série dus (une seule fois par tranche de 7 jours d'une même série)
 export async function accorderSerie(userId, type) {
   const aujourdhui = await aujourdhuiLocal();

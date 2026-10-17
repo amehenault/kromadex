@@ -1,0 +1,63 @@
+:root {
+  --blanc: #fbfbfb;
+  --noir: #273136;
+  --couleur-principale: #ffa17a;
+  --couleur-secondaire: #4bbca1;
+
+  --accent-primaire: var(--couleur-secondaire);
+  --accent-doux: #e4f5ef;
+
+  --btn: var(--couleur-secondaire);
+  --btn-save: var(--couleur-secondaire);
+
+  --fond-navigation: var(--couleur-principale);
+  --texte-navigation: var(--noir);
+  --navigation-survol: rgb(255 255 255 / 0.22);
+
+  --btn-principal-fond: var(--couleur-secondaire);
+  --btn-principal-texte: var(--noir);
+  --btn-principal-survol: #65c9b1;
+
+  --btn-secondaire-fond: #ffffff;
+  --btn-secondaire-texte: #245b50;
+  --btn-secondaire-bordure: #a9cfc3;
+  --btn-secondaire-survol: var(--accent-doux);
+
+  /* Rôles */
+  --coloriste: var(--noir);
+  --chef: #a46500;
+  --sentinelle: #15a281;
+  --admin: #8a0043;
+
+  /* Surfaces et textes (utilisés par base.css, .carte et les écrans) */
+  --fond-page: var(--blanc);
+  --texte-principal: var(--noir);
+  --texte: var(--texte-principal);
+  --texte-secondaire: #5f6b70;
+  --carte: #ffffff;
+  --fond-carte: #ffffff;
+  --bordure: #dbe9e4;
+  --bordure-carte: var(--bordure);
+
+  /* Alertes */
+  --danger: #9c033b;
+
+  /* Typographie */
+  --typo-corps: "Trebuchet MS", system-ui, sans-serif;
+  --typo-code: "Impact", "Arial", sans-serif;
+
+  /* Formes et espacements */
+  --rayon-s: 8px;
+  --rayon-m: 12px;
+  --rayon-l: 16px;
+
+  --espace-1: 4px;
+  --espace-2: 8px;
+  --espace-3: 12px;
+  --espace-4: 16px;
+  --espace-5: 24px;
+
+  --cible-tactile: 44px;
+  --ombre: 0 4px 14px rgb(39 49 54 / 0.07);
+  --largeur-max: 980px;
+}

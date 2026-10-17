@@ -14,11 +14,14 @@ export function typeVisible(type, typesVus) {
 
 // Types visibles pour une personne : « Je veux voir les… » s'il est rempli, sinon « Je fais du… »,
 // sinon tout. Une personne qui ne fait que du coloriage mystère ne voit donc rien du Cozy colo, et inversement.
+// « Autre coloriage » voit les mêmes choses que le Cozy colo (livres, bingos, palettes…).
 export function typesVisibles(typesPratiques, typesVus) {
-  if (typesVus?.length) return typesVus;
-  if (typesPratiques?.length) return typesPratiques;
-  return VALEURS_TYPES;
+  const liste = typesVus?.length ? typesVus : typesPratiques?.length ? typesPratiques : VALEURS_TYPES;
+  return liste.includes('autre') && !liste.includes('cozy') ? [...liste, 'cozy'] : liste;
 }
+
+// Fait du Cozy colo, ou un autre coloriage (traité comme le Cozy colo)
+export const faitCozy = (typesPratiques) => (typesPratiques || []).some((t) => t === 'cozy' || t === 'autre');
 
 // « Tome » pour les coloriages mystères, « livre » pour le Cozy colo
 export function nomBibliotheque(visibles) {

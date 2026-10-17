@@ -4,7 +4,7 @@ import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { typesVisibles } from '@/lib/typesColoriage';
+import { typesVisibles, faitCozy } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
@@ -525,8 +525,8 @@ export default async function ProfilPage() {
           <span>{voitMystere && voitCozy ? 'Ajouter un tome ou un livre' : voitCozy ? 'Ajouter un livre' : 'Ajouter un tome'}</span>
         </Link>
 
-        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo */}
-        {(profile?.types_pratiques || []).includes('cozy') && (
+        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
+        {faitCozy(profile?.types_pratiques) && (
           <Link
             href="/palettes"
             className="btn profil-acces-lien"

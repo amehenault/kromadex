@@ -6,6 +6,7 @@ import { VALEURS_PAYS } from '@/lib/pays';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } from '@/lib/pseudo';
 import { demanderReinitialisation, reinitialiser } from '@/lib/motDePasse';
+import { prevenir } from '@/lib/push';
 
 const err = (m, s) => NextResponse.json({ error: m }, { status: s });
 
@@ -39,6 +40,9 @@ export async function POST(req, { params }) {
                 ${pratiques}, ${types(b.typesVus)})
         returning id`;
       await createSession(r[0].id);
+      // Lancement : l'Invocatrice est prévenue de chaque nouvelle inscription (désactivable dans Lancement ou Paramètres)
+      prevenir('inscriptions', { postes: ['admin'] },
+        { titre: 'Nouvelle inscription', texte: `@${pseudo} vient de s’inscrire sur Kromadex.`, lien: '/profil/admin?onglet=lancement' });
       return NextResponse.json({ ok: true });
     } catch (e) {
       // Doublon au même moment (courriel ou pseudo pris entre la vérification et l'enregistrement)

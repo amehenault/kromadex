@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -13,6 +13,7 @@ import Moderation from './moderation';
 import Demandes from './demandes';
 import MotsCles from './motsCles';
 import KromadexPlus from './kromadexPlus';
+import Lancement from './lancement';
 
 // Ordre d'affichage : de gauche à droite, puis de haut en bas (3 par rangée)
 const ONGLETS = [
@@ -28,6 +29,7 @@ const ONGLETS = [
   { cle: 'bingos', label: 'Bingo', icone: Grid3x3, roles: ['admin'] },
   { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
   { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
+  { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
 ];
 
 export default function EspaceAdmin({ role, monId }) {
@@ -72,6 +74,7 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'signalements' && <SignalementsEpreuves />}
       {actif === 'motscles' && <MotsCles />}
       {actif === 'plus' && <KromadexPlus />}
+      {actif === 'lancement' && <Lancement />}
     </>
   );
 }

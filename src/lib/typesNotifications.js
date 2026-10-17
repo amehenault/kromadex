@@ -6,6 +6,7 @@ export const TYPES_NOTIFS = [
   { cle: 'combats', label: 'Invitations à un combat' },
   { cle: 'abonnement', label: 'Mon abonnement Kromadex+' },
   { cle: 'demandes', label: 'Nouvelles demandes dans Aide', postes: ['admin'] },
+  { cle: 'inscriptions', label: 'Nouvelles inscriptions (Lancement)', postes: ['admin'] },
   { cle: 'missivesAttente', label: 'Missives de Sentinelles à approuver', postes: ['admin'] },
   { cle: 'rappels', label: 'Activités à planifier (chaque jour si en retard, sinon aux 2 jours)', postes: ['admin'] },
   { cle: 'validation', label: 'Cases de bingo à valider', postes: ['admin', 'modo'] },

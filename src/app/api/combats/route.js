@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
+import { verifierLimite } from '@/lib/abonnement';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { COMBATS, THEMES_DUEL } from '@/lib/activites';
 import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/lib/combats';
@@ -65,6 +66,9 @@ export async function POST(req) {
     if (!themeType || !theme) return erreur('Choisis le thème (couleur, personnage ou ambiance) et écris-le');
     const [{ n }] = await sql`SELECT count(*)::int AS n FROM combats WHERE createur = ${moi} AND statut = ANY(${ACTIFS})`;
     if (n >= 3) return erreur('Tu as déjà 3 combats en attente', 429);
+    // Les duels sont réservés à Kromadex+ ; les joutes comptent dans les 3 combats par mois de la version gratuite
+    const limite = (genre === 'duel' && await verifierLimite(moi, 'duels')) || await verifierLimite(moi, 'combats');
+    if (limite) return limite;
 
     if (genre === 'duel') {
       if (!isId(String(b.inviteId || '')) || String(b.inviteId) === String(moi)) return erreur('Choisis la personne à défier');
@@ -95,6 +99,8 @@ export async function POST(req) {
 
   if (b.action === 'accepter') {
     if (c.statut !== 'invitation' || String(c.invite) !== String(moi)) return erreur('Tu ne peux pas accepter ce duel', 403);
+    const limite = await verifierLimite(moi, 'duels', { combatId: c.id }) || await verifierLimite(moi, 'combats', { combatId: c.id });
+    if (limite) return limite;
     const maj = await sql`UPDATE combats SET statut = 'soumission' WHERE id = ${c.id} AND statut = 'invitation' RETURNING id`;
     if (!maj.length) return erreur('Ce duel n’est plus en attente', 409);
     await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi}) ON CONFLICT DO NOTHING`;
@@ -123,6 +129,8 @@ export async function POST(req) {
       if (!moiDedans) {
         const [{ n }] = await sql`SELECT count(*)::int AS n FROM combat_participants WHERE combat_id = ${c.id}`;
         if (n >= COMBATS.maxJoute) return erreur('Cette joute est complète', 409);
+        const limite = await verifierLimite(moi, 'combats', { combatId: c.id });
+        if (limite) return limite;
       }
     }
     const [deja] = await sql`SELECT 1 FROM combat_participants WHERE combat_id = ${c.id} AND page_id = ${page.id} AND user_id <> ${moi}`;

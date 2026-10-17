@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles, History, Lock } from 'lucide-react';
+import { abonnementDe, JOURS_STATS_GRATUIT } from '@/lib/abonnement';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { FUSEAU, BONUS_SERIE, serieEnCours, meilleureSerie, aujourdhuiLocal, joursColories, joursConnectes } from '@/lib/series';
@@ -50,6 +51,15 @@ export default async function StatistiquesPage() {
           AND COALESCE(b.fin, (${debutMois}::date + interval '1 month - 1 day')::date) >= ${aujourdhui}::date`,
     sql`SELECT COALESCE(sum(xp), 0)::int AS xp FROM xp_journal WHERE user_id = ${uid} AND cle LIKE 'serie-%'`,
   ]);
+
+  // Historique : tous les mois pour Kromadex+, les 30 derniers jours pour la version gratuite
+  const { plus } = await abonnementDe(uid);
+  const historique = plus
+    ? await sql`SELECT to_char(date_trunc('month', created_at AT TIME ZONE ${FUSEAU}), 'YYYY-MM-01') AS mois, count(*)::int AS n
+        FROM pages WHERE user_id = ${uid} GROUP BY 1 ORDER BY 1 DESC`
+    : null;
+  const [recents] = plus ? [null] : await sql`SELECT count(*)::int AS n FROM pages
+      WHERE user_id = ${uid} AND created_at > now() - make_interval(days => ${JOURS_STATS_GRATUIT})`;
 
   const serieColo = serieEnCours(colories, aujourdhui);
   const serieCo = serieEnCours(connectes, aujourdhui);
@@ -191,6 +201,26 @@ export default async function StatistiquesPage() {
             <small style={petit}>{b.cochees} / 25</small>
           </Link>
         ))}
+      </div>
+
+      {/* Historique des coloriages */}
+      <div className="carte" style={carte}>
+        <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><History size={18} aria-hidden="true" /> Mon historique</b>
+        {plus ? (
+          historique.length ? historique.map((h) => (
+            <div key={h.mois} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '0.9rem' }}>
+              <span style={{ textTransform: 'capitalize' }}>{nomMois(h.mois)}</span>
+              <b>{h.n} coloriage{h.n > 1 ? 's' : ''}</b>
+            </div>
+          )) : <small style={petit}>Aucun coloriage pour l’instant.</small>
+        ) : (
+          <>
+            <span style={{ fontSize: '0.9rem' }}>{recents.n} coloriage{recents.n > 1 ? 's' : ''} ces {JOURS_STATS_GRATUIT} derniers jours</span>
+            <Link href="/kromadex-plus" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', fontWeight: 700, color: 'inherit', fontSize: '0.9rem' }}>
+              <Lock size={16} aria-hidden="true" /> Tout ton historique, mois par mois, avec Kromadex+
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Crown, CalendarPlus } from 'lucide-react';
-import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
+import { envoyer, colonne, ligneCarte, champ, aide, petitBtn, dateStyle } from './outils';
+import { jourQuebec } from '@/lib/temps';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import Pseudo from '@/components/Pseudo';
 
@@ -37,6 +38,21 @@ export default function Membres({ role }) {
       ((u.email || '').toLowerCase().includes(q) || (u.pseudo || '').toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q))
       && (filtre === 'tous' || u.role === filtre));
   }, [membres, recherche, filtre]);
+
+  // Offrir Kromadex+ jusqu'à une date (incluse), ou le retirer (null) ; un abonnement payé n'est pas touché
+  async function offrir(u, jusqu) {
+    const r = await envoyer('/api/abonnement', 'PUT', { userId: u.id, jusqu });
+    setMessage(r.ok ? (jusqu ? `Kromadex+ offert jusqu'au ${jusqu}` : 'Kromadex+ offert retiré') : r.error);
+    charger();
+  }
+  // Ajoute des mois à partir de la date offerte encore active, sinon d'aujourd'hui (ex. gagnante d'un concours : 1 an)
+  const offreActive = (u) => u.plus_offert_jusqu && u.plus_offert_jusqu >= jourQuebec();
+  function prolongerOffre(u, mois) {
+    const d = new Date(`${offreActive(u) ? u.plus_offert_jusqu : jourQuebec()}T12:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() + mois);
+    offrir(u, d.toISOString().slice(0, 10));
+  }
+  const paye = (u) => u.plus_jusqu && new Date(u.plus_jusqu) > new Date() && u.plus_statut !== 'aucun';
 
   async function modifier(id, corps) {
     const r = await envoyer('/api/roles', 'PUT', { targetUserId: id, ...corps });
@@ -98,6 +114,20 @@ export default function Membres({ role }) {
                   {titres.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
                 </select>
               </label>
+              <label style={champ}>Kromadex+ offert jusqu'au (inclus)
+                <input type="date" value={offreActive(u) ? u.plus_offert_jusqu : ''} min={jourQuebec()}
+                  onChange={(e) => offrir(u, e.target.value || null)} style={dateStyle} />
+              </label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button type="button" className="btn alt" style={petitBtn} onClick={() => prolongerOffre(u, 3)}>+ 3 mois</button>
+                <button type="button" className="btn alt" style={petitBtn} onClick={() => prolongerOffre(u, 12)}>+ 1 an</button>
+                {offreActive(u) && <button type="button" className="btn alt danger" style={petitBtn} onClick={() => offrir(u, null)}>Retirer</button>}
+              </div>
+              {paye(u) && (
+                <small style={aide}>
+                  Abonné·e Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}
+                </small>
+              )}
             </>
           )}
         </div>

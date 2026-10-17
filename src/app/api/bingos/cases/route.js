@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
+import { verifierLimite } from '@/lib/abonnement';
 
 // Ajouter un coloriage à une case de bingo ({ bingoId, case, pageId }), ou le retirer ({ bingoId, case } sans coloriage).
 // La case attend ensuite la validation de l'admin ou d'une sentinelle.
@@ -24,6 +25,8 @@ export async function POST(req) {
   if (!isId(String(pageId))) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
   const [p] = await sql`SELECT 1 FROM pages WHERE id = ${pageId} AND user_id = ${user.id} AND image_b64 IS NOT NULL`;
   if (!p) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
+  const limite = await verifierLimite(user.id, 'bingos', { bingoId: b.id });
+  if (limite) return limite;
   await sql`INSERT INTO bingo_cases (bingo_id, user_id, case_no, page_id) VALUES (${b.id}, ${user.id}, ${n}, ${pageId})
     ON CONFLICT (bingo_id, user_id, case_no) DO UPDATE SET page_id = EXCLUDED.page_id, valide = NULL, valide_par = NULL`;
   return NextResponse.json({ ok: true });

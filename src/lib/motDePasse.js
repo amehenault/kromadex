@@ -17,6 +17,18 @@ async function envoyerCourriel(email, lien) {
       to: [email],
       subject: 'Réinitialiser ton mot de passe Kromadex',
       text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 1 heure) :\n${lien}\n\nSi tu n'as rien demandé, ignore ce courriel.\n\nKromadex`,
+      // Version HTML : un vrai bouton cliquable (certaines boîtes, comme Hotmail, ne rendent pas le lien du texte cliquable)
+      html: `
+        <div style="font-family:'Trebuchet MS',Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#273136;background:#fbfbfb;border-radius:12px;">
+          <h2 style="margin:0 0 16px;color:#273136;">Kromadex</h2>
+          <p>Bonjour,</p>
+          <p>Pour choisir un nouveau mot de passe, touche le bouton ci-dessous. Il est valable 1 heure.</p>
+          <p style="margin:24px 0;">
+            <a href="${lien}" style="display:inline-block;background:#4bbca1;color:#273136;font-weight:bold;text-decoration:none;padding:14px 22px;border-radius:12px;">Choisir un nouveau mot de passe</a>
+          </p>
+          <p style="font-size:13px;color:#5f6b70;">Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :<br><a href="${lien}" style="color:#245b50;word-break:break-all;">${lien}</a></p>
+          <p style="font-size:13px;color:#5f6b70;">Si tu n'as rien demandé, ignore ce courriel.</p>
+        </div>`,
     }),
   });
   return r.ok;

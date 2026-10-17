@@ -283,7 +283,8 @@ alter table bingos add column if not exists conditions text[] not null default '
 alter table bingos add column if not exists categorie text not null default 'les_deux'
 ;
 create unique index if not exists defis_cheffe_mois on defis (mois, choisi_par) where genre = 'cheffe';
-create unique index if not exists defis_groupe_mois on defis (mois, choisi_par) where genre = 'groupe'
+-- Épreuves de groupe : 1 par mois en gratuit, 5 avec Kromadex+ (limite vérifiée dans l'API, plus d'index unique)
+drop index if exists defis_groupe_mois
 ;
 alter table users add column if not exists cheffe_depuis timestamptz
 ;
@@ -484,3 +485,25 @@ create table if not exists push_abonnements (
 alter table missives add column if not exists epinglee_jusqu date;
 -- Deux personnes ne peuvent pas avoir le même pseudo (sans tenir compte des majuscules)
 create unique index if not exists users_pseudo_unique on users (lower(pseudo)) where pseudo is not null
+;
+-- Présentation de Kromadex vue (elle s'ouvre seule à la première visite)
+alter table users add column if not exists tutoriel_vu boolean not null default false
+;
+-- Kromadex+ : abonnement payé par ThriveCart (actif, annule = actif jusqu'à la fin de la période payée, aucun)
+alter table users add column if not exists plus_statut text not null default 'aucun';
+alter table users add column if not exists plus_jusqu timestamptz;
+alter table users add column if not exists plus_formule text;
+-- Kromadex+ offert par l'Invocatrice jusqu'à une date (concours, bêta-testrices…)
+alter table users add column if not exists plus_offert_jusqu timestamptz;
+alter table users drop column if exists plus_offert;
+-- Chaque avis reçu de ThriveCart, pour vérifier ce qui s'est passé en cas de problème
+create table if not exists paiements_evenements (
+  id serial primary key,
+  recu_le timestamptz not null default now(),
+  evenement text not null default '',
+  mode text not null default '',
+  user_id uuid,
+  courriel text not null default '',
+  resultat text not null default '',
+  donnees jsonb not null default '{}'
+)

@@ -7,6 +7,7 @@ import { titreNiveau } from '@/lib/titres';
 import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
+import { parcheminDuMois } from '@/lib/abonnement';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import MesTomes from './mesTomes';
@@ -60,6 +61,7 @@ export default async function ProfilPage() {
     : 0;
 
   // Récompenses des activités ; une relique complète donne un cadre de profil exclusif
+  await parcheminDuMois(authUser.id);
   const recompenses = await recompensesDe(authUser.id);
   const cadreRelique = recompenses.some((r) => r.genre === 'relique');
   // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
@@ -67,6 +69,19 @@ export default async function ProfilPage() {
 
   // Tomes du profil avec leur progression automatique
   const mesTomes = await listerMesTomes(authUser.id);
+  // Ma progression : tomes (coloriage mystère) et livres (Cozy colo) commencés séparés, puis les non commencés.
+  // Un tome perso ou d'un autre type va avec les tomes, sauf pour une personne qui ne voit que le Cozy colo.
+  const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
+  const voitMystere = visibles.includes('mystere');
+  const voitCozy = visibles.includes('cozy');
+  const estLivre = (t) => t.type === 'cozy' || (t.type !== 'mystere' && voitCozy && !voitMystere);
+  const nonCommences = voitMystere && !voitCozy ? 'Tomes non commencés'
+    : voitCozy && !voitMystere ? 'Livres non commencés' : 'Tomes et livres non commencés';
+  const groupesProgression = [
+    { cle: 'tomes', titre: 'Tomes commencés', tomes: mesTomes.filter((t) => t.faites > 0 && !estLivre(t)) },
+    { cle: 'livres', titre: 'Livres commencés', tomes: mesTomes.filter((t) => t.faites > 0 && estLivre(t)) },
+    { cle: 'non', titre: nonCommences, tomes: mesTomes.filter((t) => !t.faites) },
+  ].filter((g) => g.tomes.length);
   const prochesQuetes = quetes
     .filter((q) => !q.terminee)
     .sort((a, b) => b.valeur / b.objectif - a.valeur / a.objectif || (a.objectif - a.valeur) - (b.objectif - b.valeur))
@@ -443,6 +458,16 @@ export default async function ProfilPage() {
           </Link>
         )}
 
+        {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) */}
+        <Link
+          href="/kromadex-plus"
+          className="btn profil-acces-lien"
+          aria-label="Kromadex+ : gérer l’abonnement"
+        >
+          <img src="/kromadex-plus.svg" alt="" style={{ height: '22px', width: 'auto', maxWidth: '100%' }} />
+          <span>Gérer l’abonnement</span>
+        </Link>
+
         <Link
           href="/coloriages"
           className="btn profil-acces-lien"
@@ -540,14 +565,18 @@ export default async function ProfilPage() {
         <BoutonDeconnexion />
       </div>
 
-      {/* Progression automatique de chaque tome */}
-      <div
-        className="carte"
-        style={{ marginBottom: 'var(--espace-3)' }}
-      >
-        <h3 style={{ marginTop: 0 }}>Ma progression</h3>
-        <MesTomes tomes={mesTomes} />
-      </div>
+      {/* Progression automatique : tomes commencés, livres commencés, puis non commencés, chacun dans son encadré */}
+      <h3 style={{ margin: '0 0 var(--espace-3)' }}>Ma progression</h3>
+      {groupesProgression.length ? groupesProgression.map((g) => (
+        <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
+          <h4 style={{ margin: '0 0 var(--espace-3)', fontSize: '1rem' }}>{g.titre}</h4>
+          <MesTomes tomes={g.tomes} />
+        </div>
+      )) : (
+        <div className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
+          <MesTomes tomes={[]} />
+        </div>
+      )}
     </div>
   );
 }

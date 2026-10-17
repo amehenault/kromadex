@@ -22,7 +22,7 @@ export default function AuthForm() {
       body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
     });
     if (res.ok && mode === 'oubli') {
-      setInfo('Si un compte existe avec ce courriel, un lien pour choisir un nouveau mot de passe va t’être envoyé. Il est valable 1 heure.');
+      setInfo('Si un compte existe avec ce courriel, un lien pour choisir un nouveau mot de passe va t’être envoyé. Il est valable 1 heure. Tu ne le vois pas d’ici quelques minutes ? Regarde dans tes courriels indésirables (spams).');
       setBusy(false);
       return;
     }
@@ -35,6 +35,11 @@ export default function AuthForm() {
     <form className="carte etroite" onSubmit={envoyer}>
       <h2>{TITRES[mode]}</h2>
       <input name="email" type="email" placeholder="Courriel" autoComplete="email" required />
+      {mode === 'oubli' && !info && (
+        <small style={{ display: 'block', color: 'var(--texte-secondaire)', marginBottom: 'var(--espace-2)' }}>
+          Le courriel peut arriver dans tes courriels indésirables (spams) : pense à y jeter un œil.
+        </small>
+      )}
       {mode !== 'oubli' && (
         <input name="password" type="password" placeholder="Mot de passe (8 caractères minimum)" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} required />
       )}

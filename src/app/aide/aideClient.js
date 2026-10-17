@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send, PlayCircle } from 'lucide-react';
 import { TYPES_DEMANDE, nomType, nomStatut } from '@/lib/demandes';
 
 const ICONES = { question: HelpCircle, bug: Bug, tome: BookOpen, crayons: Palette, fonctionnalite: Lightbulb };
@@ -53,6 +53,10 @@ export default function AideClient() {
         </Link>
         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Aide</h2>
       </div>
+
+      <Link href="/?tutoriel=1" className="btn alt" style={{ display: 'flex', width: '100%', minHeight: '48px', marginBottom: 'var(--espace-3)', boxSizing: 'border-box' }}>
+        <PlayCircle size={18} aria-hidden="true" /> Revoir la présentation de Kromadex
+      </Link>
 
       <form onSubmit={envoyer} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' }}>
         <b>Que veux-tu faire ?</b>

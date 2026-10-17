@@ -57,7 +57,7 @@ export default function DefisGroupe({ defis, monId, onChange }) {
             <input type="date" value={form.fin} min={dansJours(0)} onChange={(e) => setForm({ ...form, fin: e.target.value })} style={date} />
           </label>
           <small style={{ color: 'var(--texte-secondaire)' }}>
-            L'épreuve commence aujourd'hui. Tu peux créer une épreuve de groupe par mois. Créer l’épreuve ne donne pas d’XP.
+            L'épreuve commence aujourd'hui. Tu peux créer 1 épreuve de groupe par mois (jusqu’à 5 avec Kromadex+). Créer l’épreuve ne donne pas d’XP.
           </small>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button type="submit" className="btn" disabled={occupe || !form.titre.trim() || !(Number(form.objectif) >= 1)} style={{ flex: 1, minHeight: '44px' }}>{form.id ? 'Enregistrer' : 'Créer l’épreuve'}</button>

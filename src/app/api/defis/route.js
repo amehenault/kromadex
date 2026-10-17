@@ -6,6 +6,7 @@ import { VALEURS_CATEGORIES } from '@/lib/defis';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { cloturerEpreuves } from '@/lib/clotures';
 import { ajouterJours } from '@/lib/temps';
+import { verifierLimite } from '@/lib/abonnement';
 
 // Une épreuve dure un mois moins un jour : les gagnant·es sont annoncé·es le dernier jour du mois
 const veilleFinDuMois = (iso) => ajouterJours(finDuMois(iso), -1);
@@ -103,10 +104,11 @@ export async function POST(req) {
       if (!maj.length) return NextResponse.json({ error: 'Tu ne peux modifier que tes épreuves de groupe' }, { status: 403 });
       return NextResponse.json({ ok: true });
     }
+    const limite = await verifierLimite(profil.id, 'epreuvesGroupe');
+    if (limite) return limite;
     const cree = await sql`INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par, objectif, multiple)
       VALUES ('groupe', date_trunc('month', ${ajd}::date), ${titre}, ${description}, ${categorie}, ${ajd}, ${fin}, ${profil.id}, ${objectif}, ${multiple})
-      ON CONFLICT (mois, choisi_par) WHERE genre = 'groupe' DO NOTHING RETURNING id`;
-    if (!cree.length) return NextResponse.json({ error: 'Tu as déjà créé une épreuve de groupe ce mois-ci' }, { status: 409 });
+      RETURNING id`;
     // La personne qui crée l'épreuve y participe d'office
     await sql`INSERT INTO defi_participations (defi_id, user_id) VALUES (${cree[0].id}, ${profil.id}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true, id: cree[0].id });

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Compass, Shield, Sparkles, ChevronRight, ScrollText, Check } from 'lucide-react';
+import { Compass, Shield, Sparkles, ChevronRight, ScrollText, Check, Backpack } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import { FETES, NOMS_AVENTURES } from '@/lib/activites';
 
@@ -21,11 +21,19 @@ export default function ListeAventures() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Inventaire : les Parchemins du Destin (Kromadex+ en reçoit un chaque mois) */}
       {parchemins > 0 && (
-        <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
-          <ScrollText size={16} aria-hidden="true" style={{ color: 'var(--btn)' }} />
-          {parchemins} Parchemin{parchemins > 1 ? 's' : ''} du Destin : élimine une contrainte obligatoire lors d’une expédition, d’une épopée ou d’une prophétie.
-        </small>
+        <div className="carte" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ width: 44, height: 44, flex: '0 0 auto', borderRadius: '50%', background: 'var(--accent-doux)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primaire)' }}>
+            <Backpack size={22} aria-hidden="true" />
+          </span>
+          <span style={{ minWidth: 0 }}>
+            <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Mon inventaire · <ScrollText size={16} aria-hidden="true" /> {parchemins} Parchemin{parchemins > 1 ? 's' : ''} du Destin
+            </b>
+            <small style={{ color: 'var(--texte-secondaire)' }}>Élimine une contrainte obligatoire lors d’une expédition, d’une épopée ou d’une prophétie.</small>
+          </span>
+        </div>
       )}
       {!aventures.length && (
         <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>

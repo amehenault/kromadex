@@ -24,7 +24,7 @@ export async function GET() {
            (SELECT count(*)::int FROM combat_participants p WHERE p.combat_id = c.id AND p.page_id IS NOT NULL) AS coloriages,
            mp.user_id IS NOT NULL AS je_participe, mp.page_id AS ma_page,
            CASE WHEN mp.user_id IS NOT NULL OR c.invite = ${user.id} THEN
-             (SELECT json_agg(json_build_object('user_id', u.id, 'pseudo', u.pseudo, 'name', u.name, 'a_avatar', u.avatar_b64 IS NOT NULL,
+             (SELECT json_agg(json_build_object('user_id', u.id, 'pseudo', u.pseudo, 'name', u.name, 'role', u.role, 'a_avatar', u.avatar_b64 IS NOT NULL,
                                                 'avatar_maj', u.avatar_maj, 'soumis', p.page_id IS NOT NULL))
               FROM combat_participants p JOIN users u ON u.id = p.user_id WHERE p.combat_id = c.id AND p.user_id <> ${user.id})
            END AS adversaires,

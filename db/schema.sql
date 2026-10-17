@@ -479,3 +479,8 @@ create table if not exists push_abonnements (
   cles jsonb not null,
   cree_le timestamptz not null default now()
 )
+;
+-- Missive épinglée sur l'accueil jusqu'à cette date (incluse, heure du Québec)
+alter table missives add column if not exists epinglee_jusqu date;
+-- Deux personnes ne peuvent pas avoir le même pseudo (sans tenir compte des majuscules)
+create unique index if not exists users_pseudo_unique on users (lower(pseudo)) where pseudo is not null

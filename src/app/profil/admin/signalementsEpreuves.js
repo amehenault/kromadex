@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Check } from 'lucide-react';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const image = (s) => `/api/pages/${s.page_id}/image?s=${s.img_size || 0}`;
 const SANCTIONS = [[0, 'Avertir'], [7, 'Suspendre 7 jours'], [30, 'Suspendre 30 jours'], [36500, 'Bannir']];
@@ -46,7 +47,7 @@ export default function SignalementsEpreuves() {
           {s.description && <small style={{ ...aide, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{s.description}</small>}
           <img src={image(s)} alt={s.title || ''} loading="lazy" style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', borderRadius: 'var(--rayon-s)', background: 'var(--carte)' }} />
           <small style={{ overflowWrap: 'anywhere' }}>
-            Par {s.pseudo ? `@${s.pseudo}` : s.name || s.email}
+            Par <Pseudo x={s} role={s.role_auteur} />
             {s.role_auteur && <span style={{ color: couleurPoste(s.role_auteur), fontWeight: 700 }}> · {NOMS_POSTES[s.role_auteur]}</span>}
           </small>
           <div style={actions}>

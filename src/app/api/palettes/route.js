@@ -24,7 +24,7 @@ export async function GET(req) {
   }
 
   const palettes = await sql`
-    SELECT p.id, p.nom, p.couleurs, p.partagee, p.cree_le, p.user_id AS auteur_id, u.pseudo, u.name,
+    SELECT p.id, p.nom, p.couleurs, p.partagee, p.cree_le, p.user_id AS auteur_id, u.pseudo, u.name, u.role,
            (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM palette_likes l WHERE l.palette_id = p.id) AS likes,
            EXISTS (SELECT 1 FROM palette_likes l WHERE l.palette_id = p.id AND l.user_id = ${profil.id}) AS aime

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, aide, actions, petitBtn } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const image = (c) => `/api/pages/${c.page_id}/image?s=${c.img_size || 0}`;
 
@@ -31,7 +32,7 @@ export default function ValidationBingos() {
       {!cases.length && <p style={aide}>Aucune case en attente.</p>}
       {cases.map((c) => (
         <div key={`${c.bingo_id}-${c.user_id}-${c.case_no}`} style={ligneCarte}>
-          <small style={aide}>{c.bingo} · case {c.case_no + 1} · {c.pseudo ? `@${c.pseudo}` : c.name || c.email}</small>
+          <small style={aide}>{c.bingo} · case {c.case_no + 1} · <Pseudo x={c} /></small>
           <b style={{ overflowWrap: 'anywhere' }}>{c.tache}</b>
           {c.condition && <small style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.condition}</small>}
           <img src={image(c)} alt={c.title || ''} loading="lazy" style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', borderRadius: 'var(--rayon-s)', background: 'var(--carte)' }} />

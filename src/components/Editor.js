@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import SymbolPicker from './SymbolPicker';
+import MotsClesColoriage from './MotsClesColoriage';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { X, Camera, AlertTriangle } from 'lucide-react';
@@ -217,7 +218,7 @@ function Groupe({ g, maj, retirer, enExport }) {
   );
 }
 
-export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes = {} }) {
+export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes = {}, tomeCatalogue = null }) {
   const r = useRouter();
   const pageRef = useRef(null);
 
@@ -348,6 +349,9 @@ export default function Editor({ page, tomes: tomesInitiaux, initial, typesTomes
         {page && <button className="btn danger" onClick={supprimer}>Supprimer</button>}
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim() || (publiee && !typeFinal)}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
+
+      {/* Coloriage déjà enregistré : ajout de mots-clefs au tome et à la page du coloriage */}
+      {page && <MotsClesColoriage tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image` : null} />}
 
       {(erreurServeur || erreur) && (
         <div style={{

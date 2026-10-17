@@ -3,12 +3,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Image as ImageIcon, Trash2, Pencil, Gift, Trophy, Gavel, Plus } from 'lucide-react';
 import { nomCategorie } from '@/lib/defis';
-import { Avatar, nomAuteur, poster } from '@/app/communaute/outils';
+import { Avatar, poster } from '@/app/communaute/outils';
 import { TempsRestant } from '@/components/Fuseau';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import Verdict from '@/components/Verdict';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import { XP_EPREUVES, XP_GROUPE } from '@/lib/activites';
+import Pseudo from '@/components/Pseudo';
 
 const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de chef·fe', groupe: 'Épreuve de groupe' };
 const ROLE = NOMS_POSTES;
@@ -83,7 +84,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
         <Link href={`/membre/${d.createur_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', color: 'inherit', textDecoration: 'none', alignSelf: 'flex-start' }}>
           <Avatar x={{ user_id: d.createur_id, a_avatar: d.a_avatar, avatar_maj: d.avatar_maj }} taille={28} />
           <small>
-            Créée par <b>{nomAuteur({ pseudo: d.choisi_par, name: d.nom_createur })}</b>
+            Créée par <Pseudo x={{ pseudo: d.choisi_par, name: d.nom_createur, role: d.role_createur }} />
             <span style={{ color: couleurPoste(d.role_createur), fontWeight: 700 }}> · {ROLE[d.role_createur] || 'Coloriste'}</span>
           </small>
         </Link>

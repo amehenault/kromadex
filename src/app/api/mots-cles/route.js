@@ -27,7 +27,7 @@ export async function GET(req) {
 
   if (p.get('tome')) {
     const mots = await sql`
-      SELECT m.id, m.mot, m.page_no, u.pseudo, (m.user_id = ${profil.id}) AS moi,
+      SELECT m.id, m.mot, m.page_no, u.pseudo, u.role, (m.user_id = ${profil.id}) AS moi,
              (SELECT raison FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id AND s.user_id = ${profil.id}) AS mon_signalement
       FROM mots_cles m LEFT JOIN users u ON u.id = m.user_id
       WHERE m.tome_id = ${Number(p.get('tome'))}

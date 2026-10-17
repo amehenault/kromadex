@@ -1,21 +1,24 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Pin, MessageCircle, Send, Trash2 } from 'lucide-react';
+import { Pin, Mail, MessageCircle, Send, Trash2 } from 'lucide-react';
 import { Avatar, BoutonJaime, nomAuteur, poster } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-// Missives épinglées : « Non lue » tant qu'on ne l'a pas ouverte, puis « Lue » (elle reste en haut).
+// Missives : « Non lue » tant qu'on ne l'a pas ouverte, puis « Lue ». Les épinglées passent en premier.
+// seulementEpinglees : accueil, où seules les missives épinglées (jusqu'à leur échéance) s'affichent.
 // J'aime toujours possible, commentaires selon la missive.
-export default function MissivesEpinglees({ monId }) {
-  const [missives, setMissives] = useState([]);
+export default function MissivesEpinglees({ monId, seulementEpinglees, vide }) {
+  const [missives, setMissives] = useState(null);
   const [ouverte, setOuverte] = useState(null);
 
   useEffect(() => {
     fetch('/api/missives').then((r) => (r.ok ? r.json() : null)).then((d) => {
       if (!d) return;
-      setMissives(d.missives || []);
+      const liste = (d.missives || []).filter((m) => !seulementEpinglees || m.epinglee);
+      setMissives([...liste.filter((m) => m.epinglee), ...liste.filter((m) => !m.epinglee)]);
       // Arrivée depuis l'accueil (#missive-12) : on défile jusqu'à elle
       const id = Number(window.location.hash.replace('#missive-', ''));
       if (id) setTimeout(() => document.getElementById(`missive-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
@@ -26,7 +29,11 @@ export default function MissivesEpinglees({ monId }) {
 
   function ouvrir(m) {
     setOuverte(ouverte === m.id ? null : m.id);
-    if (!m.lue) { maj(m.id, { lue: true }); poster('/api/missives', { lue: m.id }); }
+    if (!m.lue) {
+      maj(m.id, { lue: true });
+      // La pastille du menu se met à jour une fois la lecture enregistrée
+      poster('/api/missives', { lue: m.id }).then(() => window.dispatchEvent(new Event('kromadex-lu')));
+    }
   }
 
   async function aimer(m) {
@@ -35,10 +42,11 @@ export default function MissivesEpinglees({ monId }) {
     if (r) maj(m.id, { aime: r.aime, likes: r.likes });
   }
 
-  if (!missives.length) return null;
+  if (!missives) return null;
+  if (!missives.length) return vide ? <p style={{ color: 'var(--texte-secondaire)' }}>{vide}</p> : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: seulementEpinglees ? 'var(--espace-3)' : 0 }}>
       {missives.map((m) => (
         <div key={m.id} id={`missive-${m.id}`} style={{
           background: 'var(--fond-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', minWidth: 0,
@@ -46,7 +54,9 @@ export default function MissivesEpinglees({ monId }) {
         }}>
           <button type="button" onClick={() => ouvrir(m)}
             style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'flex-start', width: '100%' }}>
-            <Pin size={18} style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />
+            {m.epinglee
+              ? <Pin size={18} aria-label="Épinglée" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />
+              : <Mail size={18} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--texte-secondaire)', marginTop: '2px' }} />}
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                 <small style={{ color: 'var(--texte-secondaire)' }}>{date(m.cree_le)}</small>
@@ -119,7 +129,7 @@ function Commentaires({ missive, monId, onNombre }) {
         <div key={c.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
           <Link href={`/membre/${c.user_id}`} aria-label={`Profil de ${nomAuteur(c)}`}><Avatar x={c} taille={28} /></Link>
           <div style={{ flex: 1, minWidth: 0, background: 'var(--carte)', borderRadius: 'var(--rayon-m)', padding: '6px 10px' }}>
-            <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}>{nomAuteur(c)}</Link>
+            <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}><Pseudo x={c} /></Link>
             <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.texte}</p>
           </div>
           {String(c.user_id) === monId && (

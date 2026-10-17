@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, Pencil, Flag, Check, X } from 'lucide-react';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const RAISONS = { repetition: 'Répétition', faux: 'Faux', inapproprie: 'Inapproprié' };
 const SANCTIONS = [[0, 'Avertir'], [7, 'Suspendre 7 jours'], [30, 'Suspendre 30 jours'], [36500, 'Bannir']];
@@ -63,7 +64,7 @@ export default function MotsCles() {
           )}
           <small style={aide}>{m.tome}{m.page_no ? ` · page ${m.page_no}` : ''}</small>
           <small style={{ overflowWrap: 'anywhere' }}>
-            Créé par {m.pseudo ? `@${m.pseudo}` : m.email || 'compte supprimé'}
+            Créé par <Pseudo x={m} role={m.role_auteur} repli="compte supprimé" />
             {m.role_auteur && <span style={{ color: couleurPoste(m.role_auteur), fontWeight: 700 }}> · {NOMS_POSTES[m.role_auteur]}</span>}
           </small>
           {m.signalements > 0 && (

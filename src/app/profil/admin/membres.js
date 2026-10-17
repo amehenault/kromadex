@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, Crown, CalendarPlus } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
+import Pseudo from '@/components/Pseudo';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
@@ -48,7 +49,7 @@ export default function Membres({ role }) {
       <p style={aide}>
         Tout le monde est <b>coloriste</b> par défaut. Le ou la <b>chef·fe des coloristes</b> a gagné une épreuve mensuelle :
         le poste dure 1 mois, avec 7 jours après la nomination pour créer son épreuve. Les <b>sentinelles du Kromadex</b> modèrent.
-        Le poste d'<b>Invocatrice originelle</b> est unique.
+        Le poste d'<b>Invocatrice des couleurs</b> est unique.
       </p>
       <div style={{ position: 'relative' }}>
         <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--texte-secondaire)' }} />
@@ -56,7 +57,7 @@ export default function Membres({ role }) {
       </div>
       <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
         <option value="tous">Tous les postes</option>
-        <option value="admin">Invocatrice originelle</option>
+        <option value="admin">Invocatrice des couleurs</option>
         <option value="modo">Sentinelles du Kromadex</option>
         <option value="cheffe">Cheffes</option>
         <option value="coloriste">Coloristes</option>
@@ -65,7 +66,7 @@ export default function Membres({ role }) {
 
       {visibles.map((u) => (
         <div key={u.id} style={ligneCarte}>
-          <b style={{ overflowWrap: 'anywhere' }}>{u.pseudo ? `@${u.pseudo}` : u.name || u.email}</b>
+          <Pseudo x={u} />
           <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>
             {u.email} · niv. {u.level || 1} · {u.xp || 0} XP
           </small>

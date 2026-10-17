@@ -9,7 +9,7 @@ export async function GET(req) {
   if (erreur) return erreur;
   if (new URL(req.url).searchParams.get('tout') && profil.role === 'admin') {
     const demandes = await sql`
-      SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.email
+      SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.email, u.role
       FROM demandes d JOIN users u ON u.id = d.user_id
       ORDER BY array_position(ARRAY['nouvelle', 'en_cours'], d.statut) NULLS LAST, d.cree_le ASC LIMIT 500`;
     return NextResponse.json({ demandes });

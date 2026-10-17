@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Archive, Inbox } from 'lucide-react';
 import { GROUPES_DEMANDE, groupeDuType, nomType, nomStatut, estArchivee } from '@/lib/demandes';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 // Demandes envoyées depuis la page Aide, en 3 catégories.
 // Les demandes à traiter passent en premier ; résolues, ajoutées et refusées sont archivées (jamais supprimées).
@@ -34,11 +35,13 @@ export default function Demandes() {
 
   return (
     <div className="carte" style={colonne}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px' }}>
-        {GROUPES_DEMANDE.map((g) => {
+      {/* 2 par rangée pour que « Fonctionnalités » ne soit jamais coupé ; la 3e catégorie prend toute la largeur */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px' }}>
+        {GROUPES_DEMANDE.map((g, i) => {
           const aTraiter = duGroupe(g.cle).filter((d) => !estArchivee(d.statut)).length;
           return (
-            <button key={g.cle} type="button" className={groupe === g.cle ? 'btn' : 'btn alt'} style={bouton} onClick={() => setGroupe(g.cle)}>
+            <button key={g.cle} type="button" className={groupe === g.cle ? 'btn' : 'btn alt'} onClick={() => setGroupe(g.cle)}
+              style={{ ...bouton, overflowWrap: 'normal', gridColumn: i === GROUPES_DEMANDE.length - 1 && i % 2 === 0 ? '1 / -1' : undefined }}>
               {g.label}{aTraiter ? ` (${aTraiter})` : ''}
             </button>
           );
@@ -63,7 +66,7 @@ export default function Demandes() {
               <small style={{ fontWeight: 700 }}>{nomType(d.type)} · {nomStatut(d.statut)}</small>
               <small style={aide}>{new Date(d.cree_le).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}</small>
             </div>
-            <small style={{ ...aide, overflowWrap: 'anywhere' }}>{d.pseudo ? `@${d.pseudo}` : d.email}</small>
+            <small><Pseudo x={d} /></small>
             <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: '0.9rem' }}>{d.message}</p>
             <label style={champ}>Statut
               <select value={e.statut ?? d.statut} onChange={(ev) => modifier(d.id, 'statut', ev.target.value)}>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Newspaper, Tags, ClipboardCheck, Flag } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -11,22 +11,21 @@ import ValidationBingos from './validationBingos';
 import SignalementsEpreuves from './signalementsEpreuves';
 import Moderation from './moderation';
 import Demandes from './demandes';
-import Nouveautes from './nouveautes';
 import MotsCles from './motsCles';
 
+// Ordre d'affichage : de gauche à droite, puis de haut en bas (3 par rangée)
 const ONGLETS = [
   { cle: 'demandes', label: 'Demandes', icone: Inbox, roles: ['admin'] },
-  { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
-  { cle: 'moderation', label: 'Modération', icone: ShieldAlert, roles: ['admin', 'modo'] },
-  { cle: 'motscles', label: 'Mots-clés', icone: Tags, roles: ['admin', 'modo'] },
-  { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe'] },
   { cle: 'signalements', label: 'Signalés', icone: Flag, roles: ['admin', 'modo'] },
-  { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
-  { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
+  { cle: 'moderation', label: 'Modération', icone: ShieldAlert, roles: ['admin', 'modo'] },
+  { cle: 'motscles', label: 'Mots-clefs', icone: Tags, roles: ['admin', 'modo'] },
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
-  { cle: 'bingos', label: 'Bingos', icone: Grid3x3, roles: ['admin'] },
-  { cle: 'aventures', label: 'Aventures', icone: Compass, roles: ['admin'] },
-  { cle: 'nouveautes', label: 'Nouveautés', icone: Newspaper, roles: ['admin'] },
+  { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
+  { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe'] },
+  { cle: 'aventures', label: 'Aventure', icone: Compass, roles: ['admin'] },
+  { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
+  { cle: 'bingos', label: 'Bingo', icone: Grid3x3, roles: ['admin'] },
+  { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
 ];
 
 export default function EspaceAdmin({ role, monId }) {
@@ -41,7 +40,7 @@ export default function EspaceAdmin({ role, monId }) {
 
   return (
     <>
-      {/* Onglets : tous visibles d'un coup, 3 par rangée */}
+      {/* Onglets : tous visibles d'un coup, 3 par rangée ; les mots passent à la ligne entiers, jamais coupés */}
       {onglets.length > 1 && (
         <div style={{
           display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, onglets.length)}, minmax(0, 1fr))`, gap: '6px',
@@ -51,7 +50,7 @@ export default function EspaceAdmin({ role, monId }) {
             <button key={cle} type="button" onClick={() => setActif(cle)} className={actif === cle ? 'btn' : 'btn alt'}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px',
-                minHeight: '54px', padding: '6px 4px', fontSize: '0.8rem', minWidth: 0,
+                minHeight: '54px', padding: '6px 4px', fontSize: '0.78rem', lineHeight: 1.2, minWidth: 0, overflowWrap: 'normal', wordBreak: 'normal', hyphens: 'manual',
               }}>
               <Icone size={18} /> {label}
             </button>
@@ -69,7 +68,6 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'aventures' && <Aventures />}
       {actif === 'validation' && <ValidationBingos />}
       {actif === 'signalements' && <SignalementsEpreuves />}
-      {actif === 'nouveautes' && <Nouveautes />}
       {actif === 'motscles' && <MotsCles />}
     </>
   );

@@ -10,6 +10,7 @@ import Verdict from '@/components/Verdict';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { COMBATS, XP_COMBATS, THEMES_DUEL, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE } from '@/lib/activites';
 import Tournois from './tournois';
+import Pseudo from '@/components/Pseudo';
 
 const nomType = (v) => TYPES_COLORIAGE.find((t) => t.valeur === v)?.label || '';
 const nomTheme = (v) => THEMES_DUEL.find((t) => t.valeur === v)?.label || '';
@@ -77,7 +78,7 @@ export default function Combats({ inviter }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {c.adversaires.map((u) => (
               <span key={u.user_id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <Avatar x={u} taille={22} /><small>{nomAuteur(u)}{u.soumis ? ' · coloriage soumis' : ''}</small>
+                <Avatar x={u} taille={22} /><small><Pseudo x={u} />{u.soumis ? ' · coloriage soumis' : ''}</small>
               </span>
             ))}
           </div>

@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 
-// Missives : messages à toute la communauté.
+// Date d'échéance de l'épinglage (AAAA-MM-JJ) ou null
+const dateEpingle = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null);
+
+// Missives : messages à toute la communauté. Une missive peut être épinglée sur l'accueil jusqu'à une date.
 // L'admin publie directement, une missive de modo attend l'approbation de l'admin.
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
@@ -11,7 +14,7 @@ export async function GET(req) {
   // ?gestion=1 : l'admin voit tout, la modo voit les siennes et celles publiées
   if (new URL(req.url).searchParams.get('gestion') && ['admin', 'modo'].includes(profil.role)) {
     const missives = await sql`
-      SELECT m.id, m.titre, m.contenu, m.cree_le, m.statut, u.pseudo AS auteur
+      SELECT m.id, m.titre, m.contenu, m.cree_le, m.statut, to_char(m.epinglee_jusqu, 'YYYY-MM-DD') AS epinglee_jusqu, u.pseudo AS auteur, u.role AS role_auteur
       FROM missives m LEFT JOIN users u ON u.id = m.auteur
       WHERE ${profil.role === 'admin'} OR m.auteur = ${profil.id} OR m.statut = 'publiee'
       ORDER BY (m.statut = 'en_attente') DESC, m.cree_le DESC LIMIT 100`;
@@ -20,12 +23,13 @@ export async function GET(req) {
 
   const missives = await sql`
     SELECT m.id, m.titre, m.contenu, m.cree_le, m.commentaires, (l.user_id IS NOT NULL) AS lue,
+           COALESCE(m.epinglee_jusqu >= (now() AT TIME ZONE 'America/Toronto')::date, false) AS epinglee,
            (SELECT count(*)::int FROM missive_likes k WHERE k.missive_id = m.id) AS likes,
            EXISTS (SELECT 1 FROM missive_likes k WHERE k.missive_id = m.id AND k.user_id = ${profil.id}) AS aime,
            (SELECT count(*)::int FROM missive_commentaires c WHERE c.missive_id = m.id) AS nb_commentaires
     FROM missives m LEFT JOIN missives_lues l ON l.missive_id = m.id AND l.user_id = ${profil.id}
     WHERE m.statut = 'publiee'
-    ORDER BY m.cree_le DESC LIMIT 50`;
+    ORDER BY m.cree_le DESC LIMIT 100`;
   return NextResponse.json({ missives });
 }
 
@@ -56,16 +60,21 @@ export async function POST(req) {
   const titre = String(corps.titre || '').trim().slice(0, 120);
   if (!titre) return NextResponse.json({ error: 'Titre requis' }, { status: 400 });
   const statut = profil.role === 'admin' ? 'publiee' : 'en_attente';
-  await sql`INSERT INTO missives (titre, contenu, auteur, statut, commentaires)
-    VALUES (${titre}, ${String(corps.contenu || '').slice(0, 4000)}, ${profil.id}, ${statut}, ${corps.commentaires !== false})`;
+  await sql`INSERT INTO missives (titre, contenu, auteur, statut, commentaires, epinglee_jusqu)
+    VALUES (${titre}, ${String(corps.contenu || '').slice(0, 4000)}, ${profil.id}, ${statut}, ${corps.commentaires !== false},
+            ${dateEpingle(corps.epingleeJusqu)})`;
   return NextResponse.json({ ok: true, statut });
 }
 
-// Admin : approuver ou refuser une missive en attente
+// Admin : approuver ou refuser une missive en attente, ou changer son épinglage ({ id, epingleeJusqu })
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
-  const { id, statut } = await req.json();
+  const { id, statut, ...corps } = await req.json();
+  if ('epingleeJusqu' in corps) {
+    await sql`UPDATE missives SET epinglee_jusqu = ${dateEpingle(corps.epingleeJusqu)} WHERE id = ${Number(id)}`;
+    return NextResponse.json({ ok: true });
+  }
   if (!['publiee', 'refusee'].includes(statut)) return NextResponse.json({ error: 'Statut invalide' }, { status: 400 });
   // Une missive approuvée prend la date d'approbation pour apparaître en haut de l'accueil
   await sql`UPDATE missives SET statut = ${statut}, cree_le = CASE WHEN ${statut} = 'publiee' THEN now() ELSE cree_le END WHERE id = ${Number(id)}`;

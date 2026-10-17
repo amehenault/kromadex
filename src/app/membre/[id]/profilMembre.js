@@ -3,12 +3,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, UserPlus, UserCheck, X, Swords } from 'lucide-react';
-import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from '@/app/communaute/outils';
+import { Avatar, BoutonJaime, imagePage, poster } from '@/app/communaute/outils';
 import FicheDetail from '@/app/communaute/ficheDetail';
 import { calculerNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
 import { NOMS_POSTES, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
+import Pseudo from '@/components/Pseudo';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 const POSTE = { admin: NOMS_POSTES.admin, modo: NOMS_POSTES.modo, cheffe: NOMS_POSTES.cheffe };
@@ -54,7 +55,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             <Avatar x={m} taille={60} />
           </span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <b style={{ display: 'block', fontSize: '1.05rem', overflowWrap: 'break-word' }}>{nomAuteur(m)}</b>
+            <b style={{ display: 'block', fontSize: '1.05rem', overflowWrap: 'break-word' }}><Pseudo x={m} /></b>
             {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
             <small style={{ display: 'block', fontWeight: 700 }}>
               Niveau {calculerNiveau(m.xp)}
@@ -125,7 +126,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             {liste.membres.map((x) => (
               <Link key={x.user_id} href={`/membre/${x.user_id}`} onClick={() => setListe(null)}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', textDecoration: 'none', color: 'inherit', borderBottom: '1px solid var(--bordure-carte)' }}>
-                <Avatar x={x} taille={36} /> <b style={{ overflowWrap: 'anywhere' }}>{nomAuteur(x)}</b>
+                <Avatar x={x} taille={36} /> <Pseudo x={x} />
               </Link>
             ))}
           </div>

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const DUREES = [
   { jours: 0, label: 'Avertissement seulement' },
@@ -69,7 +70,7 @@ export default function Moderation({ role, monId }) {
         </p>
         {cible ? (
           <div style={{ ...ligneCarte, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <b style={{ overflowWrap: 'anywhere' }}>{nom(cible)}</b>
+            <Pseudo x={cible} />
             <button type="button" className="btn alt" style={petitBtn} onClick={() => setCible(null)}>Changer</button>
           </div>
         ) : (
@@ -81,7 +82,7 @@ export default function Moderation({ role, monId }) {
             {trouves.map((u) => (
               <button key={u.id} type="button" className="btn alt" onClick={() => setCible(u)}
                 style={{ justifyContent: 'flex-start', minHeight: '44px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <b>{nom(u)}</b>
+                <Pseudo x={u} />
                 {u.nb_avertissements > 0 && <small>{u.nb_avertissements} avertissement{u.nb_avertissements > 1 ? 's' : ''}</small>}
               </button>
             ))}
@@ -107,7 +108,7 @@ export default function Moderation({ role, monId }) {
           <b>Suspensions en cours</b>
           {suspendus.map((u) => (
             <div key={u.id} style={ligneCarte}>
-              <b>{nom(u)}</b>
+              <Pseudo x={u} />
               <small style={aide}>Jusqu'au {date(u.suspendu_jusqu)}</small>
               <div style={actions}>
                 <button type="button" className="btn alt" style={petitBtn} onClick={() => lever(u)}>Lever la suspension</button>
@@ -121,8 +122,8 @@ export default function Moderation({ role, monId }) {
         <b>Historique</b>
         {historique.map((a) => (
           <div key={a.id} style={ligneCarte}>
-            <small style={aide}>{date(a.cree_le)}{a.par ? ` · par @${a.par}` : ''}</small>
-            <b style={{ overflowWrap: 'anywhere' }}>{a.pseudo ? `@${a.pseudo}` : a.email}</b>
+            <small style={aide}>{date(a.cree_le)}{a.par && <> · par <Pseudo x={{ pseudo: a.par, role: a.role_par }} /></>}</small>
+            <Pseudo x={a} />
             <small>{a.suspension_jours >= 36500 ? 'Bannissement' : a.suspension_jours ? `Suspension de ${a.suspension_jours} jour${a.suspension_jours > 1 ? 's' : ''}` : 'Avertissement'}</small>
             <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.motif}</p>
           </div>

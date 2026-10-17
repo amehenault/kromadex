@@ -8,7 +8,7 @@ export async function GET(req) {
   if (erreur) return erreur;
   const id = Number(new URL(req.url).searchParams.get('missive'));
   const commentaires = await sql`
-    SELECT c.id, c.texte, c.cree_le, c.user_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
+    SELECT c.id, c.texte, c.cree_le, c.user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
     FROM missive_commentaires c JOIN users u ON u.id = c.user_id
     WHERE c.missive_id = ${id} ORDER BY c.cree_le ASC LIMIT 300`;
   return NextResponse.json({ commentaires });

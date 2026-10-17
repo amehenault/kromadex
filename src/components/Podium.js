@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trophy, ChevronDown, ChevronUp } from 'lucide-react';
-import { Avatar, nomAuteur } from '@/app/communaute/outils';
+import { Avatar } from '@/app/communaute/outils';
 import { IconeRecompense } from './Recompense';
 import { nomRecompense } from '@/lib/recompenses';
+import Pseudo from '@/components/Pseudo';
 
 const COULEURS_RANG = ['#d4a017', '#9aa3ad', '#b87333'];
 
@@ -33,7 +34,7 @@ export default function Podium() {
           <Link href={`/membre/${g.user_id}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, color: 'inherit', textDecoration: 'none', minHeight: '44px' }}>
             <Avatar x={g} taille={32} />
             <span style={{ minWidth: 0 }}>
-              <b style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.92rem' }}>{nomAuteur(g)}</b>
+              <b style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.92rem' }}><Pseudo x={g} /></b>
               <small style={{ color: 'var(--texte-secondaire)' }}>+{g.xp} XP · {g.victoires} victoire{g.victoires > 1 ? 's' : ''}</small>
             </span>
           </Link>

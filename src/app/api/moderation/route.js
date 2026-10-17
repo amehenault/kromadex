@@ -24,7 +24,7 @@ export async function GET(req) {
     sql`SELECT id, email, pseudo, name, role, suspendu_jusqu,
           (SELECT count(*)::int FROM avertissements a WHERE a.user_id = users.id) AS nb_avertissements
         FROM users ORDER BY email`,
-    sql`SELECT a.id, a.motif, a.suspension_jours, a.cree_le, u.pseudo, u.email, p.pseudo AS par
+    sql`SELECT a.id, a.motif, a.suspension_jours, a.cree_le, u.pseudo, u.email, u.role, p.pseudo AS par, p.role AS role_par
         FROM avertissements a JOIN users u ON u.id = a.user_id LEFT JOIN users p ON p.id = a.par
         ORDER BY a.cree_le DESC LIMIT 100`,
   ]);

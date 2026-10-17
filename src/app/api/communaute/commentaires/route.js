@@ -11,7 +11,7 @@ export async function GET(req) {
   const id = new URL(req.url).searchParams.get('page');
   if (!isId(String(id || ''))) return NextResponse.json({ commentaires: [] });
   const commentaires = await sql`
-    SELECT c.id, c.parent_id, c.texte, c.cree_le, c.user_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+    SELECT c.id, c.parent_id, c.texte, c.cree_le, c.user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (c.user_id = ${user.id} OR p.user_id = ${user.id}) AS peut_retirer
     FROM page_commentaires c JOIN users u ON u.id = c.user_id JOIN pages p ON p.id = c.page_id AND p.publiee
     WHERE c.page_id = ${id} ORDER BY c.cree_le ASC LIMIT 500`;

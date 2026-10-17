@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
-import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from './outils';
+import { Avatar, BoutonJaime, imagePage, poster } from './outils';
 import FicheDetail from './ficheDetail';
 import useTypesVisibles from '@/components/useTypesVisibles';
+import Pseudo from '@/components/Pseudo';
 
 // Fil des coloriages publiés, 2 colonnes, filtrable par type
 export default function Fil() {
@@ -65,7 +66,7 @@ export default function Fil() {
                 <Link href={`/membre/${f.auteur_id}`} onClick={(e) => e.stopPropagation()}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
                   <Avatar x={f} taille={20} />
-                  <small style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nomAuteur(f)}</small>
+                  <small style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><Pseudo x={f} /></small>
                 </Link>
                 <BoutonJaime aime={f.aime} likes={f.likes} onClick={() => aimer(f)} petit />
               </div>

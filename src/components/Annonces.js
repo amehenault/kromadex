@@ -16,7 +16,7 @@ export default function Annonces() {
   const [invitations, setInvitations] = useState(0);
 
   useEffect(() => {
-    json('/api/missives').then((d) => d && setMissives((d.missives || []).filter((m) => !m.lue)));
+    json('/api/missives').then((d) => d && setMissives((d.missives || []).filter((m) => !m.lue && !m.epinglee)));
     json('/api/defis').then((d) => d && setDefi(d.defis.find((x) => x.mois === d.moisActuel && x.genre === 'officiel') || null));
     json('/api/moderation?miens=1').then((d) => d && setAvertissements(d.avertissements || []));
     json('/api/demandes').then((d) => d && setReponses((d.demandes || []).filter((x) => !x.reponse_vue).length));
@@ -78,16 +78,16 @@ export default function Annonces() {
           </div>
         </Link>
       )}
-      {/* Missives non lues : on les lit dans la Communauté, où elles restent épinglées */}
+      {/* Missives non lues non épinglées (les épinglées s'affichent en entier sur l'accueil) : on les lit dans Missives */}
       {missives.length > 0 && (
-        <Link href={`/communaute#missive-${missives[0].id}`} style={{ ...carte, textDecoration: 'none', color: 'inherit', border: '2px solid var(--btn)' }}>
+        <Link href={`/missives#missive-${missives[0].id}`} style={{ ...carte, textDecoration: 'none', color: 'inherit', border: '2px solid var(--btn)' }}>
           <Mail size={20} style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />
           <div style={{ minWidth: 0 }}>
             <b style={{ display: 'block' }}>
               {missives.length > 1 ? `${missives.length} missives non lues` : 'Nouvelle missive'}
             </b>
             <small style={{ display: 'block', overflowWrap: 'anywhere' }}>{missives[0].titre}</small>
-            <small style={{ color: 'var(--btn)', fontWeight: 700 }}>Lire dans la Communauté</small>
+            <small style={{ color: 'var(--btn)', fontWeight: 700 }}>Lire dans Missives</small>
           </div>
         </Link>
       )}

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { Glyph } from '@/components/SymbolPicker';
 import { Avatar, BoutonJaime, nomAuteur, nomType, imagePage, poster } from './outils';
 import CommentairesFiche from './commentairesFiche';
+import Pseudo from '@/components/Pseudo';
 
 // Codes couleurs en lecture seule : sous-catégories, puis symbole + code de chaque couleur
 export function CodesLecture({ codes }) {
@@ -65,7 +66,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{fiche.title}</b>
                 <small style={{ color: 'var(--texte-secondaire)' }}>
-                  <Link href={`/membre/${fiche.auteur_id}`} style={{ color: 'inherit' }}>{nomAuteur(fiche)}</Link> · {nomType(fiche.type_coloriage)}
+                  <Link href={`/membre/${fiche.auteur_id}`} style={{ color: 'inherit' }}><Pseudo x={fiche} /></Link> · {nomType(fiche.type_coloriage)}
                 </small>
               </div>
               <BoutonJaime aime={fiche.aime} likes={fiche.likes} onClick={aimer} />

@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search } from 'lucide-react';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
-import { Avatar, BoutonJaime, nomAuteur, imagePage, poster } from './outils';
+import { Avatar, BoutonJaime, imagePage, poster } from './outils';
 import { CodesLecture } from './ficheDetail';
 import useTypesVisibles from '@/components/useTypesVisibles';
+import Pseudo from '@/components/Pseudo';
 
 // Codes couleurs des autres : type de coloriage, puis tome, puis numéro de page
 export default function CodesCouleurs() {
@@ -65,7 +66,7 @@ export default function CodesCouleurs() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{f.title}</b>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Link href={`/membre/${f.auteur_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'inherit' }}><Avatar x={f} taille={20} /> <small>{nomAuteur(f)}</small></Link>
+                    <Link href={`/membre/${f.auteur_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'inherit' }}><Avatar x={f} taille={20} /> <small><Pseudo x={f} /></small></Link>
                   </span>
                 </div>
                 <BoutonJaime aime={f.aime} likes={f.likes} onClick={() => aimer(f)} />

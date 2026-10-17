@@ -11,9 +11,9 @@ export async function GET(req) {
   const id = q.get('id') || user.id;
   if (!isId(String(id))) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   const membres = q.get('liste') === 'abonnements'
-    ? await sql`SELECT u.id AS user_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
+    ? await sql`SELECT u.id AS user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
         FROM abonnements a JOIN users u ON u.id = a.suivi WHERE a.suiveur = ${id} ORDER BY a.cree_le DESC LIMIT 500`
-    : await sql`SELECT u.id AS user_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
+    : await sql`SELECT u.id AS user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
         FROM abonnements a JOIN users u ON u.id = a.suiveur WHERE a.suivi = ${id} ORDER BY a.cree_le DESC LIMIT 500`;
   return NextResponse.json({ membres });
 }

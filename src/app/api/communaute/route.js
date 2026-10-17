@@ -47,7 +47,7 @@ export async function GET(req) {
     if (!isId(id || '')) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
     const [fiche] = await sql`
       SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
-           u.id AS auteur_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+           u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM page_likes l WHERE l.page_id = p.id) AS likes,
            EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime, p.codes
       FROM pages p JOIN users u ON u.id = p.user_id
@@ -63,7 +63,7 @@ export async function GET(req) {
   if (vue === 'page') {
     const fiches = await sql`
       SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
-           u.id AS auteur_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+           u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM page_likes l WHERE l.page_id = p.id) AS likes,
            EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime, p.codes
       FROM pages p JOIN users u ON u.id = p.user_id
@@ -79,7 +79,7 @@ export async function GET(req) {
   const avant = q.get('avant') && !isNaN(Date.parse(q.get('avant'))) ? q.get('avant') : null;
   const fiches = await sql`
     SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
-           u.id AS auteur_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+           u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM page_likes l WHERE l.page_id = p.id) AS likes,
            EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime
     FROM pages p JOIN users u ON u.id = p.user_id

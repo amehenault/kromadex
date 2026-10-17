@@ -5,6 +5,7 @@ import { CATEGORIES_DEFI, nomCategorie } from '@/lib/defis';
 import { useFuseau, TempsRestant } from '@/components/Fuseau';
 import { formaterInstant } from '@/lib/temps';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef·fe' };
@@ -133,7 +134,7 @@ export default function Defis({ role, monId }) {
             <div key={d.id} style={ligneCarte}>
               <small style={{ ...aide, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                 {d.programme && <CalendarClock size={14} aria-hidden="true" />}
-                {GENRES[d.genre]}{d.genre !== 'officiel' && d.choisi_par ? ` @${d.choisi_par}` : ''} · {d.programme ? 'programmée : ' : ''}{jour(d.debut)} au {jour(d.fin)}
+                {GENRES[d.genre]}{d.genre !== 'officiel' && d.choisi_par && <> <Pseudo x={{ pseudo: d.choisi_par, role: d.role_createur }} /></>} · {d.programme ? 'programmée : ' : ''}{jour(d.debut)} au {jour(d.fin)}
               </small>
               <b>{d.titre}</b>
               <small>{nomCategorie(d.categorie)} · {d.participants} participant{d.participants > 1 ? 's' : ''}</small>

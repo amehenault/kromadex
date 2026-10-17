@@ -29,7 +29,8 @@ export default function AideClient() {
     setDemandes(d);
     // Les réponses affichées ici sont considérées comme vues
     if (d.some((x) => !x.reponse_vue)) {
-      fetch('/api/demandes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vues: true }) });
+      fetch('/api/demandes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vues: true }) })
+        .then(() => window.dispatchEvent(new Event('kromadex-lu')));
     }
   }
   useEffect(() => { charger(); }, []);

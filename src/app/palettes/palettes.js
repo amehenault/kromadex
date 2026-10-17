@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X } from 'lucide-react';
 import { genererPalettes, crayonLePlusProche, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
-import { Avatar, BoutonJaime, nomAuteur } from '@/app/communaute/outils';
+import { Avatar, BoutonJaime } from '@/app/communaute/outils';
+import Pseudo from '@/components/Pseudo';
 
 const json = (url, method = 'GET', corps) =>
   fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: corps && JSON.stringify(corps) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
@@ -163,7 +164,7 @@ export default function Palettes() {
                   <Avatar x={{ user_id: p.auteur_id, a_avatar: p.a_avatar, avatar_maj: p.avatar_maj }} taille={28} />
                   <span style={{ minWidth: 0 }}>
                     <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{p.nom || 'Sans nom'}</b>
-                    <small style={{ color: 'var(--texte-secondaire)' }}>{nomAuteur(p)}</small>
+                    <small><Pseudo x={p} /></small>
                   </span>
                 </Link>
                 <BoutonJaime aime={p.aime} likes={p.likes} onClick={() => aimer(p)} />

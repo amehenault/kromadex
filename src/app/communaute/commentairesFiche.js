@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Send, Trash2, CornerDownRight, X } from 'lucide-react';
 import { Avatar, nomAuteur, poster } from './outils';
+import Pseudo from '@/components/Pseudo';
 
 // Commentaires d'un coloriage publié, avec un niveau de réponses
 export default function CommentairesFiche({ pageId }) {
@@ -42,7 +43,7 @@ export default function CommentairesFiche({ pageId }) {
       <Link href={`/membre/${c.user_id}`} aria-label={`Profil de ${nomAuteur(c)}`}><Avatar x={c} taille={reponse ? 24 : 28} /></Link>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ background: 'var(--carte)', borderRadius: 'var(--rayon-m)', padding: '6px 10px' }}>
-          <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}>{nomAuteur(c)}</Link>
+          <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}><Pseudo x={c} /></Link>
           <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.texte}</p>
         </div>
         <div style={{ display: 'flex', gap: '12px', marginTop: '2px' }}>
@@ -75,7 +76,7 @@ export default function CommentairesFiche({ pageId }) {
       <form onSubmit={envoyer} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {reponseA && (
           <small style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--texte-secondaire)' }}>
-            <CornerDownRight size={14} aria-hidden="true" /> Réponse à {nomAuteur(reponseA)}
+            <CornerDownRight size={14} aria-hidden="true" /> Réponse à <Pseudo x={reponseA} />
             <button type="button" onClick={() => setReponseA(null)} aria-label="Annuler la réponse"
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'inherit', display: 'inline-flex', minHeight: '44px', alignItems: 'center' }}>
               <X size={14} aria-hidden="true" />

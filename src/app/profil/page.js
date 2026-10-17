@@ -5,7 +5,9 @@ import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
 import { typesVisibles, nomBibliotheque } from '@/lib/typesColoriage';
-import { couleurPoste } from '@/lib/postes';
+import { couleurPoste, nomPoste } from '@/lib/postes';
+import { aLire } from '@/lib/notifications';
+import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import MesTomes from './mesTomes';
 import { listerMesTomes } from '@/lib/mesTomes';
@@ -21,7 +23,7 @@ import {
   HelpCircle,
   Users,
   BarChart3,
-  Newspaper,
+  Mail,
   Images,
   Map,
   Swords,
@@ -39,13 +41,6 @@ import BoutonDeconnexion from './boutonDeconnexion';
 
 export const dynamic = 'force-dynamic';
 
-const NOM_POSTE = {
-  admin: 'Invocatrice originelle',
-  modo: 'Sentinelle du Kromadex',
-  cheffe: 'Chef·fe des coloristes',
-  coloriste: 'Coloriste',
-};
-
 export default async function ProfilPage() {
   const authUser = await getUser();
 
@@ -56,6 +51,8 @@ export default async function ProfilPage() {
   const { liste: quetes } = await verifierQuetes(authUser.id);
 
   const profile = await getUserProfile(authUser.id);
+  // Pastilles : missives non lues et réponses de l'Invocatrice pas encore vues
+  const nonLus = await aLire(authUser.id);
 
   // Admin : nombre de demandes d'aide à traiter (nouvelles ou en cours)
   const demandesATraiter = profile?.role === 'admin'
@@ -217,18 +214,8 @@ export default async function ProfilPage() {
             {nomAffiche}
           </b>
 
-          {pseudoAffiche && (
-            <small
-              style={{
-                display: 'block',
-                color: 'var(--texte-secondaire)',
-                fontWeight: 'bold',
-                overflowWrap: 'anywhere',
-              }}
-            >
-              @{pseudoAffiche}
-            </small>
-          )}
+          {/* Pseudo dans la couleur du poste, modifiable à tout moment */}
+          <ModifierPseudo pseudo={pseudoAffiche || ''} role={role} />
 
           <small
             style={{
@@ -237,7 +224,7 @@ export default async function ProfilPage() {
               fontWeight: 'bold',
             }}
           >
-            {NOM_POSTE[role]}
+            {nomPoste(role)}
           </small>
 
           {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
@@ -524,11 +511,13 @@ export default async function ProfilPage() {
         </Link>
 
         <Link
-          href="/nouveautes"
+          href="/missives"
           className="btn profil-acces-lien"
+          aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
         >
-          <Newspaper size={22} aria-hidden="true" />
-          <span>Nouveautés</span>
+          <Mail size={22} aria-hidden="true" />
+          <span>Missives</span>
+          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>
 
         <Link
@@ -545,6 +534,7 @@ export default async function ProfilPage() {
         >
           <HelpCircle size={22} aria-hidden="true" />
           <span>Aide et demandes</span>
+          {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>
 
         <BoutonDeconnexion />

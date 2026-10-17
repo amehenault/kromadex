@@ -2,12 +2,12 @@
 //  coloriste : membre de base
 //  cheffe    : Chef·fe des coloristes, gagnant·e d'une épreuve mensuelle
 //  modo      : Sentinelle du Kromadex, modérateur ou modératrice
-//  admin     : Invocatrice originelle (unique)
+//  admin     : Invocatrice des couleurs (unique)
 export const NOMS_POSTES = {
   coloriste: 'Coloriste',
   cheffe: 'Chef·fe des coloristes',
   modo: 'Sentinelle du Kromadex',
-  admin: 'Invocatrice originelle',
+  admin: 'Invocatrice des couleurs',
 };
 export const PLURIELS_POSTES = {
   coloriste: 'Coloristes',

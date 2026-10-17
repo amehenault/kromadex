@@ -61,7 +61,7 @@ export async function rendreParchemin(userId) {
 // (clés victoire:... du journal d'XP), avec les récompenses gagnées pendant cette période
 export async function podium() {
   return sql`
-    SELECT u.id AS user_id, u.pseudo, u.name, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
+    SELECT u.id AS user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            v.xp, v.victoires,
            COALESCE((SELECT json_agg(json_build_object('genre', r.genre, 'detail', r.detail, 'image', r.image, 'cree_le', r.cree_le) ORDER BY r.cree_le DESC)
                      FROM recompenses r WHERE r.user_id = u.id AND r.cree_le > now() - interval '30 days'), '[]') AS recompenses

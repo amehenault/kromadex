@@ -4,16 +4,16 @@ import { hashPassword } from '@/lib/auth';
 
 const sha = (t) => createHash('sha256').update(t).digest('hex');
 
-// Envoi du lien par Resend si une clé est configurée (RESEND_API_KEY, MAIL_FROM).
-// Sans clé, la demande arrive dans l'espace admin (onglet Demandes) avec le lien à transmettre.
+// Envoi du lien par Resend si une clé est configurée (RESEND_API_KEY, EMAIL_FROM : mêmes variables que Planidae).
+// Sans clé ou si l'envoi échoue, la demande arrive dans l'espace admin (onglet Demandes) avec le lien à transmettre.
 async function envoyerCourriel(email, lien) {
-  const cle = process.env.RESEND_API_KEY;
+  const cle = (process.env.RESEND_API_KEY || '').replace(/^﻿/, '').trim();
   if (!cle) return false;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${cle}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.MAIL_FROM || 'Kromadex <onboarding@resend.dev>',
+      from: (process.env.EMAIL_FROM || process.env.MAIL_FROM || 'Kromadex <onboarding@resend.dev>').trim(),
       to: [email],
       subject: 'Réinitialiser ton mot de passe Kromadex',
       text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 1 heure) :\n${lien}\n\nSi tu n'as rien demandé, ignore ce courriel.\n\nKromadex`,

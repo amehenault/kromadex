@@ -10,7 +10,7 @@ export async function GET() {
   const cases = await sql`
     SELECT c.bingo_id, c.user_id, c.case_no, c.page_id, c.cree_le, b.titre AS bingo, b.cases[c.case_no + 1] AS tache,
            b.conditions[c.case_no + 1] AS condition, OCTET_LENGTH(p.image_b64) AS img_size, p.title,
-           u.pseudo, u.name, u.email
+           u.pseudo, u.name, u.role, u.email
     FROM bingo_cases c JOIN bingos b ON b.id = c.bingo_id JOIN pages p ON p.id = c.page_id JOIN users u ON u.id = c.user_id
     WHERE c.valide IS NULL AND c.page_id IS NOT NULL
     ORDER BY c.cree_le LIMIT 200`;

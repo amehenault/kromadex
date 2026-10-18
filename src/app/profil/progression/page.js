@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 import { listerMesTomes } from '@/lib/mesTomes';
-import { typesVisibles } from '@/lib/typesColoriage';
+import { typesVisibles, nomMesTomes } from '@/lib/typesColoriage';
 import MesTomes from '../mesTomes';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +35,7 @@ export default async function ProgressionPage() {
         <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} aria-hidden="true" />
         </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{voitMystere && voitCozy ? 'Mes tomes et mes livres' : voitCozy ? 'Mes livres' : 'Mes tomes'}</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{nomMesTomes(visibles)}</h2>
       </div>
       {groupes.length ? groupes.map((g) => (
         <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>

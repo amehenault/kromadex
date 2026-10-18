@@ -6,7 +6,8 @@ import { RECOMPENSES, imageRecompense, nomRecompense } from '@/lib/recompenses';
 const ICONES = { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText };
 
 // Image d'une récompense (dossier public/recompenses-activites), ou son icône tant que l'image n'existe pas
-export function IconeRecompense({ r, taille = 40 }) {
+// carre : cadre carré aux coins arrondis, avec un fond (objets de l'inventaire) au lieu du rond
+export function IconeRecompense({ r, taille = 40, carre = false }) {
   const [rate, setRate] = useState(false);
   const img = useRef(null);
   const src = imageRecompense(r);
@@ -15,8 +16,9 @@ export function IconeRecompense({ r, taille = 40 }) {
   const Icone = ICONES[RECOMPENSES[r.genre]?.icone] || Gift;
   return (
     <span title={nomRecompense(r)} style={{
-      width: taille, height: taille, flex: '0 0 auto', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      background: rate || !src ? 'var(--carte)' : 'transparent', color: 'var(--btn)', overflow: 'hidden',
+      width: taille, height: taille, flex: '0 0 auto', borderRadius: carre ? 'var(--rayon-m)' : '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      background: carre ? 'var(--accent-doux)' : rate || !src ? 'var(--carte)' : 'transparent', color: 'var(--btn)', overflow: 'hidden',
+      border: carre ? '1px solid var(--bordure-carte)' : 'none', padding: carre ? Math.round(taille * 0.08) : 0, boxSizing: 'border-box',
     }}>
       {src && !rate
         ? <img ref={img} src={src} alt="" onError={() => setRate(true)} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />

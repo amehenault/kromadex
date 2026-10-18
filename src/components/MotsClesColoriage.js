@@ -73,7 +73,7 @@ export default function MotsClesColoriage({ pageId, tome, pageNo, image }) {
               <small style={{ color: 'var(--texte-secondaire)' }}>
                 {partage
                   ? 'Ces mots-clefs sont partagés : toute la communauté les voit et les utilise pour retrouver cette page.'
-                  : 'Ce tome n’est pas dans le catalogue : tes mots-clefs restent sur ce coloriage, pour le retrouver dans Mes coloriages.'}
+                  : 'Ce tome n’est pas dans le catalogue : tes mots-clefs restent sur ce coloriage, pour le retrouver dans Coloriages.'}
               </small>
               <form onSubmit={ajouter} style={{ display: 'flex', gap: '6px' }}>
                 <input value={mot} onChange={(e) => setMot(e.target.value)} maxLength={40} placeholder="ex. lapin" aria-label="Mot-clef" autoFocus

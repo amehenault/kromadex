@@ -12,7 +12,7 @@ const charger = () => (cache ||= fetch('/api/palettes?vue=crayons').then((r) => 
 const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 
 // Choisir un code couleur dans ses coffrets : d'abord le coffret (avec recherche), puis le crayon,
-// comme dans Ma collection de crayons (cercle de couleur, numéro et marque dessous), avec recherche par numéro.
+// comme dans Collection de crayons (cercle de couleur, numéro et marque dessous), avec recherche par numéro.
 // onChoisir({ code, marque, hex })
 export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
   const [donnees, setDonnees] = useState(null);
@@ -44,7 +44,7 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
       {donnees && !donnees.packs.length && (
         <>
           <small style={{ color: 'var(--texte-secondaire)' }}>
-            Tu n’as encore aucun coffret. Ajoute tes crayons dans <Link href="/profil/collection">Ma collection de crayons</Link>, ou écris le code toi-même.
+            Tu n’as encore aucun coffret. Ajoute tes crayons dans <Link href="/profil/collection">Collection de crayons</Link>, ou écris le code toi-même.
           </small>
           <button type="button" className="btn" onClick={onManuel} style={{ minHeight: '48px', fontWeight: 700 }}>Écrire manuellement</button>
         </>

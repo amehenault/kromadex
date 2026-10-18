@@ -120,7 +120,7 @@ export default async function StatistiquesPage() {
         <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} />
         </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Mes statistiques</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Statistiques</h2>
       </div>
 
       {/* Séries */}

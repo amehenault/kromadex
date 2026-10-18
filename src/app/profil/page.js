@@ -445,7 +445,7 @@ export default async function ProfilPage() {
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
 
       {/* Accès rapides : Activités à venir, Statistiques, tomes, collections et palettes en premier.
-          Chaque page ouverte porte exactement le même nom que son bouton. */}
+          Libellés sans « Mes / Ma / Mon » ; chaque page ouverte porte exactement le même nom que son bouton. */}
       <div className="profil-acces">
         {['admin', 'modo'].includes(role) && (
           <Link
@@ -470,7 +470,7 @@ export default async function ProfilPage() {
 
         <Link href="/statistiques" className="btn profil-acces-lien">
           <BarChart3 size={22} aria-hidden="true" />
-          <span>Mes statistiques</span>
+          <span>Statistiques</span>
         </Link>
 
         <Link href="/profil/progression" className="btn profil-acces-lien">
@@ -485,7 +485,7 @@ export default async function ProfilPage() {
 
         <Link href="/profil/collection" className="btn profil-acces-lien">
           <Palette size={22} aria-hidden="true" />
-          <span>Ma collection de crayons</span>
+          <span>Collection de crayons</span>
         </Link>
 
         {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
@@ -503,7 +503,7 @@ export default async function ProfilPage() {
           >
             <Trophy size={22} aria-hidden="true" />
             <span>
-              Créer mon épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
+              Créer l’épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
               {profile?.cheffe_expires_at && (
                 <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
                   Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
@@ -536,7 +536,7 @@ export default async function ProfilPage() {
 
         <Link href="/coloriages" className="btn profil-acces-lien">
           <Images size={22} aria-hidden="true" />
-          <span>Mes coloriages</span>
+          <span>Coloriages</span>
         </Link>
 
         <Link href="/quetes" className="btn profil-acces-lien">

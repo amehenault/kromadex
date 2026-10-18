@@ -27,7 +27,7 @@ export default async function MesColoriages() {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: 'var(--espace-3)' }}>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Mes coloriages</h2>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Coloriages</h2>
         <Link href="/roue" className="btn alt" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px' }}>
           <Dices size={18} aria-hidden="true" /> Roue du Destin
         </Link>

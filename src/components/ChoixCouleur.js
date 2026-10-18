@@ -20,7 +20,7 @@ function hexVersHsv(hex) {
 }
 
 // Changer une couleur de palette.
-//  crayons : avec des coffrets choisis, on choisit parmi leurs crayons (comme dans Ma collection de crayons) ;
+//  crayons : avec des coffrets choisis, on choisit parmi leurs crayons (comme dans Collection de crayons) ;
 //  sans coffret : palette libre, on choisit sa nuance au doigt ou on écrit un code hex.
 export default function ChoixCouleur({ valeur, crayons = [], packs = [], onChoisir, onFermer }) {
   const depart = estHex(valeur) ? valeur.toUpperCase() : '#CCCCCC';

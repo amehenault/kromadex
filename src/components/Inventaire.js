@@ -19,8 +19,8 @@ export default function Inventaire({ objets }) {
       {groupes.length
         ? groupes.map((g) => (
           <button key={`${g.genre}|${g.detail}`} type="button" onClick={() => setOuvert(g)}
-            style={{ all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', minHeight: '48px', minWidth: 0 }}>
-            <IconeRecompense r={g} taille={40} />
+            style={{ all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', minHeight: '72px', minWidth: 0 }}>
+            <IconeRecompense r={g} taille={64} carre />
             <span style={{ minWidth: 0, overflowWrap: 'anywhere', fontWeight: 600, fontSize: '0.9rem' }}>
               {g.nombre > 1 && <b style={{ color: 'var(--btn)' }}>{g.nombre}x </b>}{nom(g)}
             </span>
@@ -30,7 +30,7 @@ export default function Inventaire({ objets }) {
       {ouvert && (
         <Feuille titre={nom(ouvert)} onFermer={() => setOuvert(null)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <IconeRecompense r={ouvert} taille={64} />
+            <IconeRecompense r={ouvert} taille={96} carre />
             <p style={{ margin: 0, minWidth: 0 }}>{RECOMPENSES[ouvert.genre]?.description || 'Objet à garder dans ton inventaire.'}</p>
           </div>
           <small style={{ color: 'var(--texte-secondaire)', fontWeight: 600 }}>

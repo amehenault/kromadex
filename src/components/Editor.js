@@ -4,6 +4,7 @@ import { toPng } from 'html-to-image';
 import SymbolPicker from './SymbolPicker';
 import MotsClesColoriage from './MotsClesColoriage';
 import ChoixTome from './ChoixTome';
+import ChoixCrayon from './ChoixCrayon';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
@@ -60,7 +61,8 @@ function normaliser(codes) {
       id: r.id || uid(), 
       label: r.label || '',
       sym: r.sym || '', 
-      num: String(r.num || '') 
+      num: String(r.num || ''),
+      hex: String(r.hex || '')
     })) 
   }));
 }
@@ -68,36 +70,91 @@ function normaliser(codes) {
 // Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
 const reduire = (file) => compresserImage(file, 1400, 0.82);
 
-function ChampCodeCouleur({ value, onChange, enExport }) {
-  const [verrouille, setVerrouille] = useState(Boolean(value));
+// Le champ grandit avec son texte (étiquette ou code long sur 2 ou 3 lignes en colonne étroite)
+function useHauteurAuto(deps) {
+  const champ = useRef(null);
+  useEffect(() => {
+    const t = champ.current;
+    if (!t) return;
+    t.style.height = 'auto';
+    t.style.height = `${t.scrollHeight + 2}px`;
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  return champ;
+}
 
-  const TenterModification = () => {
-    if (verrouille) {
-      const toutDaccord = window.confirm('Voulez-vous modifier le code de couleur ?');
-      if (toutDaccord) {
-        setVerrouille(false);
-      }
-    }
-  };
+// Petit cercle de la couleur du crayon choisi dans un coffret
+const Pastille = ({ hex }) => (hex ? (
+  <span aria-hidden="true" style={{ width: 16, height: 16, flex: '0 0 auto', borderRadius: '50%', background: hex, border: '1px solid rgba(0,0,0,0.15)' }} />
+) : null);
+
+// Code couleur d'une ligne : une liste « Choisir dans mes packs de couleurs » ou « Écrire manuellement ».
+// Un code déjà rempli est protégé : on confirme avant de le changer.
+function ChampCodeCouleur({ value, hex, onChange, enExport }) {
+  const [mode, setMode] = useState(value ? 'rempli' : 'choix'); // choix | manuel | rempli
+  const [packs, setPacks] = useState(false);
+  const champ = useHauteurAuto([value, mode, enExport]);
 
   if (enExport) {
-    return <div className="valeur-export-code">{value || ''}</div>;
+    return (
+      <div className="valeur-export-code" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+        <Pastille hex={hex} />{value || ''}
+      </div>
+    );
   }
 
+  const choisirMode = (v) => {
+    if (v === 'packs') setPacks(true);
+    else if (v === 'manuel') { onChange(hex ? '' : value, ''); setMode('manuel'); }
+    else if (v === 'garder') setMode('rempli');
+  };
+
   return (
-    <textarea
-      rows={1}
-      placeholder="ex: PC-242"
-      aria-label="Code de couleur"
-      value={value}
-      readOnly={verrouille}
-      onClick={TenterModification}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        cursor: verrouille ? 'pointer' : 'text',
-        background: verrouille ? 'var(--carte)' : 'var(--blanc)',
-      }}
-    />
+    <>
+      {mode === 'rempli' && (
+        <button type="button" className="code-rempli" aria-label={`Code de couleur : ${value}. Toucher pour le modifier`}
+          onClick={() => { if (window.confirm('Voulez-vous modifier le code de couleur ?')) setMode('choix'); }}>
+          <Pastille hex={hex} /><span>{value}</span>
+        </button>
+      )}
+      {mode === 'choix' && (
+        <select value="" onChange={(e) => choisirMode(e.target.value)} aria-label="Code de couleur" className="code-choix">
+          <option value="" disabled>Code…</option>
+          <option value="packs">Choisir dans mes packs de couleurs</option>
+          <option value="manuel">Écrire manuellement</option>
+          {value && <option value="garder">Garder : {value}</option>}
+        </select>
+      )}
+      {mode === 'manuel' && (
+        <textarea
+          ref={champ}
+          rows={1}
+          autoFocus
+          maxLength={120}
+          placeholder="ex: PC-242"
+          aria-label="Code de couleur"
+          value={value}
+          onChange={(e) => onChange(e.target.value, '')}
+          onBlur={() => value.trim() && setMode('rempli')}
+        />
+      )}
+      {packs && (
+        <ChoixCrayon
+          onFermer={() => setPacks(false)}
+          onManuel={() => { setPacks(false); choisirMode('manuel'); }}
+          onChoisir={(c) => { onChange(`${c.code} ${c.marque}`.trim(), c.hex || ''); setPacks(false); setMode('rempli'); }}
+        />
+      )}
+    </>
+  );
+}
+
+// Étiquette d'une couleur (ex. Ombre de la casquette) : passe à la ligne et grandit, jusqu'à 100 caractères
+function ChampEtiquette({ value, onChange }) {
+  const champ = useHauteurAuto([value]);
+  return (
+    <textarea ref={champ} rows={1} maxLength={100} className="champ-etiquette"
+      placeholder="ex: Cheveux, Pelage..." aria-label="Nom de la couleur"
+      value={value} onChange={(e) => onChange(e.target.value.replace(/\n/g, ' '))} />
   );
 }
 
@@ -143,47 +200,36 @@ function Groupe({ g, maj, retirer, enExport }) {
         }
         setGlisserIndex(null);
       }}
-      style={{ display: 'flex', flexDirection: 'column', margin: '6px 0' }}
+      style={{ display: 'flex', flexDirection: enExport ? 'column' : 'row', alignItems: 'stretch', gap: '2px', margin: '6px 0', minWidth: 0 }}
     >
-      {enExport ? (
-        r.label?.trim() ? (
-          <div style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: '4px 0 2px 0', textTransform: 'capitalize' }}>
-            {r.label}
-          </div>
-        ) : null
-      ) : (
-        <input 
-          type="text" 
-          placeholder="ex: Cheveux, Pelage..." 
-          value={r.label || ''} 
-          onChange={(e) => setRow(r.id, 'label', e.target.value)}
-          style={{
-            width: '100%',
-            padding: '2px 6px',
-            fontSize: '0.8rem',
-            margin: '4px 0',
-            border: 'none',
-            borderBottom: '1px dashed #ccc',
-            background: 'transparent',
-            outline: 'none'
-          }}
-        />
-      )}
-
-      <div className="ligne" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-        <ChampCodeCouleur value={r.num} onChange={(v) => setRow(r.id, 'num', v)} enExport={enExport} />
-        
-        {!enExport && (
-          <div className="actions-ligne" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div className="fleches">
-              <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
-              <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
+      {/* Nom de la couleur au-dessus, puis le symbole et le code (comme dans l'image exportée) ;
+          en modification, les flèches et le X sont en colonne à droite pour laisser toute la largeur au nom,
+          ce qui permet 2 colonnes même sur un petit téléphone */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {enExport ? (
+          r.label?.trim() ? (
+            <div style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: '4px 0 2px 0', textTransform: 'capitalize' }}>
+              {r.label}
             </div>
-            <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => retirerLigne(r.id)}><X size={14} aria-hidden="true" /></button>
-          </div>
+          ) : null
+        ) : (
+          <ChampEtiquette value={r.label || ''} onChange={(v) => setRow(r.id, 'label', v)} />
         )}
+
+        <div className="ligne">
+          <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
+          <ChampCodeCouleur value={r.num} hex={r.hex} enExport={enExport}
+            onChange={(num, hex) => maj({ ...g, rows: g.rows.map((x) => (x.id === r.id ? { ...x, num, hex } : x)) })} />
+        </div>
       </div>
+
+      {!enExport && (
+        <div className="actions-code">
+          <button type="button" className="fleche" disabled={reelIdx === 0} aria-label="Monter" onClick={() => deplacer(reelIdx, reelIdx - 1)}>▲</button>
+          <button type="button" className="fleche" disabled={reelIdx === g.rows.length - 1} aria-label="Descendre" onClick={() => deplacer(reelIdx, reelIdx + 1)}>▼</button>
+          <button type="button" className="retirer" aria-label="Retirer la ligne" onClick={() => retirerLigne(r.id)}><X size={14} aria-hidden="true" /></button>
+        </div>
+      )}
     </div>
   );
 
@@ -198,7 +244,7 @@ function Groupe({ g, maj, retirer, enExport }) {
         <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}><X size={14} aria-hidden="true" /></button>
       </div>
 
-      <div className="grille-codes-deux-colonnes" style={enExport ? { flexDirection: 'row' } : undefined}>
+      <div className="grille-codes-deux-colonnes">
         <div className="colonne-codes">
           {codesGauche.map((r, i) => RendreLigne(r, i))}
         </div>
@@ -299,7 +345,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
     const groupesPropres = groupes.map((g) => ({
       ...g,
-      rows: (g.rows || []).map((row) => ({ id: row.id || uid(), label: row.label || '', sym: row.sym || '', num: row.num || '' })),
+      rows: (g.rows || []).map((row) => ({ id: row.id || uid(), label: row.label || '', sym: row.sym || '', num: row.num || '', hex: /^#[0-9a-f]{6}$/i.test(row.hex || '') ? row.hex : '' })),
     }));
     fd.append('codes', JSON.stringify(groupesPropres));
     fd.append('publiee', publiee ? '1' : '0');

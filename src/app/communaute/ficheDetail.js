@@ -22,7 +22,10 @@ export function CodesLecture({ codes }) {
                 <span style={{ flex: '0 0 auto', minWidth: '26px', textAlign: 'center' }}><Glyph v={r.sym} /></span>
                 <span style={{ minWidth: 0, overflowWrap: 'anywhere', fontSize: '0.9rem' }}>
                   {r.label && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{r.label}</small>}
-                  {r.num || '?'}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    {/^#[0-9a-f]{6}$/i.test(r.hex || '') && <span aria-hidden="true" style={{ width: 14, height: 14, flex: '0 0 auto', borderRadius: '50%', background: r.hex, border: '1px solid rgba(0,0,0,0.15)' }} />}
+                    {r.num || '?'}
+                  </span>
                 </span>
               </div>
             ))}

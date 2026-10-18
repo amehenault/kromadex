@@ -8,7 +8,7 @@ import { typesVisibles, faitCozy } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
-import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
+import { CADRES, cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier } from '@/lib/recompenses';
 import ModifierPseudo from './modifierPseudo';
@@ -215,7 +215,8 @@ export default async function ProfilPage() {
           <span
             style={{
               position: 'absolute',
-              bottom: '-6px',
+              // Sous un cadre illustré, la pastille descend sous le cadre pour ne pas cacher l'ornement du bas
+              bottom: CADRES[cadre]?.image ? '-14px' : '-6px',
               left: '50%',
               transform: 'translateX(-50%)',
               background: 'var(--accent-primaire)',

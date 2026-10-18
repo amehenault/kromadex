@@ -57,8 +57,8 @@ export function regrouperRecompenses(liste) {
 }
 
 // Badge de Pionnière, Pionnier ou Pionnier.ère, à ajouter en tête des récompenses d'un membre Pionnier
-// (l'Invocatrice n'en porte pas le nom, elle n'a donc pas le badge)
+// (l'Invocatrice l'a aussi, même si elle ne porte pas le nom)
 export function badgePionnier(membre) {
-  if (!membre?.pionnier || membre.role === 'admin') return [];
+  if (!membre?.pionnier && membre?.role !== 'admin') return [];
   return [{ id: 'pionnier', genre: 'pionnier', detail: `de ${nomPionnier(membre.genre)}`, source: 'pionnier' }];
 }

@@ -2,7 +2,7 @@ import { sql } from '@/lib/db';
 import { accorderXP } from '@/lib/series';
 
 // Quêtes du Destin : une page tirée par la Roue du Destin et ajoutée aux quêtes.
-// 14 jours pour la colorier (un coloriage de ce tome et de cette page enregistré après l'ajout) : 10 XP.
+// 14 jours pour la colorier (un coloriage avec image, de ce tome et de cette page, enregistré après l'ajout) : 10 XP.
 // Passé ce délai sans coloriage, la quête disparaît.
 export const JOURS_QUETE_DESTIN = 14;
 export const XP_QUETE_DESTIN = 10;
@@ -15,7 +15,7 @@ export async function quetesDestin(userId) {
     UPDATE roue_tirages r SET termine_le = now()
     WHERE r.user_id = ${userId} AND r.quete_le IS NOT NULL AND r.termine_le IS NULL
       AND EXISTS (SELECT 1 FROM pages p WHERE p.user_id = ${userId} AND lower(p.tome) = lower(r.tome)
-                    AND p.page_no = r.page_no AND p.created_at >= r.quete_le)
+                    AND p.page_no = r.page_no AND p.created_at >= r.quete_le AND p.image_b64 IS NOT NULL)
     RETURNING r.id`;
   for (const f of finies) await accorderXP(userId, `destin:${f.id}`, XP_QUETE_DESTIN);
   return sql`

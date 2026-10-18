@@ -18,7 +18,7 @@ export async function GET(req) {
     return NextResponse.json({ avertissements });
   }
 
-  const { erreur } = await exigerPoste('admin', 'modo');
+  const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
   const [membres, avertissements] = await Promise.all([
     sql`SELECT id, email, pseudo, name, role, suspendu_jusqu,
@@ -28,6 +28,8 @@ export async function GET(req) {
         FROM avertissements a JOIN users u ON u.id = a.user_id LEFT JOIN users p ON p.id = a.par
         ORDER BY a.cree_le DESC LIMIT 100`,
   ]);
+  // Les courriels restent réservés à l'Invocatrice : les Sentinelles reçoivent les listes sans eux
+  if (profil.role !== 'admin') for (const x of [...membres, ...avertissements]) delete x.email;
   return NextResponse.json({ membres, avertissements });
 }
 

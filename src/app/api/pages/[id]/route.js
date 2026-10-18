@@ -4,6 +4,8 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { lirePublication, lirePalette } from '@/lib/pages';
 import { retirerXP } from '@/lib/series';
+import { accorderXPColoriage } from '@/lib/xpColoriage';
+import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
 
 export async function PUT(req, { params }) {
   try {
@@ -23,11 +25,11 @@ export async function PUT(req, { params }) {
     const changePalette = formData.has('palette_id');
     const paletteId = changePalette ? await lirePalette(formData, user.id) : null;
 
-    if (file && typeof file === 'object' && file.size > 0) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const base64 = buffer.toString('base64');
-      const imageType = file.type || 'image/jpeg';
+    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
+    const image = await imageDuFormulaire(file, { coteMax: COTE.coloriage });
+    if (image) {
+      const base64 = image.b64;
+      const imageType = image.type;
 
       await sql`
         UPDATE pages 
@@ -44,6 +46,9 @@ export async function PUT(req, { params }) {
             image_type = ${imageType}
         WHERE id = ${id} AND user_id = ${user.id}
       `;
+      // Première vraie image de la fiche : les XP du coloriage sont donnés à ce moment (une seule fois par fiche)
+      const [p] = await sql`SELECT 1 FROM pages WHERE id = ${id} AND user_id = ${user.id}`;
+      if (p) await accorderXPColoriage(user.id, id).catch(() => {});
     } else {
       await sql`
         UPDATE pages 
@@ -67,8 +72,9 @@ export async function PUT(req, { params }) {
     
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof ErreurImage) return reponseErreurImage(err);
     console.error('Erreur de sauvegarde :', err);
-    return NextResponse.json({ error: err.message || 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
 
@@ -91,6 +97,6 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erreur de suppression :', err);
-    return NextResponse.json({ error: err.message || 'Erreur lors de la suppression' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 });
   }
 }

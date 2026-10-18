@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { compresserImage } from '@/lib/compressionImage';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ImagePlus, BookOpen, ArrowLeft, StickyNote } from 'lucide-react';
 
@@ -80,7 +81,8 @@ export default function Library({ pages = [] }) {
 
     const fd = new FormData();
     fd.append('tome', tomeEnEdition);
-    fd.append('image', file);
+    // Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
+    fd.append('image', await compresserImage(file, 1200), 'couverture.jpg');
 
     const res = await fetch('/api/tomes/cover', {
       method: 'POST',
@@ -90,7 +92,8 @@ export default function Library({ pages = [] }) {
     if (res.ok) {
       setVersion(Date.now().toString());
     } else {
-      alert('Erreur lors du changement de couverture.');
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || 'Erreur lors du changement de couverture.');
     }
 
     setMenuOuvert(null);

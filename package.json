@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "db:init": "node --env-file=.env.local scripts/init-db.mjs",
-    "db:tomes": "node --env-file=.env.local scripts/seed-tomes.mjs"
+    "db:tomes": "node --env-file=.env.local scripts/seed-tomes.mjs",
+    "test": "node --test \"tests/unitaires/*.test.mjs\"",
+    "test:securite": "node --env-file=.env.test.local tests/integration/securite.mjs",
+    "db:migrer": "node --env-file=.env.local scripts/migrer.mjs",
+    "images:audit": "node --env-file=.env.local scripts/audit-images.mjs",
+    "start:test": "node scripts/demarrer-test.mjs",
+    "db:preparer-test": "node --env-file=.env.test.local scripts/preparer-base-test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
@@ -16,6 +22,7 @@
     "next": "^15.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sharp": "0.35.5",
     "web-push": "^3.6.7"
   }
 }

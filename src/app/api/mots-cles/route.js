@@ -18,7 +18,7 @@ export async function GET(req) {
   if (p.get('gestion') === '1') {
     if (!['admin', 'modo'].includes(profil.role)) return NextResponse.json({ error: 'Accès restreint' }, { status: 403 });
     const mots = await sql`
-      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, u.email, u.role AS role_auteur, u.genre AS genre_auteur,
+      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, CASE WHEN ${profil.role === 'admin'} THEN u.email END AS email, u.role AS role_auteur, u.genre AS genre_auteur,
              (SELECT count(*)::int FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id) AS signalements,
              (SELECT json_object_agg(r, n) FROM (SELECT raison AS r, count(*)::int AS n FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id GROUP BY raison) x) AS raisons
       FROM mots_cles m JOIN tome_catalog c ON c.id = m.tome_id LEFT JOIN users u ON u.id = m.user_id

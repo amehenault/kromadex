@@ -6,6 +6,7 @@ import MotsClesColoriage from './MotsClesColoriage';
 import ChoixTome from './ChoixTome';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
+import { compresserImage } from '@/lib/compressionImage';
 import { X, Camera, AlertTriangle } from 'lucide-react';
 
 const uid = () => crypto.randomUUID();
@@ -64,14 +65,8 @@ function normaliser(codes) {
   }));
 }
 
-async function reduire(file) {
-  const b = await createImageBitmap(file);
-  const k = Math.min(1, 1400 / Math.max(b.width, b.height));
-  const c = document.createElement('canvas');
-  c.width = Math.round(b.width * k); c.height = Math.round(b.height * k);
-  c.getContext('2d').drawImage(b, 0, 0, c.width, c.height);
-  return new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.82));
-}
+// Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
+const reduire = (file) => compresserImage(file, 1400, 0.82);
 
 function ChampCodeCouleur({ value, onChange, enExport }) {
   const [verrouille, setVerrouille] = useState(Boolean(value));

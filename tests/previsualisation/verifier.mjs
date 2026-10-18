@@ -13,7 +13,10 @@
 //  - cookies de session et « appareil connu » : HttpOnly, Secure, SameSite=Lax ;
 //  - CSRF : une écriture venant d'un autre site est refusée ;
 //  - aucune action extérieure : « mot de passe oublié » n'envoie pas de courriel (pas de clé Resend en prévisualisation),
-//    le lien est seulement noté dans la base de test.
+//    le lien est seulement noté dans la base de test ;
+//  - ThriveCart en mode TEST : la prévisualisation attend THRIVECART_MODE=test (variable Vercel de la branche),
+//    alors que les tests locaux attendent « live ». Ici, un avis « test » est appliqué une seule fois et un avis « live »
+//    est ignoré. Le secret fictif est celui de .env.test.local (le même que dans Vercel pour cette branche).
 import { neon } from '@neondatabase/serverless';
 
 const BASE = (process.env.PREVIEW_URL || '').replace(/\/$/, '');
@@ -52,6 +55,10 @@ verifier('même le bon mot de passe est bloqué depuis cette adresse', r.status 
 const [{ n: ipsDistinctes }] = await sql`SELECT count(DISTINCT ip_h)::int AS n FROM essais_limites WHERE genre = 'connexion' AND cree_le >= ${debut.toISOString()}`;
 verifier('une seule adresse IP notée pour ces essais (la vraie, fixée par Vercel)', ipsDistinctes === 1, ipsDistinctes);
 
+console.log('\nBase utilisée');
+r = await appel('/api/auth/login', { methode: 'POST', json: { email: 'admin@kromadex.test', password: 'mdp1234!' } });
+verifier('connexion du compte admin@kromadex.test (il n’existe que dans la base de test)', r.status === 200, r.status);
+
 console.log('\nCookies');
 r = await appel('/api/auth/login', { methode: 'POST', json: { email: 'test1@kromadex.test', password: 'mdp1234!' } });
 const session = r.cookies.find((c) => c.startsWith('cm_session=')) || '';
@@ -70,8 +77,34 @@ r = await appel('/api/auth/oubli', { methode: 'POST', json: { email: 'test1@krom
 const [demande] = await sql`SELECT 1 FROM demandes WHERE type = 'motdepasse' AND cree_le >= ${debut.toISOString()}`;
 verifier('mot de passe oublié : aucun courriel, le lien est noté dans la base de test', r.status === 200 && Boolean(demande));
 
+console.log('\nAvis ThriveCart (mode test attendu)');
+const SECRET = process.env.THRIVECART_SECRET;
+const [t2] = await sql`SELECT id, plus_statut, plus_jusqu, plus_formule FROM users WHERE email = 'test2@kromadex.test'`;
+const marque = `apercu-${Date.now()}`;
+const avis = (extra) => ({ thrivecart_secret: SECRET, mode: 'test', event: 'order.subscription_payment', event_id: `${marque}-1`,
+  passthrough: { user_id: t2.id }, order: { total: '379', total_str: '3.79' }, ...extra });
+const envoi = (corps) => appel('/api/paiements/thrivecart', { methode: 'POST', json: corps, entetes: { origin: '' } });
+const plus = async () => (await sql`SELECT plus_statut, plus_jusqu FROM users WHERE id = ${t2.id}`)[0];
+const [a1, a2] = await Promise.all([envoi(avis()), envoi(avis())]);
+const p1 = await plus();
+const jours = p1.plus_jusqu ? (new Date(p1.plus_jusqu) - Date.now()) / 86400000 : 0;
+verifier('avis « test » : deux copies simultanées acceptées (200)', a1.status === 200 && a2.status === 200, `${a1.status},${a2.status}`);
+verifier('avis « test » : un seul mois ajouté', p1.plus_statut === 'actif' && jours > 32 && jours < 35, jours.toFixed(1));
+const [{ n: cles }] = await sql`SELECT count(*)::int AS n FROM paiements_traites WHERE cle LIKE ${'%' + marque + '%'}`;
+verifier('avis « test » : noté une seule fois', cles === 1, cles);
+r = await envoi(avis({ mode: 'live', event_id: `${marque}-2` }));
+verifier('avis « live » ignoré par la prévisualisation (mode test)', r.donnees?.ignore === 'mode' && String((await plus()).plus_jusqu) === String(p1.plus_jusqu));
+r = await envoi(avis({ thrivecart_secret: 'faux', event_id: `${marque}-3` }));
+verifier('avis forgé (mauvais secret) refusé (401)', r.status === 401, r.status);
+await sql`UPDATE users SET plus_statut = ${t2.plus_statut}, plus_jusqu = ${t2.plus_jusqu}, plus_formule = ${t2.plus_formule} WHERE id = ${t2.id}`;
+await sql`DELETE FROM paiements_traites WHERE cle LIKE ${'%' + marque + '%'}`;
+await sql`DELETE FROM paiements_evenements WHERE recu_le >= ${debut.toISOString()}`;
+
 // Nettoyage de la base de test
 await sql`DELETE FROM essais_limites WHERE cree_le >= ${debut.toISOString()}`;
 await sql`DELETE FROM demandes WHERE type = 'motdepasse' AND cree_le >= ${debut.toISOString()}`;
+await sql`DELETE FROM reinitialisations WHERE cree_le >= ${debut.toISOString()}`;
+await sql`DELETE FROM sessions`;
+await sql`DELETE FROM appareils_connus`;
 console.log(`\nRésultat : ${reussis} réussi(s), ${echecs} échec(s).`);
 process.exit(echecs ? 1 : 0);

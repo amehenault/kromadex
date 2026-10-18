@@ -14,7 +14,11 @@ import sharp from 'sharp';
 
 const BASE = process.env.BASE || 'http://localhost:3123';
 if (!/^http:\/\/(localhost|127\.0\.0\.1)/.test(BASE)) { console.error('Ces tests ne visent que un serveur local.'); process.exit(1); }
-const SECRET = process.env.THRIVECART_SECRET_TEST || 'secret-test-local';
+// Même secret fictif que le serveur de test (.env.test.local) ; les avis simulés sont en mode « live »,
+// donc THRIVECART_MODE doit valoir « live » pour que le serveur les accepte (et ignore ceux en mode « test »)
+const SECRET = process.env.THRIVECART_SECRET;
+if (!SECRET) { console.error('THRIVECART_SECRET manquant dans .env.test.local.'); process.exit(1); }
+if (process.env.THRIVECART_MODE !== 'live') { console.error('THRIVECART_MODE doit valoir « live » dans .env.test.local pour ces tests.'); process.exit(1); }
 const MDP = 'mdp1234!';
 const sql = neon(process.env.DATABASE_URL);
 // Garde-fou : seulement une base de test préparée par scripts/preparer-base-test.mjs

@@ -1,0 +1,89 @@
+import { createHash, randomBytes } from 'node:crypto';
+import { cookies } from 'next/headers';
+import { sql } from '@/lib/db';
+
+// Limitation des essais (connexion, inscription, mot de passe oublié), stockée dans la base :
+// elle fonctionne même si Vercel lance plusieurs copies de l'appli (un compteur en mémoire ne suffirait pas).
+// Les courriels et les adresses IP ne sont pas conservés en clair, seulement leur empreinte.
+//
+// Connexion : chaque essai est noté AVANT la vérification du mot de passe (des essais lancés en même temps
+// sont donc tous comptés). Une connexion réussie efface les essais de ce courriel depuis cette adresse.
+//  - 5 essais pour un même courriel depuis une même adresse IP en 15 minutes ;
+//  - 30 essais depuis une même adresse IP (tous courriels confondus) en 15 minutes ;
+//  - 50 essais sur un même compte en 1 heure, toutes adresses confondues. Ce dernier blocage ne s'applique pas
+//    aux appareils déjà connectés avec succès à ce compte (cookie « appareil connu ») : une personne malveillante
+//    ne peut donc pas empêcher la titulaire de se connecter depuis son téléphone ou son ordinateur habituel.
+export const LIMITES = {
+  paire: { max: 5, minutes: 15 },
+  ip: { max: 30, minutes: 15 },
+  compte: { max: 50, minutes: 60 },
+  inscription: { max: 10, minutes: 60 },
+  oubli: { max: 10, minutes: 60 },
+};
+
+const COOKIE_APPAREIL = 'cm_appareil';
+const empreinte = (t) => createHash('sha256').update(String(t)).digest('hex');
+
+// Adresse IP de la personne. Sur Vercel, x-real-ip et x-forwarded-for sont fixés par Vercel lui-même.
+export function ipDe(req) {
+  const ip = req.headers.get('x-real-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0];
+  return (ip || 'inconnue').trim().slice(0, 64);
+}
+
+const fenetre = (minutes) => `${minutes} minutes`;
+
+// Note un essai et renvoie les compteurs dans les fenêtres (l'essai noté compris)
+async function noter(genre, ip, email = '') {
+  const ipH = empreinte(ip), emailH = email ? empreinte(email.toLowerCase()) : '';
+  await sql`INSERT INTO essais_limites (genre, ip_h, email_h) VALUES (${genre}, ${ipH}, ${emailH})`;
+  return { ipH, emailH };
+}
+
+// Inscription et mot de passe oublié : nombre d'essais par adresse IP. Renvoie vrai si la limite est dépassée.
+export async function limiteParIp(genre, req) {
+  const { max, minutes } = LIMITES[genre];
+  const { ipH } = await noter(genre, ipDe(req));
+  const [{ n }] = await sql`SELECT count(*)::int AS n FROM essais_limites
+    WHERE genre = ${genre} AND ip_h = ${ipH} AND cree_le > now() - ${fenetre(minutes)}::interval`;
+  return n > max;
+}
+
+// Connexion, étape 1 : note l'essai et dit s'il est bloqué par la paire courriel + IP ou par l'IP
+export async function essaiConnexion(req, email) {
+  const { ipH, emailH } = await noter('connexion', ipDe(req), email);
+  const [c] = await sql`SELECT
+      count(*) FILTER (WHERE ip_h = ${ipH} AND email_h = ${emailH} AND cree_le > now() - ${fenetre(LIMITES.paire.minutes)}::interval)::int AS paire,
+      count(*) FILTER (WHERE ip_h = ${ipH} AND cree_le > now() - ${fenetre(LIMITES.ip.minutes)}::interval)::int AS ip,
+      count(*) FILTER (WHERE email_h = ${emailH} AND cree_le > now() - ${fenetre(LIMITES.compte.minutes)}::interval)::int AS compte
+    FROM essais_limites WHERE genre = 'connexion' AND (ip_h = ${ipH} OR email_h = ${emailH})`;
+  // Nettoyage des vieux essais (au-delà de toutes les fenêtres)
+  await sql`DELETE FROM essais_limites WHERE cree_le < now() - interval '2 days'`;
+  return {
+    ipH, emailH,
+    bloque: c.paire > LIMITES.paire.max || c.ip > LIMITES.ip.max,
+    compteSature: c.compte > LIMITES.compte.max,
+  };
+}
+
+// Connexion réussie : les essais de ce courriel depuis cette adresse sont effacés
+export async function connexionReussie({ ipH, emailH }) {
+  await sql`DELETE FROM essais_limites WHERE genre = 'connexion' AND ip_h = ${ipH} AND email_h = ${emailH}`;
+}
+
+// Appareil déjà connecté avec succès à ce compte ?
+export async function appareilConnu(userId) {
+  const jeton = (await cookies()).get(COOKIE_APPAREIL)?.value;
+  if (!jeton || !/^[0-9a-f]{64}$/.test(jeton)) return false;
+  const [r] = await sql`SELECT 1 FROM appareils_connus WHERE jeton_hash = ${empreinte(jeton)} AND user_id = ${userId}`;
+  return Boolean(r);
+}
+
+// Retient cet appareil pour ce compte (après une connexion réussie ou une réinitialisation du mot de passe)
+export async function retenirAppareil(userId) {
+  if (await appareilConnu(userId)) return;
+  const jeton = randomBytes(32).toString('hex');
+  await sql`INSERT INTO appareils_connus (jeton_hash, user_id) VALUES (${empreinte(jeton)}, ${userId}) ON CONFLICT DO NOTHING`;
+  (await cookies()).set(COOKIE_APPAREIL, jeton, {
+    httpOnly: true, sameSite: 'lax', path: '/', secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 * 365,
+  });
+}

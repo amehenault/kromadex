@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server';
-import { timingSafeEqual } from 'node:crypto';
 import { sql } from '@/lib/db';
 import { prevenir } from '@/lib/push';
+import { memeSecret, champ, modeAccepte, modeAttendu, cleEvenement, formuleDe } from '@/lib/thrivecart';
 
 export const dynamic = 'force-dynamic';
 
 // Avis de paiement ThriveCart (webhook) pour Kromadex+.
 // Dans ThriveCart : Settings > API & webhooks > Webhooks & notifications, adresse https://<site>/api/paiements/thrivecart
 // Le mot secret ThriveCart (même écran) doit être dans la variable THRIVECART_SECRET.
+// THRIVECART_MODE : « live » (par défaut, production) ou « test » (environnement de test seulement).
+//
+// Chaque avis n'est appliqué qu'une seule fois : sa clé (event_id) est enregistrée dans paiements_traites
+// dans la MÊME requête SQL que le changement d'abonnement. Deux copies arrivées en même temps ne peuvent donc
+// pas prolonger Kromadex+ deux fois : la deuxième trouve la clé déjà prise et ne change rien.
 
 // ThriveCart vérifie l'adresse avec une requête HEAD (ou GET) avant de l'enregistrer
 export function HEAD() { return new Response(null, { status: 200 }); }
 export function GET() { return NextResponse.json({ ok: true }); }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function memeSecret(recu, attendu) {
-  const a = Buffer.from(String(recu || '')), b = Buffer.from(String(attendu || ''));
-  return a.length > 0 && a.length === b.length && timingSafeEqual(a, b);
-}
 
 // Les avis arrivent en formulaire (clés comme customer[email]) ou en JSON
 async function lireDonnees(req) {
@@ -28,29 +28,10 @@ async function lireDonnees(req) {
   return Object.fromEntries(new URLSearchParams(texte));
 }
 
-const champ = (d, ...cles) => {
-  for (const c of cles) {
-    const v = c.split('.').reduce((o, k) => (o == null ? undefined : o[k]), d) ?? d[c.replace(/\.(\w+)/g, '[$1]')];
-    if (v !== undefined && v !== '') return String(v);
-  }
-  return '';
-};
-
-// Mensuel ou annuel : d'après le nom ou la fréquence du paiement, sinon d'après le montant (40,99 contre 3,79)
-function formuleDe(d) {
-  const texte = JSON.stringify(d).toLowerCase();
-  if (/annuel|annual|yearly|"year"|per year|\/yr/.test(texte)) return 'annuel';
-  if (/mensuel|monthly|"month"|per month|\/mo/.test(texte)) return 'mensuel';
-  const montant = parseFloat(champ(d, 'order.total', 'order_total', 'order.charges.0.amount', 'amount')) || 0;
-  // Montants parfois en cents
-  const dollars = montant > 1000 ? montant / 100 : montant;
-  return dollars >= 20 ? 'annuel' : 'mensuel';
-}
-
 export async function POST(req) {
   const d = await lireDonnees(req);
   const evenement = champ(d, 'event');
-  const mode = champ(d, 'mode', 'mode_int');
+  const mode = champ(d, 'mode');
   const courriel = champ(d, 'customer.email', 'customer[email]', 'email').toLowerCase().trim();
   const idPassthrough = champ(d, 'passthrough.user_id', 'passthrough[user_id]');
 
@@ -68,6 +49,11 @@ export async function POST(req) {
     await noter('refusé : mot secret invalide');
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
+  // Test et production séparés : un avis d'un autre mode n'a aucun effet (200 pour que ThriveCart ne le renvoie pas)
+  if (!modeAccepte(d)) {
+    await noter(`ignoré : mode « ${mode || 'inconnu'} » (ce site accepte « ${modeAttendu()} »)`);
+    return NextResponse.json({ ok: true, ignore: 'mode' });
+  }
 
   // La personne : l'identifiant transmis par le lien de paiement, sinon le courriel utilisé pour payer
   const [u] = UUID.test(idPassthrough)
@@ -79,23 +65,36 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, membre: false });
   }
 
+  const cle = cleEvenement(d);
+  // Applique le changement seulement si la clé de l'avis est nouvelle (une seule requête, donc atomique)
+  const appliquer = async (miseAJour) => {
+    const r = await sql`
+      WITH nouveau AS (
+        INSERT INTO paiements_traites (cle, evenement, mode, user_id) VALUES (${cle}, ${evenement}, ${mode}, ${u.id})
+        ON CONFLICT (cle) DO NOTHING RETURNING cle
+      )
+      ${miseAJour}`;
+    return r.length > 0;
+  };
+
   if (evenement === 'order.success' || evenement === 'order.subscription_payment') {
     // Paiement ou renouvellement : actif jusqu'à la fin de la période payée, plus 3 jours de marge pour le prochain prélèvement
     const formule = formuleDe(d);
     const duree = formule === 'annuel' ? '1 year 3 days' : '1 month 3 days';
-    await sql`
+    const fait = await appliquer(sql`
       UPDATE users SET plus_statut = 'actif', plus_formule = ${formule},
         plus_jusqu = GREATEST(COALESCE(plus_jusqu, now()), now()) + ${duree}::interval
-      WHERE id = ${u.id}`;
+      WHERE id = ${u.id} AND EXISTS (SELECT 1 FROM nouveau) RETURNING id`);
+    if (!fait) { await noter('doublon ignoré (déjà traité)', u.id); return NextResponse.json({ ok: true, doublon: true }); }
     await noter(`actif (${formule})`, u.id);
     if (evenement === 'order.success') prevenir('abonnement', { ids: [u.id] }, { titre: 'Bienvenue dans Kromadex+', texte: 'Ton abonnement est actif. Merci de soutenir Kromadex !', lien: '/kromadex-plus' });
   } else if (evenement === 'order.subscription_cancelled') {
     // Annulé : Kromadex+ reste actif jusqu'à la fin de la période déjà payée
-    await sql`UPDATE users SET plus_statut = 'annule' WHERE id = ${u.id}`;
-    await noter('annulé, actif jusqu’à la fin de la période payée', u.id);
+    const fait = await appliquer(sql`UPDATE users SET plus_statut = 'annule' WHERE id = ${u.id} AND EXISTS (SELECT 1 FROM nouveau) RETURNING id`);
+    await noter(fait ? 'annulé, actif jusqu’à la fin de la période payée' : 'doublon ignoré (déjà traité)', u.id);
   } else if (evenement === 'order.refund') {
-    await sql`UPDATE users SET plus_statut = 'aucun', plus_jusqu = now() WHERE id = ${u.id}`;
-    await noter('remboursé, Kromadex+ retiré', u.id);
+    const fait = await appliquer(sql`UPDATE users SET plus_statut = 'aucun', plus_jusqu = now() WHERE id = ${u.id} AND EXISTS (SELECT 1 FROM nouveau) RETURNING id`);
+    await noter(fait ? 'remboursé, Kromadex+ retiré' : 'doublon ignoré (déjà traité)', u.id);
   } else {
     // Ex. prélèvement refusé : rien à faire, l'accès s'arrête seul à la fin de la période payée
     await noter('ignoré', u.id);

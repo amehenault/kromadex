@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { compresserImage } from '@/lib/compressionImage';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -78,12 +79,18 @@ export default function MesTomes({ tomes }) {
       if (edition.fichier) {
         const fd = new FormData();
         fd.append('tome', nom);
-        fd.append('image', edition.fichier);
+        // Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
+        fd.append('image', await compresserImage(edition.fichier, 1200), 'couverture.jpg');
 
-        await fetch('/api/tomes/cover', {
+        const rc = await fetch('/api/tomes/cover', {
           method: 'POST',
           body: fd,
         });
+        if (!rc.ok) {
+          const dc = await rc.json().catch(() => ({}));
+          setErreur(dc.error || 'La couverture n’a pas pu être enregistrée.');
+          return;
+        }
       }
 
       setEdition(null);

@@ -7,11 +7,11 @@ import { prevenir } from '@/lib/push';
 
 // Coloriages d'épreuve signalés parce qu'ils ne correspondent pas à ce qui est demandé (admin et sentinelles)
 export async function GET() {
-  const { erreur } = await exigerPoste('admin', 'modo');
+  const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
   const signalements = await sql`
     SELECT s.defi_id, s.page_id, d.titre AS epreuve, d.description, d.genre, count(*)::int AS nombre, max(s.cree_le) AS dernier,
-           p.title, OCTET_LENGTH(p.image_b64) AS img_size, u.id AS auteur_id, u.pseudo, u.name, u.email, u.role AS role_auteur, u.genre AS genre_auteur
+           p.title, OCTET_LENGTH(p.image_b64) AS img_size, u.id AS auteur_id, u.pseudo, u.name, CASE WHEN ${profil.role === 'admin'} THEN u.email END AS email, u.role AS role_auteur, u.genre AS genre_auteur
     FROM defi_signalements s
     JOIN defis d ON d.id = s.defi_id JOIN pages p ON p.id = s.page_id JOIN users u ON u.id = p.user_id
     WHERE NOT s.traite

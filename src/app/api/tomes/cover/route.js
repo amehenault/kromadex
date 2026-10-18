@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { imageDuFormulaire, ErreurImage, reponseErreurImage, enTetesImage, formatReel, COTE } from '@/lib/images';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,17 +18,19 @@ export async function GET(req) {
     if (user && name) {
       const userIdStr = String(user.id);
       const r = await sql`
-        SELECT image_b64, image_type
+        SELECT image_b64
         FROM tome_covers
         WHERE user_id = ${userIdStr} AND tome_name = ${name}
       `;
 
       if (r.length && r[0].image_b64) {
-        const mime = r[0].image_type || 'image/jpeg';
-        if (enImage) {
-          return new NextResponse(Buffer.from(r[0].image_b64, 'base64'), { headers: { 'Content-Type': mime } });
+        // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
+        const contenu = Buffer.from(r[0].image_b64, 'base64');
+        const format = formatReel(contenu);
+        if (format) {
+          if (enImage) return new NextResponse(contenu, { headers: enTetesImage(contenu, 'private, no-cache') });
+          return NextResponse.json({ cover: `data:image/${format};base64,${r[0].image_b64}` });
         }
-        return NextResponse.json({ cover: `data:${mime};base64,${r[0].image_b64}` });
       }
 
       // Pas de couverture personnelle : celle du catalogue si le nom correspond à un tome connu
@@ -51,17 +54,12 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
     const formData = await req.formData();
-    const tomeName = formData.get('tome');
-    const file = formData.get('image');
-
-    if (!tomeName || !file || typeof file !== 'object') {
-      return NextResponse.json({ error: 'Fichier invalide' }, { status: 400 });
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const imageType = file.type || 'image/jpeg';
+    const tomeName = String(formData.get('tome') || '').trim().slice(0, 120);
+    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
+    const image = await imageDuFormulaire(formData.get('image'), { coteMax: COTE.couverture });
+    if (!tomeName || !image) return NextResponse.json({ error: 'Fichier invalide' }, { status: 400 });
+    const base64 = image.b64;
+    const imageType = image.type;
     const userIdStr = String(user.id);
 
     await sql`
@@ -73,7 +71,8 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, cover: `data:${imageType};base64,${base64}` });
   } catch (err) {
+    if (err instanceof ErreurImage) return reponseErreurImage(err);
     console.error('Erreur sauvegarde couverture :', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

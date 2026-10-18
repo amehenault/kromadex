@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { traiterImage, ErreurImage, reponseErreurImage, enTetesImage, COTE } from '@/lib/images';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,13 @@ export async function GET(req) {
   if (!user) return new NextResponse(null, { status: 401 });
   const id = new URL(req.url).searchParams.get('id') || user.id;
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse(null, { status: 400 });
-  const [r] = await sql`SELECT avatar_b64, avatar_type FROM users WHERE id = ${id}`;
+  const [r] = await sql`SELECT avatar_b64 FROM users WHERE id = ${id}`;
   if (!r?.avatar_b64) return new NextResponse(null, { status: 404 });
-  return new NextResponse(Buffer.from(r.avatar_b64, 'base64'), {
-    headers: { 'Content-Type': r.avatar_type, 'Cache-Control': 'private, max-age=31536000, immutable' },
-  });
+  // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
+  const contenu = Buffer.from(r.avatar_b64, 'base64');
+  const entetes = enTetesImage(contenu, 'private, max-age=31536000, immutable');
+  if (!entetes) return new NextResponse(null, { status: 404 });
+  return new NextResponse(contenu, { headers: entetes });
 }
 
 // Reçoit l'image déjà recadrée et réduite par le téléphone ({ type, b64 })
@@ -28,7 +31,11 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Image invalide' }, { status: 400 });
   }
   if (b64.length > 400_000) return NextResponse.json({ error: 'Image trop lourde' }, { status: 413 });
-  await sql`UPDATE users SET avatar_b64 = ${b64}, avatar_type = ${type}, avatar_maj = now() WHERE id = ${user.id}`;
+  // Contenu réel vérifié, puis réencodé (le type annoncé ne suffit pas)
+  let image;
+  try { image = await traiterImage(Buffer.from(b64, 'base64'), { coteMax: COTE.avatar, qualite: 85 }); }
+  catch (e) { if (e instanceof ErreurImage) return reponseErreurImage(e); throw e; }
+  await sql`UPDATE users SET avatar_b64 = ${image.b64}, avatar_type = ${image.type}, avatar_maj = now() WHERE id = ${user.id}`;
   return NextResponse.json({ ok: true });
 }
 

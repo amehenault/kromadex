@@ -3,8 +3,9 @@ import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { lirePublication, lirePalette } from '@/lib/pages';
-import { accorderSerie, accorderXP } from '@/lib/series';
-import { XP_PAGE } from '@/lib/niveaux';
+import { accorderSerie } from '@/lib/series';
+import { accorderXPColoriage } from '@/lib/xpColoriage';
+import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
 
 export async function POST(req) {
   try {
@@ -31,15 +32,10 @@ export async function POST(req) {
       }
     }
 
-    let base64 = null;
-    let imageType = null;
-
-    if (file && typeof file === 'object' && file.size > 0) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      base64 = buffer.toString('base64');
-      imageType = file.type || 'image/jpeg';
-    }
+    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
+    const image = await imageDuFormulaire(file, { coteMax: COTE.coloriage });
+    const base64 = image?.b64 ?? null;
+    const imageType = image?.type ?? null;
 
     const [nouvelle] = await sql`
       INSERT INTO pages (user_id, title, tome, page_no, memo, codes, image_b64, image_type, publiee, type_coloriage, publiee_le, palette_id)
@@ -48,8 +44,8 @@ export async function POST(req) {
       RETURNING id
     `;
 
-    // Une page de coloriage terminée rapporte 100 XP (une seule fois par fiche)
-    await accorderXP(user.id, `page:${nouvelle.id}`, XP_PAGE).catch(() => {});
+    // Les XP du coloriage sont donnés seulement avec une image (une fiche sans image reste un brouillon)
+    if (image) await accorderXPColoriage(user.id, nouvelle.id).catch(() => {});
 
     // Un tome masqué redevient visible dès qu'on y enregistre une fiche
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
@@ -58,7 +54,8 @@ export async function POST(req) {
     revalidatePath('/');
     return NextResponse.json({ success: true });
   } catch (err) {
+    if (err instanceof ErreurImage) return reponseErreurImage(err);
     console.error('Erreur lors de la création :', err);
-    return NextResponse.json({ error: err.message || 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -51,16 +51,17 @@ export async function demanderReinitialisation(email, origine) {
   }
 }
 
-// Change le mot de passe avec un jeton valide ; le jeton ne sert qu'une fois et les sessions ouvertes sont fermées
+// Change le mot de passe avec un jeton valide ; le jeton ne sert qu'une fois et les sessions ouvertes sont fermées.
+// Renvoie { erreur } ou { userId }.
 export async function reinitialiser(jeton, motDePasse) {
-  if (!/^[0-9a-f]{64}$/.test(jeton || '')) return 'Lien invalide.';
-  if (String(motDePasse || '').length < 8) return 'Le mot de passe doit contenir au moins 8 caractères.';
+  if (!/^[0-9a-f]{64}$/.test(jeton || '')) return { erreur: 'Lien invalide.' };
+  if (String(motDePasse || '').length < 8) return { erreur: 'Le mot de passe doit contenir au moins 8 caractères.' };
   const [r] = await sql`
     UPDATE reinitialisations SET utilise = true
     WHERE jeton_hash = ${sha(jeton)} AND NOT utilise AND expire_le > now()
     RETURNING user_id`;
-  if (!r) return 'Ce lien est expiré ou a déjà servi. Refais une demande.';
+  if (!r) return { erreur: 'Ce lien est expiré ou a déjà servi. Refais une demande.' };
   await sql`UPDATE users SET password_hash = ${hashPassword(motDePasse)} WHERE id = ${r.user_id}`;
   await sql`DELETE FROM sessions WHERE user_id = ${r.user_id}`;
-  return null;
+  return { erreur: null, userId: r.user_id };
 }

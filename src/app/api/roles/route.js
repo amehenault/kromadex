@@ -14,6 +14,8 @@ export async function GET() {
     FROM users
     ORDER BY (role = 'admin') DESC, email ASC
   `;
+  // Les courriels restent réservés à l'Invocatrice : les Sentinelles reçoivent la liste sans eux
+  if (profil.role !== 'admin') for (const u of users) delete u.email;
   const titles = await sql`SELECT * FROM system_titles ORDER BY name ASC`;
 
   return NextResponse.json({ users, titles, userRole: profil.role });

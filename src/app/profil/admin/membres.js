@@ -69,7 +69,7 @@ export default function Membres({ role }) {
         <div key={u.id} style={ligneCarte}>
           <Pseudo x={u} />
           <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>
-            {u.email} · niv. {u.level || 1} · {u.xp || 0} XP
+            {u.email ? `${u.email} · ` : ''}niv. {u.level || 1} · {u.xp || 0} XP
           </small>
           {u.role === 'admin' || !estAdmin ? (
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: couleurPoste(u.role) }}>

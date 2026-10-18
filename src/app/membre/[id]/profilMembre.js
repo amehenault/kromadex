@@ -12,7 +12,7 @@ import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
 import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
-import { badgePionnier } from '@/lib/recompenses';
+import { badgePionnier, OBJETS } from '@/lib/recompenses';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 
@@ -98,7 +98,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
         )}
       </div>
 
-      <MesRecompenses recompenses={[...badgePionnier(m), ...recompenses]} titre={moi ? 'Mes récompenses' : 'Récompenses'} />
+      <MesRecompenses recompenses={[...badgePionnier(m), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]} titre={moi ? 'Mes récompenses' : 'Récompenses'}
+        epingles={m.badges_epingles || []} modifiable={moi} />
 
       <h3 style={{ margin: '0 0 10px' }}>Coloriages publiés</h3>
       {!fiches.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage publié pour l'instant.</p>}

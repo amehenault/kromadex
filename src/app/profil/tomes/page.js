@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search, Plus, Check } from 'lucide-react';
-import { nomBibliotheque, VALEURS_TYPES } from '@/lib/typesColoriage';
+import { nomCollectionTomes, VALEURS_TYPES } from '@/lib/typesColoriage';
 
 const TYPES = [
   { valeur: 'mystere', label: 'Tomes (coloriages mystères)' },
@@ -125,7 +125,7 @@ export default function CatalogueTomesPage() {
           <ArrowLeft size={16} />
         </Link>
         <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
-          <BookOpen size={22} /> {nomBibliotheque(visibles)}
+          <BookOpen size={22} /> {nomCollectionTomes(visibles)}
         </h2>
       </div>
 

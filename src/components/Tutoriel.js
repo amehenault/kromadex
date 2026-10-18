@@ -93,7 +93,7 @@ const ECRANS = [
   },
   {
     icone: HelpCircle, titre: 'Besoin d’aide ?',
-    texte: 'Dans ton profil, tu trouveras Aide et demandes. Tu pourras y poser une question, signaler un bug ou proposer une idée. Tu peux aussi revoir cette présentation à tout moment depuis cette même page.',
+    texte: 'Dans ton profil, tu trouveras Aide. Tu pourras y poser une question, signaler un bug ou proposer une idée. Tu peux aussi revoir cette présentation à tout moment depuis cette même page.',
   },
   {
     icone: Rocket, titre: 'Bonne découverte',

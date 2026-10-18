@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Trophy, Grid3x3, Users, Compass, Swords, Gavel } from 'lucide-react';
+import { ArrowLeft, Trophy, Grid3x3, Users, Compass, Swords, Gavel, Dices } from 'lucide-react';
 import CarteDefi from './carteDefi';
 import Bingo from './bingo';
 import DefisGroupe from './defisGroupe';
@@ -31,7 +31,8 @@ export default function Defis({ monId, integre }) {
   }
   useEffect(() => { charger(); }, []);
 
-  const ONGLETS = [['mois', 'En cours', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users], ['aventures', 'Aventures', Compass], ['combats', 'Combats', Swords]];
+  // La Roue du Destin, à droite de Combats, ouvre sa propre page
+  const ONGLETS = [['mois', 'En cours', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users], ['aventures', 'Aventures', Compass], ['combats', 'Combats', Swords], ['roue', 'Roue du Destin', Dices, '/roue']];
   // Tri par rôle de la personne qui a créé l'épreuve
   const duMois = (donnees?.defis || []).filter((d) => role === 'tous' || ROLE_DU_GENRE[d.genre] === role);
   const groupe = (donnees?.defis || []).filter((d) => d.genre === 'groupe');
@@ -47,21 +48,25 @@ export default function Defis({ monId, integre }) {
         </div>
       )}
 
-      {/* Grand bouton corail : les coloriages qui attendent mon verdict (vue par défaut) */}
+      {/* Grand bouton corail : les coloriages qui attendent mon verdict (vue par défaut), sans contour */}
       <button type="button" onClick={() => setOnglet('verdicts')} aria-pressed={onglet === 'verdicts'}
         className="btn btn-corail"
         style={{ width: '100%', minHeight: '52px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px',
-          outline: onglet === 'verdicts' ? '3px solid var(--noir)' : 'none', outlineOffset: '-3px' }}>
+          border: 'none' }}>
         <Gavel size={20} aria-hidden="true" /> Verdicts à rendre{aVoter ? ` (${aVoter})` : ''}
       </button>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px', marginBottom: 'var(--espace-3)' }}>
-        {ONGLETS.map(([cle, label, Icone], i) => (
-          <button key={cle} type="button" onClick={() => setOnglet(cle)} className={onglet === cle ? 'btn' : 'btn alt'}
-            style={{ gridColumn: i === ONGLETS.length - 1 && ONGLETS.length % 2 ? '1 / -1' : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', minHeight: '54px', padding: '6px 4px', fontSize: '0.85rem', minWidth: 0 }}>
-            <Icone size={18} /> {label}
-          </button>
-        ))}
+        {ONGLETS.map(([cle, label, Icone, lien], i) => {
+          const style = { gridColumn: i === ONGLETS.length - 1 && ONGLETS.length % 2 ? '1 / -1' : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', minHeight: '54px', padding: '6px 4px', fontSize: '0.85rem', minWidth: 0 };
+          return lien
+            ? <Link key={cle} href={lien} className="btn alt" style={style}><Icone size={18} aria-hidden="true" /> {label}</Link>
+            : (
+              <button key={cle} type="button" onClick={() => setOnglet(cle)} className={onglet === cle ? 'btn' : 'btn alt'} style={style}>
+                <Icone size={18} /> {label}
+              </button>
+            );
+        })}
       </div>
 
       {onglet === 'verdicts' && <VerdictsARendre onNombre={setAVoter} />}

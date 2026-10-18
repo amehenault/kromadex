@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { typesPour } from '@/lib/typesNotifications';
 import { cadresDebloques } from '@/lib/cadres';
+import { MAX_EPINGLES } from '@/lib/recompenses';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,12 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Ce cadre n’est pas encore débloqué' }, { status: 403 });
     }
     await sql`UPDATE users SET cadre = ${choix} WHERE id = ${user.id}`;
+  }
+  // Badges épinglés sur le profil (clés « genre|détail », 6 au maximum ; [] = les 6 plus récents)
+  if ('badges' in b) {
+    if (!Array.isArray(b.badges)) return NextResponse.json({ error: 'Liste invalide' }, { status: 400 });
+    const badges = [...new Set(b.badges.filter((x) => typeof x === 'string' && x.length <= 200))].slice(0, MAX_EPINGLES);
+    await sql`UPDATE users SET badges_epingles = ${JSON.stringify(badges)}::jsonb WHERE id = ${user.id}`;
   }
   if ('titre' in b) {
     const titre = String(b.titre || '');

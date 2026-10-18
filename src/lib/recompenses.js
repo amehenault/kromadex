@@ -3,7 +3,7 @@ import { nomPionnier } from '@/lib/postes';
 // Catalogue des récompenses des activités (utilisable dans le navigateur et sur le serveur).
 //
 // Les images se trouvent dans public/recompenses-activites, un dossier par type d'activité.
-// Nom de fichier attendu (en .png) : par exemple epreuve/chef/sceau-3.png ou combat/epee.png.
+// Nom de fichier attendu (en .png) : par exemple combat/epee.png (les sceaux de chef.fe sont en .svg, voir imageSceau).
 // Une récompense peut aussi avoir sa propre image (ex. le badge d'une épreuve, le blason d'une épopée) :
 // c'est le nom de fichier saisi dans l'espace admin, cherché dans le dossier de la récompense.
 // Tant que l'image n'existe pas, une icône la remplace.
@@ -24,14 +24,28 @@ export const RECOMPENSES = {
   boussole: { nom: 'Boussole', pluriel: 'boussoles', dossier: 'expedition', fichier: 'boussole', prestige: 55, icone: 'Compass' },
   joute: { nom: 'Joute', pluriel: 'joutes', dossier: 'combat', fichier: 'joute', prestige: 45, icone: 'Swords' },
   fragment: { nom: 'Fragment de relique', pluriel: 'fragments de relique', dossier: 'epreuve/sentinelles', fichier: 'fragment', prestige: 35, icone: 'Puzzle' },
-  parchemin: { nom: 'Parchemin du Destin', pluriel: 'parchemins du Destin', dossier: 'autres-activites', fichier: 'parchemin', prestige: 30, icone: 'ScrollText' },
+  parchemin: { nom: 'Parchemin du Destin', pluriel: 'parchemins du Destin', chemin: '/inventaire/kromadex-parchemin.svg', prestige: 30, icone: 'ScrollText',
+    description: 'Élimine une contrainte durant une Expédition, une Épopée ou une Prophétie. Il se consomme au moment de soumettre ton coloriage.' },
 };
+
+// Objets qu'on garde dans son inventaire pour s'en servir (ce ne sont pas des badges)
+export const OBJETS = ['parchemin'];
+
+// Nombre de badges affichés sur le profil (2 rangées de 3) et d'épingles permises
+export const MAX_EPINGLES = 6;
+
+// Sceaux des épreuves de chef.fe : la ou le chef choisit lequel des 6 la personne gagnante reçoit
+// (public/recompenses-activites/epreuve/chef/kromadex-sceau1.svg à kromadex-sceau6.svg)
+export const NUMEROS_SCEAUX = [1, 2, 3, 4, 5, 6];
+export const imageSceau = (n) => `${DOSSIER_RECOMPENSES}/epreuve/chef/kromadex-sceau${Math.max(1, Math.min(6, Number(n) || 1))}.svg`;
 
 // Chemin de l'image d'une récompense (image propre ou image par défaut du type)
 export function imageRecompense(r) {
   const c = RECOMPENSES[r.genre];
   if (!c) return null;
   if (c.chemin) return c.chemin;
+  // Sceau : le numéro choisi par la ou le chef (aussi pour les anciens noms « sceau-3.png »)
+  if (r.genre === 'sceau') return imageSceau((String(r.image || '').match(/\d+/) || [1])[0]);
   const fichier = (r.image || '').trim() || `${c.fichier}.png`;
   return `${DOSSIER_RECOMPENSES}/${c.dossier}/${/\.[a-z0-9]+$/i.test(fichier) ? fichier : `${fichier}.png`}`;
 }

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Compass, Shield, Sparkles, ChevronRight, ScrollText, Check, Backpack } from 'lucide-react';
+import { Compass, Shield, Sparkles, ChevronRight, Check, Backpack } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import { FETES, NOMS_AVENTURES } from '@/lib/activites';
 
@@ -29,7 +29,7 @@ export default function ListeAventures() {
           </span>
           <span style={{ minWidth: 0 }}>
             <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              Mon inventaire · <ScrollText size={16} aria-hidden="true" /> {parchemins} Parchemin{parchemins > 1 ? 's' : ''} du Destin
+              Mon inventaire · <img src="/inventaire/kromadex-parchemin.svg" alt="" aria-hidden="true" style={{ width: 20, height: 20 }} /> {parchemins} Parchemin{parchemins > 1 ? 's' : ''} du Destin
             </b>
             <small style={{ color: 'var(--texte-secondaire)' }}>Élimine une contrainte obligatoire lors d’une expédition, d’une épopée ou d’une prophétie.</small>
           </span>

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, Frame, Crown, PlayCircle, HelpCircle, LogOut, ChevronRight, Trash2, Award } from 'lucide-react';
+import { ArrowLeft, Bell, Frame, Lock, Crown, PlayCircle, HelpCircle, ChevronRight, Trash2, Award } from 'lucide-react';
 import NotificationsAppareil from '@/components/NotificationsAppareil';
 import PhotoProfil from '@/app/profil/edit/photoProfil';
 import APropos from '@/app/profil/edit/apropos';
@@ -37,11 +37,6 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
     setCadre(c);
     if (await enregistrer({ cadre: c })) router.refresh(); else setCadre(avant);
   }
-  async function sortir() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.replace('/login');
-    router.refresh();
-  }
 
   const carte = { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' };
   const titre_ = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
@@ -73,24 +68,39 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
 
       <PhotoProfil />
 
-      {/* Cadre autour de la photo de profil, parmi ceux débloqués */}
-      {cadres.length > 0 && (
-        <section className="carte" style={carte}>
-          <h3 style={titre_}><Frame size={20} aria-hidden="true" /> Cadre de profil</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px' }}>
-            {[...cadres, 'aucun'].map((c) => (
-              <button key={c} type="button" onClick={() => choisirCadre(c)} aria-pressed={cadre === c}
-                className={cadre === c ? 'btn' : 'btn alt'}
-                style={{ flexDirection: 'column', gap: '12px', padding: '16px 8px', minHeight: '120px', fontSize: '0.8rem', minWidth: 0 }}>
-                <PhotoCadre cadre={c === 'aucun' ? null : c} taille={40}>
-                  {(t) => <span style={{ width: t, height: t, borderRadius: '50%', background: 'var(--carte)', display: 'block' }} />}
-                </PhotoCadre>
-                {c === 'aucun' ? 'Sans cadre' : CADRES[c].nom}
+      {/* Cadre autour de la photo de profil : tous les cadres sont montrés ; ceux pas encore débloqués sont grisés,
+          avec un cadenas et la seule condition pour les obtenir */}
+      <section className="carte" style={carte}>
+        <h3 style={titre_}><Frame size={20} aria-hidden="true" /> Cadre de profil</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
+          {['aucun', ...Object.keys(CADRES)].map((c) => {
+            const libre = c === 'aucun' || cadres.includes(c);
+            const choisi = libre && cadre === c;
+            return (
+              <button key={c} type="button" onClick={() => libre && choisirCadre(c)} aria-pressed={choisi} aria-disabled={!libre}
+                className={choisi ? 'btn' : 'btn alt'}
+                style={{ position: 'relative', flexDirection: 'column', justifyContent: 'flex-start', gap: '8px', padding: '16px 8px', minHeight: '120px', fontSize: '0.8rem', minWidth: 0, cursor: libre ? 'pointer' : 'default' }}>
+                <span style={{ filter: libre ? 'none' : 'grayscale(1)', opacity: libre ? 1 : 0.45, display: 'inline-flex' }}>
+                  <PhotoCadre cadre={c === 'aucun' ? null : c} taille={40}>
+                    {(t) => <span style={{ width: t, height: t, borderRadius: '50%', background: 'var(--carte)', display: 'block' }} />}
+                  </PhotoCadre>
+                </span>
+                {!libre && (
+                  <span style={{ position: 'absolute', top: '8px', right: '8px', display: 'inline-flex' }} aria-hidden="true">
+                    <Lock size={16} />
+                  </span>
+                )}
+                <b style={{ fontSize: '0.8rem', overflowWrap: 'anywhere' }}>{c === 'aucun' ? 'Sans cadre' : CADRES[c].nom}</b>
+                {!libre && (
+                  <small style={{ fontWeight: 400, fontSize: '0.72rem', color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>
+                    {CADRES[c].condition}
+                  </small>
+                )}
               </button>
-            ))}
-          </div>
-        </section>
-      )}
+            );
+          })}
+        </div>
+      </section>
 
       {/* Titre affiché sous le niveau, parmi les titres gagnés (ex. Cheffe des coloristes, titre d'une épreuve) */}
       <section className="carte" style={carte}>
@@ -109,7 +119,7 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
       <Preferences />
       <Acces />
 
-      {/* Le reste : abonnement, présentation, aide, déconnexion */}
+      {/* Le reste : abonnement, présentation, aide (la déconnexion est en bas du profil) */}
       <section className="carte" style={{ ...carte, gap: 0 }}>
         <Link href="/kromadex-plus" style={{ ...lien, borderTop: 'none' }}>
           <Crown size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Kromadex+ et mon abonnement</span> <ChevronRight size={18} aria-hidden="true" />
@@ -118,11 +128,8 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
           <PlayCircle size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Revoir la présentation de Kromadex</span> <ChevronRight size={18} aria-hidden="true" />
         </Link>
         <Link href="/aide" style={lien}>
-          <HelpCircle size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Aide et demandes</span> <ChevronRight size={18} aria-hidden="true" />
+          <HelpCircle size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Aide</span> <ChevronRight size={18} aria-hidden="true" />
         </Link>
-        <button type="button" onClick={sortir} style={{ all: 'unset', boxSizing: 'border-box', ...lien, width: '100%', color: 'var(--danger)' }}>
-          <LogOut size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Déconnexion</span>
-        </button>
       </section>
 
       <SupprimerCompte role={role} />

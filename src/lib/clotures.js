@@ -53,7 +53,7 @@ async function cloturerEpreuve(d) {
     const [chef] = await sql`SELECT pseudo, name FROM users WHERE id = ${d.choisi_par}`;
     const auteur = chef?.pseudo ? `@${chef.pseudo}` : chef?.name || 'la cheffe';
     await recompenserVictoire(gagnant, {
-      cleXP: `victoire:${source}`, xp, genre: 'sceau', detail: `de ${auteur}`, source, image: `sceau-${d.sceau || 1}.png`,
+      cleXP: `victoire:${source}`, xp, genre: 'sceau', detail: `de ${auteur}`, source, image: `kromadex-sceau${d.sceau || 1}.svg`,
     });
   }
   // Titre exclusif créé par la personne qui a lancé l'épreuve

@@ -23,7 +23,8 @@ export async function GET(req) {
            COALESCE((SELECT json_agg(json_build_object('case', c.case_no, 'page', c.page_id, 'valide', c.valide,
                                                        'img_size', (SELECT OCTET_LENGTH(p.image_b64) FROM pages p WHERE p.id = c.page_id)))
                      FROM bingo_cases c WHERE c.bingo_id = b.id AND c.user_id = ${profil.id}), '[]') AS cochees,
-           EXISTS (SELECT 1 FROM bingo_inscriptions i WHERE i.bingo_id = b.id AND i.user_id = ${profil.id}) AS inscrit
+           EXISTS (SELECT 1 FROM bingo_inscriptions i WHERE i.bingo_id = b.id AND i.user_id = ${profil.id}) AS inscrit,
+           (SELECT count(*)::int FROM bingo_inscriptions i WHERE i.bingo_id = b.id) AS participants
     FROM bingos b
     WHERE ${gestion}
        OR (b.categorie = ANY(${categories}) AND b.debut <= (now() AT TIME ZONE 'America/Toronto')::date AND COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) >= (now() AT TIME ZONE 'America/Toronto')::date)

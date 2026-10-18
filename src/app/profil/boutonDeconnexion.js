@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 
-// Déconnexion, placée dans le profil
+// Déconnexion : bouton corail pleine largeur, tout en bas du profil
 export default function BoutonDeconnexion() {
   const r = useRouter();
   async function sortir() {
@@ -11,8 +11,9 @@ export default function BoutonDeconnexion() {
     r.refresh();
   }
   return (
-    <button type="button" className="btn profil-acces-lien" onClick={sortir}>
-      <LogOut size={22} aria-hidden="true" />
+    <button type="button" className="btn btn-corail" onClick={sortir}
+      style={{ display: 'flex', width: '100%', minHeight: '52px', boxSizing: 'border-box', gap: '8px', fontWeight: 700, marginBottom: 'var(--espace-3)' }}>
+      <LogOut size={20} aria-hidden="true" />
       <span>Déconnexion</span>
     </button>
   );

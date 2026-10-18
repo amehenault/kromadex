@@ -5,9 +5,12 @@
 //    occupée par la photo. Le centre est vide sur environ 47 % (pierres) et 54 % (vigne) ; la photo est un peu
 //    plus grande pour passer sous les ornements, qui sont dessinés par-dessus.
 export const CADRES = {
-  relique: { nom: 'Cadre de la relique', anneau: ['#d4a017', '#d4a017'] },
-  pionnier: { nom: 'Cadre de Pionnière et Pionnier : pierres', image: '/pionniers/kromadex-pionnier-cadre1.svg', photo: 0.56 },
-  pionnier2: { nom: 'Cadre de Pionnière et Pionnier : vigne', image: '/pionniers/kromadex-pionnier-cadre2.svg', photo: 0.62 },
+  relique: { nom: 'Cadre de la relique', anneau: ['#d4a017', '#d4a017'],
+    condition: 'Compléter une relique : réunir 4 fragments de la même collection en gagnant des épreuves des Sentinelles.' },
+  pionnier: { nom: 'Cadre de Pionnière et Pionnier : pierres', image: '/pionniers/kromadex-pionnier-cadre1.svg', photo: 0.56,
+    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière ou Pionnier.' },
+  pionnier2: { nom: 'Cadre de Pionnière et Pionnier : vigne', image: '/pionniers/kromadex-pionnier-cadre2.svg', photo: 0.62,
+    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière ou Pionnier.' },
 };
 
 // Cadres débloqués : relique complétée, Pionnière ou Pionnier (l'Invocatrice y a droit aussi)

@@ -25,7 +25,11 @@ export default async function KromadexPlus() {
         <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} />
         </Link>
-        <img src="/kromadex-plus.svg" alt="Kromadex+" style={{ height: '34px', width: 'auto', maxWidth: '70%' }} />
+        {/* Même nom que le bouton du profil : logo Kromadex+ et « Gérer l'abonnement » */}
+        <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', minWidth: 0 }}>
+          <img src="/kromadex-plus.svg" alt="Kromadex+" style={{ height: '26px', width: 'auto', maxWidth: '100%' }} />
+          <span>Gérer l’abonnement</span>
+        </h2>
       </div>
 
       {abo.plus ? (
@@ -92,7 +96,7 @@ export default async function KromadexPlus() {
             <Settings size={18} aria-hidden="true" /> Gérer l’abonnement <ExternalLink size={16} aria-hidden="true" />
           </a>
           <small style={{ display: 'block', color: 'var(--texte-secondaire)', marginTop: '6px' }}>
-            Tu as déjà payé mais Kromadex+ ne s’affiche pas ? Écris-nous dans Aide et demandes.
+            Tu as déjà payé mais Kromadex+ ne s’affiche pas ? Écris-nous dans Aide.
           </small>
         </>
       )}

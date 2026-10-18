@@ -2,34 +2,29 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X, Pencil, ImagePlus } from 'lucide-react';
-import { genererPalettes, crayonLePlusProche, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
+import { genererPalettes, crayonsPourCouleurs, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
 import { Avatar, BoutonJaime, imagePage } from '@/app/communaute/outils';
 import FicheDetail from '@/app/communaute/ficheDetail';
 import Pseudo from '@/components/Pseudo';
 import TexteErreur from '@/components/TexteErreur';
+import ChoixCouleur from '@/components/ChoixCouleur';
 
 const json = (url, method = 'GET', corps) =>
   fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: corps && JSON.stringify(corps) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
 
 const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 
-// Crayons à utiliser pour une palette : le plus proche de chaque couleur, dans les packs choisis, sans doublon
+// Crayons à utiliser pour une palette : pour chaque couleur, le crayon le plus proche des packs choisis
+// qui n'est pas déjà pris. On garde ainsi autant de crayons que de couleurs demandées (6 couleurs = 6 crayons) ;
+// un crayon ne se répète que si les packs n'en ont pas assez.
 function codesPour(couleurs, packs, crayons) {
-  const dispo = crayons.filter((c) => packs.includes(c.pack));
-  if (!dispo.length) return [];
-  const vus = new Set();
-  return couleurs.map((hex) => crayonLePlusProche(hex, dispo)).filter((c) => {
-    const cle = `${c.pack}:${c.code || c.nom}`;
-    if (vus.has(cle)) return false;
-    vus.add(cle);
-    return true;
-  }).map((c) => ({ hex: c.hex, code: c.code || '', nom: c.nom || '' }));
+  return crayonsPourCouleurs(couleurs, crayons.filter((c) => packs.includes(c.pack)));
 }
 
-// Une suggestion dans des packs précis : chaque couleur devient le crayon le plus proche (une seule fois chaque crayon)
+// Une suggestion dans des packs précis : chaque couleur devient le crayon le plus proche (même nombre de couleurs)
 function ajusterAuxPacks(palette, packs, crayons) {
   const codes = codesPour(palette.couleurs, packs, crayons);
-  return codes.length >= MIN_COULEURS ? { ...palette, couleurs: codes.map((c) => c.hex) } : palette;
+  return codes.length ? { ...palette, couleurs: codes.map((c) => c.hex) } : palette;
 }
 
 // Palettes de couleurs (Cozy colo) : suggestions, mes palettes et palettes partagées par la communauté
@@ -37,7 +32,7 @@ export default function Palettes() {
   const [onglet, setOnglet] = useState('suggestions');
   const [crayons, setCrayons] = useState([]);
   const [packs, setPacks] = useState([]);
-  const [packsChoisis, setPacksChoisis] = useState([]); // [] = sans pack précis
+  const [packsChoisis, setPacksChoisis] = useState([]); // [] = sans coffrets de crayons
   const [nombre, setNombre] = useState(5);
   const [suggestions, setSuggestions] = useState([]);
   const [mes, setMes] = useState([]);
@@ -46,6 +41,7 @@ export default function Palettes() {
   const [creation, setCreation] = useState(null); // { id?, nom, couleurs, packs, partagee? }
   const [erreurCreation, setErreurCreation] = useState('');
   const [fiche, setFiche] = useState(null);
+  const [couleurOuverte, setCouleurOuverte] = useState(null); // index de la couleur de la palette en cours de modification
 
   async function chargerMes() { const r = await json('/api/palettes?vue=mes'); if (r.ok) setMes(r.palettes || []); }
   async function chargerCommunaute() { const r = await json('/api/palettes?vue=communaute'); if (r.ok) setCommunaute(r.palettes || []); }
@@ -111,13 +107,13 @@ export default function Palettes() {
   );
   const nomsDe = (ids) => ids.map((id) => packs.find((p) => p.id === id)).filter(Boolean).map(nomPack);
 
-  // Choix des packs de crayons : aucun = sans pack précis
+  // Choix des packs de crayons : aucun = sans coffrets de crayons
   const ChoixPacks = ({ valeur, onChange }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <b>Pack de crayons à utiliser</b>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         <button type="button" className={!valeur.length ? 'btn' : 'btn alt'} aria-pressed={!valeur.length} onClick={() => onChange([])}
-          style={{ minHeight: '44px', fontSize: '0.85rem', padding: '6px 10px' }}>Sans pack précis</button>
+          style={{ minHeight: '44px', fontSize: '0.85rem', padding: '6px 10px' }}>Sans coffrets de crayons</button>
         {packs.map((p) => {
           const actif = valeur.includes(p.id);
           return (
@@ -131,7 +127,7 @@ export default function Palettes() {
       </div>
       {!packs.length && (
         <small style={{ color: 'var(--texte-secondaire)' }}>
-          Ajoute tes coffrets dans <Link href="/profil/collection">Mes coffrets de crayons</Link> pour générer une palette avec tes crayons.
+          Ajoute tes coffrets dans <Link href="/profil/collection">Ma collection de crayons</Link> pour générer une palette avec tes crayons.
         </small>
       )}
     </div>
@@ -289,9 +285,8 @@ export default function Palettes() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>
               {creation.couleurs.map((c, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                  <input type="color" value={c} aria-label={`Couleur ${i + 1}`}
-                    onChange={(e) => setCreation({ ...creation, couleurs: creation.couleurs.map((x, j) => (j === i ? e.target.value.toUpperCase() : x)) })}
-                    style={{ width: '100%', height: '48px', padding: 0, border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-s)' }} />
+                  <button type="button" aria-label={`Changer la couleur ${i + 1} (${c})`} onClick={() => setCouleurOuverte(i)}
+                    style={{ width: '100%', height: '48px', padding: 0, background: c, border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-s)', cursor: 'pointer' }} />
                   {creation.couleurs.length > MIN_COULEURS && (
                     <button type="button" aria-label={`Retirer la couleur ${i + 1}`} onClick={() => setCreation({ ...creation, couleurs: creation.couleurs.filter((_, j) => j !== i) })}
                       style={{ border: 'none', background: 'transparent', cursor: 'pointer', minHeight: '44px', minWidth: '44px', color: 'var(--texte-secondaire)' }}>
@@ -323,6 +318,15 @@ export default function Palettes() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Changer une couleur : les crayons des coffrets choisis, ou une palette libre (nuance et code hex) */}
+      {creation && couleurOuverte !== null && creation.couleurs[couleurOuverte] && (
+        <ChoixCouleur valeur={creation.couleurs[couleurOuverte]}
+          crayons={creation.packs.length ? crayons.filter((c) => creation.packs.includes(c.pack)) : []}
+          packs={packs.filter((p) => creation.packs.includes(p.id)).map((p) => ({ id: p.id, nom: nomPack(p) }))}
+          onChoisir={(hex) => { setCreation({ ...creation, couleurs: creation.couleurs.map((x, j) => (j === couleurOuverte ? hex : x)) }); setCouleurOuverte(null); }}
+          onFermer={() => setCouleurOuverte(null)} />
       )}
 
       {fiche && <FicheDetail id={fiche} onFermer={() => setFiche(null)} />}

@@ -220,16 +220,16 @@ export default async function StatistiquesPage() {
         <small style={petit}>Tout ce que tu as en cours, au même endroit : touche une ligne pour y aller.</small>
         {rienEnCours && <small style={petit}>Rien en cours pour l’instant. Lance-toi dans une épreuve, un bingo, une aventure, un combat ou fais tourner la Roue du Destin !</small>}
         {defis.map((d) => (
-          <Link key={d.id} href="/defis" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+          <Link key={d.id} href="/defis" style={ligneResume}>
             <Trophy size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
-            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.titre}</span>
+            <span style={texteResume}>Épreuve · {d.titre}</span>
             <small style={petit}>{d.envoye ? 'Coloriage envoyé' : 'Coloriage à envoyer'}</small>
           </Link>
         ))}
         {bingos.map((b) => (
-          <Link key={b.id} href="/defis" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+          <Link key={b.id} href="/defis" style={ligneResume}>
             <Grid3x3 size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
-            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.titre}</span>
+            <span style={texteResume}>Bingo · {b.titre.replace(/^bingo\s*[:·-]?\s*/i, '') || b.titre}</span>
             <small style={petit}>{b.cochees} / {b.taille || 9} cases remplies</small>
           </Link>
         ))}

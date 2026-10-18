@@ -49,7 +49,7 @@ export async function GET() {
   return NextResponse.json({ combats });
 }
 
-// Actions : creer, accepter, refuser, annuler, soumettre, quitter
+// Actions : creer, accepter (duel), rejoindre (joute), refuser, annuler, soumettre, quitter
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -93,14 +93,12 @@ export async function POST(req) {
       prevenir('combats', { ids: [u.id] }, { titre: 'Invitation à un duel', texte: `Thème : ${theme}. Tu as 5 jours pour accepter.`, lien: '/combats' });
       return NextResponse.json({ ok: true, id: c.id });
     }
-    // Joute : on lance l'appel avec son coloriage
-    const page = await monColoriage(b.pageId, categorie);
-    if (!page) return erreur('Choisis un de tes coloriages du bon type');
+    // Joute : on lance l'appel sans coloriage ; la personne qui la crée a le même délai que les autres pour soumettre le sien
     const [c] = await sql`
       INSERT INTO combats (genre, createur, categorie, theme_type, theme, statut, soumission_fin, places)
       VALUES ('joute', ${moi}, ${categorie}, ${themeType}, ${theme}, 'ouvert', now() + make_interval(days => ${COMBATS.joursSoumission}), ${places})
       RETURNING id`;
-    await sql`INSERT INTO combat_participants (combat_id, user_id, page_id, soumis_le) VALUES (${c.id}, ${moi}, ${page.id}, now())`;
+    await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi})`;
     return NextResponse.json({ ok: true, id: c.id });
   }
 
@@ -116,6 +114,18 @@ export async function POST(req) {
     const maj = await sql`UPDATE combats SET statut = 'soumission', soumission_fin = now() + make_interval(days => ${COMBATS.joursSoumission})
       WHERE id = ${c.id} AND statut = 'invitation' RETURNING id`;
     if (!maj.length) return erreur('Ce duel n’est plus en attente', 409);
+    await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi}) ON CONFLICT DO NOTHING`;
+    return NextResponse.json({ ok: true });
+  }
+  // Joute : accepter l'appel sans coloriage ; la joute est enregistrée dans « Mes combats » et le coloriage
+  // se soumet ensuite, avant la date limite de la joute
+  if (b.action === 'rejoindre') {
+    if (c.genre !== 'joute' || c.statut !== 'ouvert') return erreur('Cette joute n’accepte plus de coloristes', 403);
+    if (moiDedans) return NextResponse.json({ ok: true });
+    const [{ n }] = await sql`SELECT count(*)::int AS n FROM combat_participants WHERE combat_id = ${c.id}`;
+    if (n >= (c.places || COMBATS.maxJoute)) return erreur('Cette joute est complète', 409);
+    const limite = await verifierLimite(moi, 'combats', { combatId: c.id });
+    if (limite) return limite;
     await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true });
   }

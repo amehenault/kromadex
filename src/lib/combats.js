@@ -6,7 +6,8 @@ import { COMBATS, XP_COMBATS, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE, TITRE_EXPE
 
 // Cycle d'un combat
 //  duel  : invitation (5 jours pour accepter) -> soumission (12 jours après la création) -> verdict (5 jours) -> terminé
-//  joute : ouvert (12 jours pour que les coloristes soumettent ; 2, 3 ou 4 places choisies à la création) -> verdict (5 jours) -> terminé
+//  joute : ouvert (on la crée ou on l'accepte sans coloriage, puis chaque coloriste, la créatrice ou le créateur compris,
+//          a jusqu'à la date limite de la joute pour soumettre le sien ; 2, 3 ou 4 places) -> verdict (5 jours) -> terminé
 //  Un combat sans tous ses coloriages à temps est annulé.
 
 async function terminer(c) {

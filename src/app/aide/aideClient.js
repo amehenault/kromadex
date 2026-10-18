@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send, PlayCircle } from 'lucide-react';
-import { TYPES_DEMANDE, nomType, nomStatut } from '@/lib/demandes';
+import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send, PlayCircle, Info } from 'lucide-react';
+import { TYPES_DEMANDE, nomType, nomStatut, JOURS_ARCHIVES } from '@/lib/demandes';
 
 const ICONES = { question: HelpCircle, bug: Bug, tome: BookOpen, crayons: Palette, fonctionnalite: Lightbulb };
 const AIDE_TEXTE = {
@@ -57,6 +57,14 @@ export default function AideClient() {
       <Link href="/?tutoriel=1" className="btn alt" style={{ display: 'flex', width: '100%', minHeight: '48px', marginBottom: 'var(--espace-3)', boxSizing: 'border-box' }}>
         <PlayCircle size={18} aria-hidden="true" /> Revoir la présentation de Kromadex
       </Link>
+
+      {/* Mémo : les demandes traitées ne restent pas indéfiniment */}
+      <div className="carte" role="note" style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: 'var(--espace-3)', borderLeft: '4px solid var(--couleur-secondaire)' }}>
+        <Info size={20} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '1px' }} />
+        <small style={{ fontWeight: 600 }}>
+          Une question, un bug ou une demande marquée comme résolue, ajoutée ou refusée sera automatiquement supprimée au bout de {JOURS_ARCHIVES} jours.
+        </small>
+      </div>
 
       <form onSubmit={envoyer} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' }}>
         <b>Que veux-tu faire ?</b>

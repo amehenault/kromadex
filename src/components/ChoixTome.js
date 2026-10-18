@@ -74,7 +74,8 @@ export default function ChoixTome({ valeur, bibliotheque, onChange }) {
 
           {groupes.map(([titre, liste]) => (
             <div key={titre}>
-              <small style={{ display: 'block', padding: '8px 12px 2px', fontWeight: 700, color: 'var(--texte-secondaire)', textTransform: 'uppercase', fontSize: '0.72rem' }}>{titre}</small>
+              {/* Titres des sections (Coloriage mystère, Cozy colo…) en couleur secondaire pour bien s'y repérer */}
+              <small style={{ display: 'block', padding: '10px 12px 4px', fontWeight: 800, color: 'var(--couleur-secondaire)', textTransform: 'uppercase', fontSize: '0.75rem' }}>{titre}</small>
               {liste.map((t) => (
                 <button key={t.nom} type="button" role="option" aria-selected={t.nom === valeur} onClick={() => choisir(t.nom)} style={ligne(t.nom === valeur)}>
                   <span style={{ flex: 1, minWidth: 0 }}>{t.nom}</span>

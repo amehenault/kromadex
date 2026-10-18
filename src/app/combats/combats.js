@@ -27,7 +27,7 @@ export default function Combats({ inviter, integre }) {
   const [combats, setCombats] = useState(null);
   const [abonnements, setAbonnements] = useState([]);
   const [form, setForm] = useState(inviter ? { genre: 'duel', categorie: 'mystere', themeType: 'couleur', theme: '', inviteId: inviter } : null);
-  const [choix, setChoix] = useState(null); // { combat } ou { creer: true }
+  const [choix, setChoix] = useState(null); // { combat } : choisir le coloriage à soumettre
   const [verdict, setVerdict] = useState(null);
   const [erreur, setErreur] = useState('');
 
@@ -47,14 +47,12 @@ export default function Combats({ inviter, integre }) {
     setChoix(null); setForm(null); charger();
     return true;
   }
-  // Joute : on lance l'appel avec son coloriage ; duel : on invite d'abord
+  // Duel : on invite d'abord ; joute : on lance l'appel, le coloriage se soumet ensuite (même délai pour tout le monde)
   function creer() {
-    if (form.genre === 'joute') setChoix({ creer: true });
-    else action({ action: 'creer', ...form });
+    action({ action: 'creer', ...form });
   }
   function choisir(f) {
-    if (choix.creer) action({ action: 'creer', ...form, pageId: f.id });
-    else action({ action: 'soumettre', id: choix.combat.id, pageId: f.id });
+    action({ action: 'soumettre', id: choix.combat.id, pageId: f.id });
   }
 
   const petit = { minHeight: '44px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' };
@@ -106,6 +104,9 @@ export default function Combats({ inviter, integre }) {
         )}
         {c.je_participe && ['soumission', 'ouvert'].includes(c.statut) && c.ma_page && (
           <small style={{ fontWeight: 700 }}>Ton coloriage est soumis{c.genre === 'duel' ? ' : le verdict commence dès que les deux coloriages sont là.' : '.'}</small>
+        )}
+        {c.je_participe && ['soumission', 'ouvert'].includes(c.statut) && !c.ma_page && (
+          <small style={{ fontWeight: 700, color: 'var(--danger)' }}>Coloriage à soumettre avant la date limite, sinon tu ne participes pas au verdict.</small>
         )}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {boutons}
@@ -183,7 +184,7 @@ export default function Combats({ inviter, integre }) {
           {titre('Joutes ouvertes')}
           {!joutes.length && <small style={{ color: 'var(--texte-secondaire)' }}>Aucune joute ouverte pour l’instant.</small>}
           {joutes.map((c) => carte(c, [
-            <button key="j" type="button" className="btn" style={petit} onClick={() => setChoix({ combat: c })}><Swords size={16} aria-hidden="true" /> Relever le défi</button>,
+            <button key="j" type="button" className="btn" style={petit} onClick={() => action({ action: 'rejoindre', id: c.id })}><Swords size={16} aria-hidden="true" /> Accepter la joute</button>,
           ]))}
           {termines.length > 0 && <>{titre('Terminés')}{termines.map((c) => carte(c))}</>}
         </>
@@ -199,7 +200,7 @@ export default function Combats({ inviter, integre }) {
           <small style={{ color: 'var(--texte-secondaire)' }}>
             {form.genre === 'duel'
               ? `Tu invites une personne que tu suis et qui te suit. Elle a ${COMBATS.joursAcceptation} jours pour accepter, puis vous réalisez chacun un coloriage sur le même thème.`
-              : `Tu publies ton coloriage et tu lances un appel : les coloristes qui relèvent le défi soumettent un coloriage sur le même thème. Tout est anonyme, et le verdict commence dès que la joute est complète.`}
+              : `Tu lances un appel : les coloristes acceptent la joute, puis chaque personne, toi comprise ou compris, a ${COMBATS.joursSoumission} jours pour soumettre un coloriage sur le même thème. Tout est anonyme, et le verdict commence dès que tous les coloriages sont là.`}
           </small>
           <label style={champ}>Type de coloriage
             <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
@@ -233,14 +234,14 @@ export default function Combats({ inviter, integre }) {
             </label>
           )}
           <button type="button" className="btn" onClick={creer} disabled={!form.theme.trim() || (form.genre === 'duel' && !form.inviteId)} style={{ minHeight: '48px', fontWeight: 700 }}>
-            {form.genre === 'duel' ? 'Envoyer l’invitation' : 'Choisir mon coloriage'}
+            {form.genre === 'duel' ? 'Envoyer l’invitation' : 'Lancer la joute'}
           </button>
           {erreur && <small style={{ color: 'var(--danger)' }}><TexteErreur texte={erreur} /></small>}
         </Feuille>
       )}
       {choix && (
-        <ChoixColoriage type={choix.creer ? form.categorie : choix.combat.categorie} onChoisir={choisir} onFermer={() => setChoix(null)} erreur={erreur}
-          aide={`Coloriage de type ${nomType(choix.creer ? form.categorie : choix.combat.categorie)}, sur le thème « ${choix.creer ? form.theme : choix.combat.theme} ».`} />
+        <ChoixColoriage type={choix.combat.categorie} onChoisir={choisir} onFermer={() => setChoix(null)} erreur={erreur}
+          aide={`Coloriage de type ${nomType(choix.combat.categorie)}, sur le thème « ${choix.combat.theme} ».`} />
       )}
     </div>
   );

@@ -74,3 +74,17 @@ export function genererPalettes(nombre, combien = 6) {
     return { nom: `${harmonie.nom} ${ambiance.nom}`, couleurs };
   });
 }
+
+// Un crayon par couleur : le plus proche parmi ceux pas encore pris (autant de crayons que de couleurs ;
+// un crayon ne se répète que si les crayons disponibles ne suffisent pas)
+export function crayonsPourCouleurs(couleurs, dispo) {
+  if (!dispo.length) return [];
+  const pris = new Set();
+  const cle = (c) => `${c.pack}:${c.code || c.nom || c.hex}`;
+  return couleurs.map((hex) => {
+    const libres = dispo.filter((c) => !pris.has(cle(c)));
+    const c = crayonLePlusProche(hex, libres.length ? libres : dispo);
+    pris.add(cle(c));
+    return { hex: c.hex, code: c.code || '', nom: c.nom || '' };
+  });
+}

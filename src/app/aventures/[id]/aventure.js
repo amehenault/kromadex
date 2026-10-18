@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, ScrollText, Gift, KeyRound, Swords, Image as ImageIcon, Trophy } from 'lucide-react';
+import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import { FETES, NOMS_AVENTURES, DEGATS, XP_EPOPEE, XP_PROPHETIE } from '@/lib/activites';
 import TexteErreur from '@/components/TexteErreur';
+import NombreParticipants from '@/components/NombreParticipants';
 
 const ICONES = { expedition: Compass, epopee: Shield, prophetie: Sparkles };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
@@ -71,7 +72,7 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
             {c.genre === 'obligatoire' && a.parchemins > 0 && (!parchemin || elimine) && (
               <button type="button" className="btn alt" onClick={() => { setParchemin(elimine ? null : c.id); setCochees((l) => l.filter((x) => x !== c.id)); }}
                 style={{ minHeight: '44px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start' }}>
-                <ScrollText size={16} aria-hidden="true" /> {elimine ? 'Garder cette contrainte' : 'Éliminer avec un Parchemin du Destin'}
+                <img src="/inventaire/kromadex-parchemin.svg" alt="" aria-hidden="true" style={{ width: 20, height: 20 }} /> {elimine ? 'Garder cette contrainte' : 'Éliminer avec un Parchemin du Destin'}
               </button>
             )}
           </div>
@@ -183,7 +184,7 @@ export default function Aventure({ id }) {
         </small>
         {a.parchemins > 0 && (
           <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
-            <ScrollText size={16} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {a.parchemins} Parchemin{a.parchemins > 1 ? 's' : ''} du Destin disponible{a.parchemins > 1 ? 's' : ''}
+            <img src="/inventaire/kromadex-parchemin.svg" alt="" aria-hidden="true" style={{ width: 20, height: 20 }} /> {a.parchemins} Parchemin{a.parchemins > 1 ? 's' : ''} du Destin disponible{a.parchemins > 1 ? 's' : ''}
           </small>
         )}
       </div>
@@ -195,6 +196,7 @@ export default function Aventure({ id }) {
           <b>S’inscrire à {a.genre === 'expedition' ? 'l’expédition' : 'la prophétie'}</b>
           <small style={{ color: 'var(--texte-secondaire)' }}>Inscris-toi pour pouvoir soumettre tes coloriages. Ils devront venir de ta section Tomes / Livres.</small>
           <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}>S’inscrire</button>
+          <NombreParticipants n={a.participants} />
         </div>
       )}
 
@@ -222,6 +224,7 @@ export default function Aventure({ id }) {
                 chaque coloriage que tu soumettras devra venir de ta section Tomes / Livres.
               </p>
               {!terminee && <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}><Swords size={18} aria-hidden="true" /> Je m’engage dans l’épopée</button>}
+              <NombreParticipants n={a.participants} />
             </div>
           ) : (
             <>

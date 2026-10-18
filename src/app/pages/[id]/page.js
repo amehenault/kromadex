@@ -12,11 +12,17 @@ export default async function Fiche({ params, searchParams }) {
   if (!user) redirect('/login');
 
   // Tomes et livres de la personne (possédés, perso ou déjà utilisés), avec leur type et leur nombre de pages
-  const [mesTomes, [moi]] = await Promise.all([
+  // et les pages déjà coloriées de chacun (pour signaler un doublon)
+  const [mesTomes, [moi], faites] = await Promise.all([
     listerMesTomes(user.id),
     sql`select types_pratiques from users where id = ${user.id}`,
+    sql`select lower(tome) as t, page_no, id from pages where user_id = ${user.id} and tome <> '' and page_no <> ''`,
   ]);
-  const bibliotheque = mesTomes.map((t) => ({ nom: t.nom, type: t.type, total: t.total || null }));
+  const bibliotheque = mesTomes.map((t) => ({
+    nom: t.nom, type: t.type, total: t.total || null,
+    // Pages déjà faites (sans compter le coloriage qu'on modifie)
+    faites: [...new Set(faites.filter((x) => x.t === t.nom.toLowerCase() && String(x.id) !== String(id)).map((x) => String(x.page_no).trim()))],
+  }));
 
   let page = null;
   if (id !== 'new') {

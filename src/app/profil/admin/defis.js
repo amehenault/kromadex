@@ -7,6 +7,7 @@ import { formaterInstant } from '@/lib/temps';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import Pseudo from '@/components/Pseudo';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
+import { NUMEROS_SCEAUX, imageSceau } from '@/lib/recompenses';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef.fe' };
@@ -116,11 +117,20 @@ export default function Defis({ role, monId }) {
           </label>
         )}
         {genre === 'cheffe' && (
-          <label style={champ}>Sceau remis à la personne gagnante
-            <select value={form.sceau} onChange={(e) => setForm({ ...form, sceau: Number(e.target.value) })}>
-              {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Sceau {n}</option>)}
-            </select>
-          </label>
+          <fieldset style={{ ...champ, border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            <legend style={{ padding: 0, marginBottom: '6px' }}>Sceau remis à la personne gagnante</legend>
+            {/* Les 6 sceaux de chef.fe (public/recompenses-activites/epreuve/chef) : on touche celui qu'on veut remettre */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
+              {NUMEROS_SCEAUX.map((n) => (
+                <button key={n} type="button" onClick={() => setForm({ ...form, sceau: n })} aria-pressed={form.sceau === n}
+                  aria-label={`Sceau ${n}`} className={form.sceau === n ? 'btn' : 'btn alt'}
+                  style={{ flexDirection: 'column', gap: '4px', padding: '8px', minHeight: '88px', minWidth: 0 }}>
+                  <img src={imageSceau(n)} alt="" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
+                  <small style={{ fontSize: '0.75rem' }}>Sceau {n}</small>
+                </button>
+              ))}
+            </div>
+          </fieldset>
         )}
         <div style={actions}>
           <button type="submit" className="btn" disabled={!form.titre.trim() || (estAdmin && !form.debut) || cheffeBloquee} style={{ flex: 1, minHeight: '44px' }}>

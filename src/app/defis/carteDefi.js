@@ -10,6 +10,7 @@ import Verdict from '@/components/Verdict';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import { XP_EPREUVES, XP_GROUPE } from '@/lib/activites';
 import Pseudo from '@/components/Pseudo';
+import NombreParticipants from '@/components/NombreParticipants';
 
 const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de chef.fe', groupe: 'Épreuve de groupe' };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
@@ -94,7 +95,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
       </small>
       <small style={{ color: 'var(--texte-secondaire)' }}>
         {d.debut && d.fin ? `Du ${jour(d.debut)} au ${jour(d.fin)}${termine ? ' · terminée' : ''} · ` : ''}
-        {d.participants} participant{d.participants > 1 ? 's' : ''} · {groupe ? d.envois : d.coloriages} coloriage{(groupe ? d.envois : d.coloriages) > 1 ? 's' : ''}
+        {groupe ? d.envois : d.coloriages} coloriage{(groupe ? d.envois : d.coloriages) > 1 ? 's' : ''}
       </small>
       {!termine && <TempsRestant fin={d.fin_instant} />}
 
@@ -119,7 +120,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
         <small style={{ fontWeight: 700, color: 'var(--btn)' }}>{d.objectif && d.envois >= d.objectif ? 'Objectif atteint, bravo à tout le monde !' : 'Épreuve terminée'}</small>
       )}
 
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
         {!d.je_participe && !termine && <button type="button" className="btn" style={petit} onClick={participer}>S’inscrire</button>}
         {peutEnvoyer && (
           <button type="button" className="btn" style={petit} onClick={() => setChoix(true)}>
@@ -145,6 +146,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
           </>
         )}
       </div>
+      <NombreParticipants n={d.participants} />
       {erreur && !choix && <small style={{ color: 'var(--danger)' }}>{erreur}</small>}
 
       {verdict && <Verdict activite={`epreuve:${d.id}`} signalerDefi={d.id} />}

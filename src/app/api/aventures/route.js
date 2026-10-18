@@ -39,6 +39,7 @@ async function vueMembre(a, userId) {
     enigme: inscription ? enigme : '',
     etapes,
     inscrit: !!inscription,
+    participants: (await sql`SELECT count(*)::int AS n FROM aventure_inscriptions WHERE aventure_id = ${a.id}`)[0].n,
     enigmeResolue: !!inscription?.enigme_ok,
     mesSoumissions: mes,
     epopee,

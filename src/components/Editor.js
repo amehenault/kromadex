@@ -198,7 +198,7 @@ function Groupe({ g, maj, retirer, enExport }) {
         <button type="button" className="retirer" aria-label="Retirer la sous-catégorie" onClick={retirer}><X size={14} aria-hidden="true" /></button>
       </div>
 
-      <div className="grille-codes-deux-colonnes">
+      <div className="grille-codes-deux-colonnes" style={enExport ? { flexDirection: 'row' } : undefined}>
         <div className="colonne-codes">
           {codesGauche.map((r, i) => RendreLigne(r, i))}
         </div>
@@ -233,12 +233,31 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [enExport, setEnExport] = useState(false);
+  // Logo de Kromadex déjà converti en image intégrée : html-to-image n'a rien à télécharger pendant l'export,
+  // donc le logo apparaît toujours en bas de l'image
+  const [logoExport, setLogoExport] = useState('/logo.svg');
+  useEffect(() => {
+    fetch('/logo.svg').then((r) => r.text())
+      .then((svg) => setLogoExport(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`))
+      .catch(() => {});
+  }, []);
 
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   // Changer de tome vide la page si elle dépasse le nombre de pages du nouveau tome
   function choisirTome(nom) {
     const t = bibliotheque.find((x) => x.nom.toLowerCase() === nom.toLowerCase());
     setF((s) => ({ ...s, tome: nom, page_no: t?.total && Number(s.page_no) > t.total ? '' : s.page_no }));
+  }
+
+  // Pages déjà coloriées du tome choisi : on les signale dans la liste et on demande avant de créer un doublon
+  const pagesFaites = new Set(tomeChoisi?.faites || []);
+  function choisirPage(n) {
+    const v = String(n).trim();
+    if (v && pagesFaites.has(v) && !confirm('Tu as déjà fait cette page, es-tu sûr.e de vouloir créer un doublon ?')) {
+      if (!tomeChoisi?.total) set('page_no', ''); // la liste garde la page d'avant
+      return;
+    }
+    set('page_no', v);
   }
 
   async function choisir(e) {
@@ -258,6 +277,8 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     await new Promise((resolve) => setTimeout(resolve, 200));
     try {
       if (!pageRef.current) throw new Error('Copie introuvable');
+      // Attendre que la photo et le logo de la copie soient chargés avant de faire l'image
+      await Promise.all([...pageRef.current.querySelectorAll('img')].map((i) => (i.decode ? i.decode().catch(() => {}) : null)));
       const dataUrl = await toPng(pageRef.current, { cacheBust: true, pixelRatio: 2 });
       const link = document.createElement('a');
       link.download = `${f.title || 'coloriage'}-kromadex.png`;
@@ -345,12 +366,15 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
                 {/* Page : liste des pages quand le nombre de pages du tome est connu, sinon champ libre */}
                 <label>Page
                   {tomeChoisi?.total ? (
-                    <select value={f.page_no} onChange={(e) => set('page_no', e.target.value)}>
+                    <select value={f.page_no} onChange={(e) => choisirPage(e.target.value)}>
                       <option value="">Choisir</option>
-                      {Array.from({ length: tomeChoisi.total }, (_, i) => String(i + 1)).map((n) => <option key={n} value={n}>{n}</option>)}
+                      {Array.from({ length: tomeChoisi.total }, (_, i) => String(i + 1)).map((n) => (
+                        <option key={n} value={n}>{pagesFaites.has(n) ? `${n} - Page déjà faite` : n}</option>
+                      ))}
                     </select>
                   ) : (
-                    <input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)} />
+                    <input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)}
+                      onBlur={(e) => e.target.value && choisirPage(e.target.value)} />
                   )}
                 </label>
               </div>
@@ -452,7 +476,8 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
           <div ref={pageRef} className="zone-export-conteneur mode-export" style={{ background: 'var(--arriere-plan, #e4f0ec)' }}>
             {contenu(true)}
             <div className="pied-export">
-              <img src="/logo.svg" alt="" />
+              {/* Le logo (4228 x 732) a une taille fixe : sans largeur ni hauteur propres, il pouvait disparaître de l'image */}
+              <img src={logoExport} alt="Kromadex" width={162} height={28} style={{ width: '162px', height: '28px' }} />
               <span>app.kromadex.com</span>
             </div>
           </div>

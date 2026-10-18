@@ -4,13 +4,13 @@ import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { typesVisibles, faitCozy } from '@/lib/typesColoriage';
+import { typesVisibles, faitCozy, nomMesTomes, nomCollectionTomes } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
 import { CADRES, cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
-import { badgePionnier } from '@/lib/recompenses';
+import { badgePionnier, OBJETS } from '@/lib/recompenses';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import { listerMesTomes } from '@/lib/mesTomes';
@@ -24,13 +24,13 @@ import {
   Shield,
   Trophy,
   HelpCircle,
-  Users,
   BarChart3,
   Mail,
   Images,
   Map,
   Swords,
   ChevronRight,
+  Eye,
   TrendingUp,
   Paintbrush,
   Compass,
@@ -40,7 +40,8 @@ import {
 import { recompensesDe } from '@/lib/recompensesServeur';
 import { rappelsDuJour } from '@/lib/planification';
 import MesRecompenses from '@/components/MesRecompenses';
-import Inventaire, { OBJETS } from '@/components/Inventaire';
+import Inventaire from '@/components/Inventaire';
+import BoutonDeconnexion from './boutonDeconnexion';
 import { verifierQuetes } from '@/lib/quetes';
 import { quetesDestin } from '@/lib/quetesDestin';
 import QuetesDuDestin from '@/components/QuetesDuDestin';
@@ -299,6 +300,12 @@ export default async function ProfilPage() {
               </span>
             </small>
           )}
+
+          {/* Profil public (abonnés, coloriages publiés) */}
+          <Link href={`/membre/${authUser.id}`} className="btn alt"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', marginTop: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
+            <Eye size={16} aria-hidden="true" /> Voir mon profil
+          </Link>
         </div>
       </div>
 
@@ -400,7 +407,9 @@ export default async function ProfilPage() {
         </div>
       </div>
 
-      <MesRecompenses recompenses={[...badgePionnier(profile), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
+      <MesRecompenses recompenses={[...badgePionnier(profile), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]}
+        epingles={profile?.badges_epingles || []} modifiable
+        vide="Tes badges, reliques et sceaux d’épreuves, de combats et d’aventures apparaîtront ici. Tu pourras en épingler 6 ; sinon les 6 plus récents s’affichent." />
 
       <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} />
 
@@ -435,7 +444,8 @@ export default async function ProfilPage() {
       {/* Pages choisies par la Roue du Destin, à colorier */}
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
 
-      {/* Accès rapides */}
+      {/* Accès rapides : Activités à venir, Statistiques, tomes, collections et palettes en premier.
+          Chaque page ouverte porte exactement le même nom que son bouton. */}
       <div className="profil-acces">
         {['admin', 'modo'].includes(role) && (
           <Link
@@ -452,12 +462,37 @@ export default async function ProfilPage() {
         )}
 
         {role === 'admin' && (
-          <Link
-            href="/activites-a-venir"
-            className="btn profil-acces-lien"
-          >
+          <Link href="/activites-a-venir" className="btn profil-acces-lien">
             <CalendarClock size={22} aria-hidden="true" />
             <span>Activités à venir</span>
+          </Link>
+        )}
+
+        <Link href="/statistiques" className="btn profil-acces-lien">
+          <BarChart3 size={22} aria-hidden="true" />
+          <span>Mes statistiques</span>
+        </Link>
+
+        <Link href="/profil/progression" className="btn profil-acces-lien">
+          <TrendingUp size={22} aria-hidden="true" />
+          <span>{nomMesTomes(visibles)}</span>
+        </Link>
+
+        <Link href="/profil/tomes" className="btn profil-acces-lien">
+          <BookOpen size={22} aria-hidden="true" />
+          <span>{nomCollectionTomes(visibles)}</span>
+        </Link>
+
+        <Link href="/profil/collection" className="btn profil-acces-lien">
+          <Palette size={22} aria-hidden="true" />
+          <span>Ma collection de crayons</span>
+        </Link>
+
+        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
+        {faitCozy(profile?.types_pratiques) && (
+          <Link href="/palettes" className="btn profil-acces-lien">
+            <Paintbrush size={22} aria-hidden="true" />
+            <span>Palettes de couleurs</span>
           </Link>
         )}
 
@@ -494,82 +529,27 @@ export default async function ProfilPage() {
             className="btn profil-acces-lien"
           >
             <HelpCircle size={22} aria-hidden="true" />
-            <span>Aide et demandes</span>
+            <span>Aide</span>
             {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 
-        <Link
-          href="/profil/progression"
-          className="btn profil-acces-lien"
-        >
-          <TrendingUp size={22} aria-hidden="true" />
-          <span>{voitMystere && voitCozy ? 'Mes tomes et mes livres' : voitCozy ? 'Mes livres' : 'Mes tomes'}</span>
-        </Link>
-
-        <Link
-          href="/coloriages"
-          className="btn profil-acces-lien"
-        >
+        <Link href="/coloriages" className="btn profil-acces-lien">
           <Images size={22} aria-hidden="true" />
           <span>Mes coloriages</span>
         </Link>
 
-        <Link
-          href="/profil/collection"
-          className="btn profil-acces-lien"
-        >
-          <Palette size={22} aria-hidden="true" />
-          <span>Ma collection de crayons</span>
-        </Link>
-
-        <Link
-          href="/profil/tomes"
-          className="btn profil-acces-lien"
-        >
-          <BookOpen size={22} aria-hidden="true" />
-          <span>{voitMystere && voitCozy ? 'Ajouter un tome ou un livre' : voitCozy ? 'Ajouter un livre' : 'Ajouter un tome'}</span>
-        </Link>
-
-        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
-        {faitCozy(profile?.types_pratiques) && (
-          <Link
-            href="/palettes"
-            className="btn profil-acces-lien"
-          >
-            <Paintbrush size={22} aria-hidden="true" />
-            <span>Palettes de couleurs</span>
-          </Link>
-        )}
-
-        <Link
-          href="/statistiques"
-          className="btn profil-acces-lien"
-        >
-          <BarChart3 size={22} aria-hidden="true" />
-          <span>Mes statistiques</span>
-        </Link>
-
-        <Link
-          href="/quetes"
-          className="btn profil-acces-lien"
-        >
+        <Link href="/quetes" className="btn profil-acces-lien">
           <Map size={22} aria-hidden="true" />
           <span>Quêtes</span>
         </Link>
 
-        <Link
-          href="/aventures"
-          className="btn profil-acces-lien"
-        >
+        <Link href="/aventures" className="btn profil-acces-lien">
           <Compass size={22} aria-hidden="true" />
           <span>Aventures</span>
         </Link>
 
-        <Link
-          href="/combats"
-          className="btn profil-acces-lien"
-        >
+        <Link href="/combats" className="btn profil-acces-lien">
           <Swords size={22} aria-hidden="true" />
           <span>Combats</span>
         </Link>
@@ -583,24 +563,10 @@ export default async function ProfilPage() {
           <span>Missives</span>
           {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>}
-
-        <Link
-          href={`/membre/${authUser.id}`}
-          className="btn profil-acces-lien"
-        >
-          <Users size={22} aria-hidden="true" />
-          <span>Mon profil public et mes abonnés</span>
-        </Link>
-
       </div>
 
-      {/* Supprimer son compte (dans Paramètres, avec confirmation et mot de passe) */}
-      {role !== 'admin' && (
-        <Link href="/parametres#supprimer-compte"
-          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '44px', color: 'var(--danger)', fontSize: '0.85rem', fontWeight: 600 }}>
-          Supprimer mon compte
-        </Link>
-      )}
+      {/* Déconnexion : bouton corail pleine largeur, tout en bas du profil */}
+      <BoutonDeconnexion />
     </div>
   );
 }

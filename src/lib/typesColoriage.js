@@ -31,3 +31,16 @@ export function nomBibliotheque(visibles) {
   if (cozy && !mystere) return 'Mes livres';
   return 'Mes tomes et livres';
 }
+
+// Noms des boutons du profil et des pages qu'ils ouvrent (toujours identiques) :
+//  « Mes tomes et mes livres » : la progression ; « Collection de tomes et de livres » : le catalogue où on ajoute ses tomes
+export function nomMesTomes(visibles) {
+  const mystere = visibles.includes('mystere');
+  const cozy = visibles.includes('cozy');
+  return mystere && cozy ? 'Mes tomes et mes livres' : cozy ? 'Mes livres' : 'Mes tomes';
+}
+export function nomCollectionTomes(visibles) {
+  const mystere = visibles.includes('mystere');
+  const cozy = visibles.includes('cozy');
+  return mystere && cozy ? 'Collection de tomes et de livres' : cozy ? 'Collection de livres' : 'Collection de tomes';
+}

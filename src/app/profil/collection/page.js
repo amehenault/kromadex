@@ -206,7 +206,7 @@ export default function CollectionCrayonsPage() {
           <ArrowLeft size={16} aria-hidden="true" />
         </Link>
         <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-          <Palette size={22} aria-hidden="true" /> Mes coffrets de crayons ({marquesAffichees.length})
+          <Palette size={22} aria-hidden="true" /> Ma collection de crayons
         </h2>
       </div>
 

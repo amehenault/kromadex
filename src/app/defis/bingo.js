@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { Check, Clock, XCircle, Image as ImageIcon, Trash2, Gift } from 'lucide-react';
-import { LIGNES_BINGO, nomCategorieBingo } from '@/lib/bingos';
+import { Check, Clock, XCircle, Image as ImageIcon, Trash2, Gift, Info } from 'lucide-react';
+import { LIGNES_BINGO, nomCategorieBingo, apparenceCase, imageCaseBingo } from '@/lib/bingos';
 import { XP_BINGO } from '@/lib/activites';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
@@ -26,6 +26,7 @@ export default function Bingo({ bingo }) {
   const [choix, setChoix] = useState(false);
   const [erreur, setErreur] = useState('');
   const [inscrit, setInscrit] = useState(Boolean(bingo.inscrit));
+  const [conditions, setConditions] = useState(null); // case dont on lit seulement les conditions
   const [participants, setParticipants] = useState(bingo.participants || 0);
 
   // S'inscrire au bingo (1 bingo par mois en version gratuite, les 2 avec Kromadex+)
@@ -88,21 +89,43 @@ export default function Bingo({ bingo }) {
         {bingo.cases.map((tache, i) => {
           const x = cases[i];
           const e = etatCase(x);
+          // Fond de la case : mon coloriage s'il y en a un, sinon la couleur ou l'image choisie à la création.
+          // Avec un fond, le texte est toujours posé sur un rectangle pour rester lisible.
+          const im = (bingo.images || []).find((y) => y.case === i);
+          const a = apparenceCase({ ...(bingo.styles?.[i] || {}), image: x ? image(x) : im ? imageCaseBingo(bingo.id, i, im.v) : '' });
           return (
-            <button key={i} type="button" onClick={() => { setOuverte(i); setErreur(''); }} aria-label={`${tache}${e ? `, ${ETAT[e].texte}` : ''}`}
-              style={{
-                position: 'relative', aspectRatio: '1 / 1', borderRadius: 'var(--rayon-m)', padding: '6px', cursor: 'pointer', minWidth: 0, overflow: 'hidden',
-                fontSize: '0.85rem', lineHeight: 1.2, wordBreak: 'break-word', fontWeight: 700, color: x ? '#ffffff' : 'var(--texte-principal)',
-                border: e === 'valide' ? '3px solid var(--btn)' : e === 'refuse' ? '3px solid var(--danger)' : '1px solid var(--bordure-carte)',
-                background: x ? `center / cover no-repeat url(${image(x)})` : 'var(--fond-carte)',
-                textShadow: x ? '0 1px 3px rgba(0,0,0,0.8)' : 'none',
-              }}>
-              {tache}
-              {e && (() => { const { Icone } = ETAT[e]; return <Icone size={18} aria-hidden="true" style={{ position: 'absolute', top: 4, right: 4, color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))' }} />; })()}
-            </button>
+            <div key={i} style={{ position: 'relative', aspectRatio: '1 / 1', minWidth: 0 }}>
+              <button type="button" onClick={() => { setOuverte(i); setErreur(''); }} aria-label={`${tache}${e ? `, ${ETAT[e].texte}` : ''}`}
+                style={{
+                  position: 'absolute', inset: 0, width: '100%', height: '100%', borderRadius: 'var(--rayon-m)', padding: '6px 6px 38px', cursor: 'pointer', overflow: 'hidden',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.85rem', lineHeight: 1.2, wordBreak: 'break-word', fontWeight: 700, color: a.couleurTexte,
+                  border: e === 'valide' ? '3px solid var(--btn)' : e === 'refuse' ? '3px solid var(--danger)' : '1px solid var(--bordure-carte)',
+                  background: a.background || 'var(--fond-carte)',
+                }}>
+                <span style={a.rectangle ? { background: a.rectangle, padding: '3px 6px', borderRadius: 'var(--rayon-s)' } : undefined}>{tache}</span>
+                {e && (() => { const { Icone } = ETAT[e]; return <Icone size={18} aria-hidden="true" style={{ position: 'absolute', top: 4, right: 4, color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))' }} />; })()}
+              </button>
+              {/* Petit bouton : seulement les conditions de cette case */}
+              <button type="button" onClick={() => setConditions(i)} aria-label={`Voir les conditions : ${tache}`}
+                style={{
+                  position: 'absolute', left: '4px', right: '4px', bottom: '4px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', padding: '3px 4px', minHeight: '28px', boxSizing: 'border-box',
+                  border: 'none', borderRadius: 'var(--rayon-s)', background: 'rgba(255, 255, 255, 0.92)', color: 'var(--noir)',
+                  fontSize: '0.64rem', fontWeight: 700, lineHeight: 1.1, textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                }}>
+                <Info size={12} aria-hidden="true" style={{ flex: '0 0 auto' }} /> <span>Voir les conditions</span>
+              </button>
+            </div>
           );
         })}
       </div>
+
+      {conditions !== null && (
+        <Feuille titre={`Conditions : ${bingo.cases[conditions]}`} onFermer={() => setConditions(null)}>
+          <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{(bingo.conditions || [])[conditions] || 'Aucune condition particulière.'}</p>
+        </Feuille>
+      )}
 
       {ouverte !== null && !choix && (
         <Feuille titre={bingo.cases[ouverte]} onFermer={() => setOuverte(null)}>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -14,6 +14,7 @@ import Demandes from './demandes';
 import MotsCles from './motsCles';
 import KromadexPlus from './kromadexPlus';
 import Lancement from './lancement';
+import Recompenses from './recompenses';
 
 // Ordre d'affichage : de gauche à droite, puis de haut en bas (3 par rangée)
 const ONGLETS = [
@@ -30,14 +31,17 @@ const ONGLETS = [
   { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
   { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
   { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
+  { cle: 'recompenses', label: 'Récompenses', icone: Award, roles: ['admin'] },
 ];
 
 export default function EspaceAdmin({ role, monId }) {
   const onglets = ONGLETS.filter((o) => o.roles.includes(role));
   const [actif, setActif] = useState(onglets[0]?.cle);
 
+  // L'espace s'ouvre toujours en haut de la page (et non à la hauteur où on était dans le profil)
   // Lien direct vers un onglet (ex. depuis Activités à venir : /profil/admin?onglet=aventures)
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const o = new URLSearchParams(window.location.search).get('onglet');
     if (onglets.some((x) => x.cle === o)) setActif(o);
   }, []);
@@ -75,6 +79,7 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'motscles' && <MotsCles />}
       {actif === 'plus' && <KromadexPlus />}
       {actif === 'lancement' && <Lancement />}
+      {actif === 'recompenses' && <Recompenses />}
     </>
   );
 }

@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Palette, Plus, Trash2, ArrowLeft, Search, ChevronRight, Check, X } from 'lucide-react';
+import CrayonsUnite from '@/components/CrayonsUnite';
+import OngletsCollections from '@/components/OngletsCollections';
 
 export default function CollectionCrayonsPage() {
   const [toutesMarques, setToutesMarques] = useState([]);
@@ -35,11 +37,11 @@ export default function CollectionCrayonsPage() {
         const setsPossedes = new Set((data.userSets || []).map(Number));
         setMesSetsIds(setsPossedes);
 
+        // Coffret ouvert au départ : le premier coffret possédé. Sans coffret, aucun n'est ouvert
+        // (avant, le premier coffret du catalogue s'affichait, avec « Retirer le pack », sans être possédé)
         if (setsPossedes.size > 0 && data.allBrands) {
           const premierSet = data.allBrands.find((b) => setsPossedes.has(Number(b.id)));
           if (premierSet) setSetActif(Number(premierSet.id));
-        } else if (data.allBrands?.length > 0) {
-          setSetActif(Number(data.allBrands[0].id));
         }
       }
     } catch (err) {
@@ -201,14 +203,8 @@ export default function CollectionCrayonsPage() {
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-4)' }}>
       
-      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} aria-hidden="true" />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-          <Palette size={22} aria-hidden="true" /> Collection de crayons
-        </h2>
-      </div>
+      {/* Collections : onglet Crayons (celui ouvert par défaut) */}
+      <OngletsCollections actif="crayons" />
 
       <div className="carte" style={{ marginBottom: 'var(--espace-4)', display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)' }}>
         <button 
@@ -253,6 +249,9 @@ export default function CollectionCrayonsPage() {
           </p>
         )}
       </div>
+
+      {/* Crayons à l'unité entrés à la main (marque, code, pastille) */}
+      <CrayonsUnite />
 
       {setActifInfo && (
         <div className="carte" style={{ marginBottom: 'var(--espace-4)' }}>

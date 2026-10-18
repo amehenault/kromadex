@@ -1,0 +1,154 @@
+[
+  {
+    "chemin": "/recompenses-activites/combat/kromadex-duel.svg",
+    "fichier": "kromadex-duel.svg",
+    "type": "Duel",
+    "octets": 20011,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau1.svg",
+    "fichier": "kromadex-sceau1.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 38665,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau2.svg",
+    "fichier": "kromadex-sceau2.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 19358,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau3.svg",
+    "fichier": "kromadex-sceau3.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 59140,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau4.svg",
+    "fichier": "kromadex-sceau4.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 25936,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau5.svg",
+    "fichier": "kromadex-sceau5.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 16764,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau6.svg",
+    "fichier": "kromadex-sceau6.svg",
+    "type": "Épreuve des chef.fes",
+    "octets": 27674,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/sentinelles/kromadex-fragment-relique.svg",
+    "fichier": "kromadex-fragment-relique.svg",
+    "type": "Épreuve des Sentinelles",
+    "octets": 13956,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/sentinelles/kromadex-relique-complete.svg",
+    "fichier": "kromadex-relique-complete.svg",
+    "type": "Épreuve des Sentinelles",
+    "octets": 22361,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/epreuve/mensuelles/kromadex-coffre-au-tresor.svg",
+    "fichier": "kromadex-coffre-au-tresor.svg",
+    "type": "Épreuve mensuelle",
+    "octets": 122142,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/inventaire/kromadex-parchemin.svg",
+    "fichier": "kromadex-parchemin.svg",
+    "type": "Inventaire",
+    "octets": 18273,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/combat/kromadex-joute.svg",
+    "fichier": "kromadex-joute.svg",
+    "type": "Joute",
+    "octets": 10194,
+    "largeur": 313,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/pionniers/kromadex-pionnier-badge.svg",
+    "fichier": "kromadex-pionnier-badge.svg",
+    "type": "Pionnières et Pionniers",
+    "octets": 28859,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/pionniers/kromadex-pionnier-cadre1.svg",
+    "fichier": "kromadex-pionnier-cadre1.svg",
+    "type": "Pionnières et Pionniers",
+    "octets": 72409,
+    "largeur": 512,
+    "hauteur": 512
+  },
+  {
+    "chemin": "/pionniers/kromadex-pionnier-cadre2.svg",
+    "fichier": "kromadex-pionnier-cadre2.svg",
+    "type": "Pionnières et Pionniers",
+    "octets": 38935,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/prophetie/kromadex-prophetie-orbe.svg",
+    "fichier": "kromadex-prophetie-orbe.svg",
+    "type": "Prophétie",
+    "octets": 14655,
+    "largeur": 430,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/combat/kromadex-tournoi-ambiance.svg",
+    "fichier": "kromadex-tournoi-ambiance.svg",
+    "type": "Tournoi du royaume",
+    "octets": 28741,
+    "largeur": 432,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/combat/kromadex-tournoi-couleur.svg",
+    "fichier": "kromadex-tournoi-couleur.svg",
+    "type": "Tournoi du royaume",
+    "octets": 20026,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/combat/kromadex-tournoi-libre.svg",
+    "fichier": "kromadex-tournoi-libre.svg",
+    "type": "Tournoi du royaume",
+    "octets": 6919,
+    "largeur": 314,
+    "hauteur": 503
+  }
+]

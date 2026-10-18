@@ -16,7 +16,9 @@ export async function GET(req) {
   const categories = categoriesBingoVisibles(await mesTypesVisibles(profil.id));
   await cloturerBingos();
   const bingos = await sql`
-    SELECT b.id, b.titre, b.cases, b.conditions, b.categorie,
+    SELECT b.id, b.titre, b.cases, b.conditions, b.categorie, b.styles,
+           COALESCE((SELECT json_agg(json_build_object('case', i.case_no, 'v', floor(extract(epoch FROM i.maj_le))::bigint))
+                     FROM bingo_images i WHERE i.bingo_id = b.id), '[]') AS images,
            to_char(b.debut, 'YYYY-MM-DD') AS debut, to_char(b.fin, 'YYYY-MM-DD') AS fin,
            (b.debut > (now() AT TIME ZONE 'America/Toronto')::date) AS programme,
            (((COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant,
@@ -38,7 +40,13 @@ export async function GET(req) {
 export async function POST(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
-  const { id, titre, cases, conditions, categorie, debut, fin } = await req.json();
+  const { id, titre, cases, conditions, categorie, debut, fin, styles } = await req.json();
+  // Apparence de chaque case : couleur de fond et de texte (codes hex), vide = apparence normale
+  const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c.toUpperCase() : '');
+  const apparences = Array.from({ length: NB_CASES }, (_, i) => {
+    const x = Array.isArray(styles) ? styles[i] || {} : {};
+    return { fond: hex(x.fond), texte: hex(x.texte) };
+  });
   const liste = (Array.isArray(cases) ? cases : []).slice(0, NB_CASES).map((c) => String(c || '').trim().slice(0, 60));
   const conds = Array.from({ length: NB_CASES }, (_, i) => String((Array.isArray(conditions) ? conditions[i] : '') || '').trim().slice(0, 300));
   if (!String(titre || '').trim()) return NextResponse.json({ error: 'Titre requis' }, { status: 400 });
@@ -57,12 +65,15 @@ export async function POST(req) {
 
   const t = titre.trim().slice(0, 100);
   if (id) {
-    await sql`UPDATE bingos SET titre = ${t}, cases = ${liste}, conditions = ${conds}, categorie = ${cat}, debut = ${d}, fin = ${f}
+    await sql`UPDATE bingos SET titre = ${t}, cases = ${liste}, conditions = ${conds}, categorie = ${cat}, debut = ${d}, fin = ${f},
+      styles = ${JSON.stringify(apparences)}::jsonb
       WHERE id = ${Number(id)}`;
-  } else {
-    await sql`INSERT INTO bingos (titre, cases, conditions, categorie, debut, fin) VALUES (${t}, ${liste}, ${conds}, ${cat}, ${d}, ${f})`;
+    return NextResponse.json({ ok: true, id: Number(id) });
   }
-  return NextResponse.json({ ok: true });
+  const [b] = await sql`INSERT INTO bingos (titre, cases, conditions, categorie, debut, fin, styles)
+    VALUES (${t}, ${liste}, ${conds}, ${cat}, ${d}, ${f}, ${JSON.stringify(apparences)}::jsonb) RETURNING id`;
+  // L'id sert à envoyer ensuite les images de fond des cases
+  return NextResponse.json({ ok: true, id: b.id });
 }
 
 export async function DELETE(req) {

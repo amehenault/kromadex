@@ -2,7 +2,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search, Plus, Check } from 'lucide-react';
-import { nomCollectionTomes, VALEURS_TYPES } from '@/lib/typesColoriage';
+import { VALEURS_TYPES } from '@/lib/typesColoriage';
+import OngletsCollections from '@/components/OngletsCollections';
 
 const TYPES = [
   { valeur: 'mystere', label: 'Tomes (coloriages mystères)' },
@@ -120,14 +121,8 @@ export default function CatalogueTomesPage() {
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
 
-      <div className="barre" style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <ArrowLeft size={16} />
-        </Link>
-        <h2 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
-          <BookOpen size={22} /> {nomCollectionTomes(visibles)}
-        </h2>
-      </div>
+      {/* Collections : onglet Tomes et livres, sous-onglet Tomes et livres à ajouter */}
+      <OngletsCollections actif="ajouter" visibles={visibles} />
 
       {/* Filtres collants en haut de l'écran */}
       <div style={{

@@ -13,7 +13,10 @@
     "db:migrer": "node --env-file=.env.local scripts/migrer.mjs",
     "images:audit": "node --env-file=.env.local scripts/audit-images.mjs",
     "start:test": "node scripts/demarrer-test.mjs",
-    "db:preparer-test": "node --env-file=.env.test.local scripts/preparer-base-test.mjs"
+    "db:preparer-test": "node --env-file=.env.test.local scripts/preparer-base-test.mjs",
+    "prebuild": "node scripts/manifeste-recompenses.mjs",
+    "recompenses:liste": "node scripts/manifeste-recompenses.mjs",
+    "predev": "node scripts/manifeste-recompenses.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",

@@ -39,3 +39,29 @@ Application Next.js hébergée sur Vercel, avec une base de données Neon (Postg
 - Réinitialisation du mot de passe par courriel
 - Limite de tentatives de connexion
 - Paiement (Stripe) et gestion des abonnements
+
+## Images des récompenses (ajout automatique)
+
+Déposer le fichier (svg, png, webp ou jpg) suffit : il apparaît dans l'onglet Récompenses de l'Espace de l'Invocatrice
+et il est utilisé dans le jeu au prochain déploiement (ou au prochain `npm run dev`). La règle : le bon dossier et un mot-clef
+dans le nom du fichier.
+
+| Récompense | Dossier (dans public/) | Mot dans le nom |
+|---|---|---|
+| Badge de Pionnière et Pionnier | pionniers | badge |
+| Cadre de profil de Pionnière et Pionnier | pionniers | cadre (chaque nouveau fichier devient un cadre) |
+| Parchemin du Destin | inventaire | parchemin |
+| Coffre au trésor (épreuve mensuelle) | recompenses-activites/epreuve/mensuelles | coffre |
+| Badge du mois | recompenses-activites/epreuve/mensuelles | badge |
+| Relique complète | recompenses-activites/epreuve/sentinelles | relique (sans « fragment ») |
+| Fragment de relique | recompenses-activites/epreuve/sentinelles | fragment |
+| Badge de sentinelle | recompenses-activites/epreuve/sentinelles | badge |
+| Sceaux des chef.fes | recompenses-activites/epreuve/chef | sceau + numéro (sceau7 ajoute un 7e choix) |
+| Épée chromatique (duel) | recompenses-activites/combat | duel ou epee |
+| Joute | recompenses-activites/combat | joute |
+| Insigne du tournoi | recompenses-activites/combat | tournoi + libre, couleur ou ambiance |
+| Boussole (expédition) | recompenses-activites/expedition | boussole + numéro (1, 2, 3) |
+| Blason (épopée) | n'importe où dans recompenses-activites | blason ou epopee |
+| Orbe magique (prophétie) | n'importe où dans recompenses-activites | orbe ou prophetie |
+
+La liste est refaite par `scripts/manifeste-recompenses.mjs` (lancé avant `npm run build` et `npm run dev`).

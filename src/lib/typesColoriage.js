@@ -44,3 +44,11 @@ export function nomCollectionTomes(visibles) {
   const cozy = visibles.includes('cozy');
   return mystere && cozy ? 'Collection de tomes et de livres' : cozy ? 'Collection de livres' : 'Collection de tomes';
 }
+
+// Bouton du profil qui regroupe les collections, et titre de ses pages (identiques)
+export function nomCollections(visibles) {
+  const mystere = visibles.includes('mystere');
+  const cozy = visibles.includes('cozy');
+  return mystere && cozy ? 'Collections de tomes, de livres et de crayons'
+    : cozy ? 'Collections de livres et de crayons' : 'Collections de tomes et de crayons';
+}

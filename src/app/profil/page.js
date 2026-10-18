@@ -4,7 +4,7 @@ import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
-import { typesVisibles, faitCozy, nomMesTomes, nomCollectionTomes } from '@/lib/typesColoriage';
+import { typesVisibles, faitCozy, nomCollections } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
@@ -31,7 +31,7 @@ import {
   Swords,
   ChevronRight,
   Eye,
-  TrendingUp,
+  Pencil,
   Paintbrush,
   Compass,
   CalendarClock,
@@ -444,7 +444,7 @@ export default async function ProfilPage() {
       {/* Pages choisies par la Roue du Destin, à colorier */}
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
 
-      {/* Accès rapides : Activités à venir, Statistiques, tomes, collections et palettes en premier.
+      {/* Accès rapides : Espace et Activités à venir (toute la largeur), Kromadex+ et Aide, Statistiques et Missives, puis les collections.
           Libellés sans « Mes / Ma / Mon » ; chaque page ouverte porte exactement le même nom que son bouton. */}
       <div className="profil-acces">
         {['admin', 'modo'].includes(role) && (
@@ -462,57 +462,13 @@ export default async function ProfilPage() {
         )}
 
         {role === 'admin' && (
-          <Link href="/activites-a-venir" className="btn profil-acces-lien">
+          <Link href="/activites-a-venir" className="btn profil-acces-plein">
             <CalendarClock size={22} aria-hidden="true" />
             <span>Activités à venir</span>
           </Link>
         )}
 
-        <Link href="/statistiques" className="btn profil-acces-lien">
-          <BarChart3 size={22} aria-hidden="true" />
-          <span>Statistiques</span>
-        </Link>
-
-        <Link href="/profil/progression" className="btn profil-acces-lien">
-          <TrendingUp size={22} aria-hidden="true" />
-          <span>{nomMesTomes(visibles)}</span>
-        </Link>
-
-        <Link href="/profil/tomes" className="btn profil-acces-lien">
-          <BookOpen size={22} aria-hidden="true" />
-          <span>{nomCollectionTomes(visibles)}</span>
-        </Link>
-
-        <Link href="/profil/collection" className="btn profil-acces-lien">
-          <Palette size={22} aria-hidden="true" />
-          <span>Collection de crayons</span>
-        </Link>
-
-        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
-        {faitCozy(profile?.types_pratiques) && (
-          <Link href="/palettes" className="btn profil-acces-lien">
-            <Paintbrush size={22} aria-hidden="true" />
-            <span>Palettes de couleurs</span>
-          </Link>
-        )}
-
-        {role === 'cheffe' && (
-          <Link
-            href="/profil/admin"
-            className="btn profil-acces-lien"
-          >
-            <Trophy size={22} aria-hidden="true" />
-            <span>
-              Créer l’épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
-              {profile?.cheffe_expires_at && (
-                <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
-                  Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
-                </small>
-              )}
-            </span>
-          </Link>
-        )}
-
+        {/* 1re ligne : Kromadex+ (gauche) et Aide (droite) ; 2e ligne : Statistiques et Missives (droite) */}
         {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
         {role !== 'admin' && <Link
           href="/kromadex-plus"
@@ -531,6 +487,55 @@ export default async function ProfilPage() {
             <HelpCircle size={22} aria-hidden="true" />
             <span>Aide</span>
             {nonLus.reponses > 0 && <span className="pastille" aria-hidden="true" />}
+          </Link>
+        )}
+
+        <Link href="/statistiques" className="btn profil-acces-lien">
+          <BarChart3 size={22} aria-hidden="true" />
+          <span>Statistiques</span>
+        </Link>
+
+        {role !== 'admin' && <Link
+          href="/missives"
+          className="btn profil-acces-lien"
+          aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
+        >
+          <Mail size={22} aria-hidden="true" />
+          <span>Missives</span>
+          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
+        </Link>}
+
+        {role === 'cheffe' && (
+          <Link
+            href="/profil/admin"
+            className="btn profil-acces-lien"
+          >
+            <Trophy size={22} aria-hidden="true" />
+            <span>
+              Créer l’épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
+              {profile?.cheffe_expires_at && (
+                <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
+                  Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
+                </small>
+              )}
+            </span>
+          </Link>
+        )}
+
+        {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}
+        <Link href="/profil/collection" className="btn profil-acces-lien profil-acces-long">
+          <span className="profil-acces-icones" aria-hidden="true">
+            <BookOpen size={22} />
+            <Pencil size={22} />
+          </span>
+          <span>{nomCollections(visibles)}</span>
+        </Link>
+
+        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
+        {faitCozy(profile?.types_pratiques) && (
+          <Link href="/palettes" className="btn profil-acces-lien">
+            <Paintbrush size={22} aria-hidden="true" />
+            <span>Palettes de couleurs</span>
           </Link>
         )}
 
@@ -554,15 +559,6 @@ export default async function ProfilPage() {
           <span>Combats</span>
         </Link>
 
-        {role !== 'admin' && <Link
-          href="/missives"
-          className="btn profil-acces-lien"
-          aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
-        >
-          <Mail size={22} aria-hidden="true" />
-          <span>Missives</span>
-          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
-        </Link>}
       </div>
 
       {/* Déconnexion : bouton corail pleine largeur, tout en bas du profil */}

@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { ArrowLeft, Search, ChevronRight } from 'lucide-react';
 import Feuille from './Feuille';
 
-// Crayons de la personne (coffrets possédés et crayons à l'unité), chargés une seule fois par page
-let cache = null;
-const charger = () => (cache ||= fetch('/api/palettes?vue=crayons').then((r) => (r.ok ? r.json() : { crayons: [], packs: [] }))
-  .catch(() => { cache = null; return { crayons: [], packs: [] }; }));
+// Crayons de la personne, rechargés à chaque ouverture (un crayon ajouté juste avant apparaît) : ceux de ses coffrets, puis ses crayons à l'unité
+// (entrés à la main dans Collection de crayons), regroupés dans un coffret « Crayons à l'unité » placé en premier
+const UNITE = 'unite';
+const lire = (url) => fetch(url).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+const charger = () => (Promise.all([lire('/api/palettes?vue=crayons'), lire('/api/crayons-unite')]).then(([d, u]) => {
+  const unite = (u.crayons || []).map((c) => ({ id: `u${c.id}`, code: c.code, nom: '', hex: c.hex || '', pack: UNITE, marque: c.marque }));
+  return {
+    crayons: [...unite, ...(d.crayons || [])],
+    packs: [...(unite.length ? [{ id: UNITE, marque: 'Crayons à l’unité' }] : []), ...(d.packs || [])],
+  };
+}));
 
 const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 
@@ -22,10 +29,12 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
   useEffect(() => { charger().then(setDonnees); }, []);
 
   const q = recherche.trim().toLowerCase();
+  // Marque affichée sous le crayon : celle du coffret, ou celle entrée à la main pour un crayon à l'unité
+  const marqueDe = (c) => (pack?.id === UNITE ? c.marque : pack?.marque || nomPack(pack || {}));
   const packs = useMemo(() => (donnees?.packs || []).filter((p) => !q || nomPack(p).toLowerCase().includes(q)), [donnees, q]);
   const crayons = useMemo(() => (donnees?.crayons || [])
     .filter((c) => c.pack === pack?.id)
-    .filter((c) => !q || `${c.code || ''} ${c.nom || ''}`.toLowerCase().includes(q))
+    .filter((c) => !q || `${c.code || ''} ${c.nom || ''} ${pack?.id === UNITE ? c.marque : ''}`.toLowerCase().includes(q))
     .sort((a, b) => String(a.code).localeCompare(String(b.code), 'fr', { numeric: true })), [donnees, pack, q]);
 
   const barre = (
@@ -44,7 +53,7 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
       {donnees && !donnees.packs.length && (
         <>
           <small style={{ color: 'var(--texte-secondaire)' }}>
-            Tu n’as encore aucun coffret. Ajoute tes crayons dans <Link href="/profil/collection">Collection de crayons</Link>, ou écris le code toi-même.
+            Tu n’as encore aucun coffret ni crayon à l’unité. Ajoute tes crayons dans tes <Link href="/profil/collection">Collections (onglet Crayons)</Link>, ou écris le code toi-même.
           </small>
           <button type="button" className="btn" onClick={onManuel} style={{ minHeight: '48px', fontWeight: 700 }}>Écrire manuellement</button>
         </>
@@ -78,8 +87,8 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
           {barre}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: '8px' }}>
             {crayons.map((c) => (
-              <button key={c.id} type="button" onClick={() => onChoisir({ code: c.code || c.nom || '', marque: pack.marque || nomPack(pack), hex: c.hex })}
-                aria-label={`${c.code || ''} ${c.nom || ''} ${nomPack(pack)}`.trim()}
+              <button key={c.id} type="button" onClick={() => onChoisir({ code: c.code || c.nom || '', marque: marqueDe(c), hex: c.hex })}
+                aria-label={`${c.code || ''} ${c.nom || ''} ${marqueDe(c)}`.trim()}
                 style={{
                   all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center',
                   gap: '4px', padding: '8px 4px', minHeight: '96px', minWidth: 0, textAlign: 'center',
@@ -87,7 +96,7 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
                 }}>
                 <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: '50%', background: c.hex || '#808080', border: '1px solid rgba(0,0,0,0.15)', boxShadow: '0 2px 4px rgba(0,0,0,0.12)' }} />
                 <b style={{ fontSize: '0.9rem', overflowWrap: 'anywhere', lineHeight: 1.2 }}>{c.code || c.nom}</b>
-                <small style={{ fontSize: '0.7rem', color: 'var(--texte-secondaire)', overflowWrap: 'anywhere', lineHeight: 1.2 }}>{pack.marque || nomPack(pack)}</small>
+                <small style={{ fontSize: '0.7rem', color: 'var(--texte-secondaire)', overflowWrap: 'anywhere', lineHeight: 1.2 }}>{marqueDe(c)}</small>
               </button>
             ))}
           </div>

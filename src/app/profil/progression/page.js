@@ -1,15 +1,14 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 import { listerMesTomes } from '@/lib/mesTomes';
-import { typesVisibles, nomMesTomes } from '@/lib/typesColoriage';
+import { typesVisibles } from '@/lib/typesColoriage';
+import OngletsCollections from '@/components/OngletsCollections';
 import MesTomes from '../mesTomes';
 
 export const dynamic = 'force-dynamic';
 
-// Ma progression : tomes (coloriage mystère) et livres (Cozy colo) commencés séparés, puis les non commencés.
+// Collections > Tomes et livres > Ma collection : tomes (coloriage mystère) et livres (Cozy colo) commencés séparés, puis les non commencés.
 // Un tome perso ou d'un autre type va avec les tomes, sauf pour une personne qui ne voit que le Cozy colo.
 export default async function ProgressionPage() {
   const user = await getUser();
@@ -31,12 +30,8 @@ export default async function ProgressionPage() {
 
   return (
     <div className="contenu">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} aria-hidden="true" />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{nomMesTomes(visibles)}</h2>
-      </div>
+      {/* Collections : onglet Tomes et livres, sous-onglet Ma collection */}
+      <OngletsCollections actif="collection" visibles={visibles} />
       {groupes.length ? groupes.map((g) => (
         <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
           <h3 style={{ margin: '0 0 var(--espace-3)', fontSize: '1rem' }}>{g.titre}</h3>

@@ -127,7 +127,7 @@ export default function Palettes() {
       </div>
       {!packs.length && (
         <small style={{ color: 'var(--texte-secondaire)' }}>
-          Ajoute tes coffrets dans <Link href="/profil/collection">Collection de crayons</Link> pour générer une palette avec tes crayons.
+          Ajoute tes coffrets dans tes <Link href="/profil/collection">Collections (onglet Crayons)</Link> pour générer une palette avec tes crayons.
         </small>
       )}
     </div>

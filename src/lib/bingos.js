@@ -15,3 +15,24 @@ export const LIGNES_BINGO = [
   [0, 3, 6], [1, 4, 7], [2, 5, 8],
   [0, 4, 8], [2, 4, 6],
 ];
+
+// Apparence d'une case : couleur de fond, couleur de texte et image de fond choisies à la création.
+// Dès qu'il y a un fond (couleur ou image), le texte est posé sur un rectangle pour rester lisible :
+// rectangle foncé pour un texte clair, rectangle clair pour un texte foncé.
+const luminance = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+};
+export function apparenceCase({ fond = '', texte = '', image = '' } = {}) {
+  const avecFond = Boolean(fond || image);
+  const couleurTexte = texte || 'var(--texte-principal)';
+  const texteClair = texte ? luminance(texte) > 0.6 : false;
+  return {
+    background: image ? `center / cover no-repeat url(${image})${fond ? `, ${fond}` : ''}` : fond || '',
+    couleurTexte,
+    rectangle: avecFond ? (texteClair ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.88)') : '',
+  };
+}
+
+// Adresse de l'image de fond d'une case (v : version, change à chaque nouvelle image)
+export const imageCaseBingo = (bingoId, n, v) => `/api/bingos/image?id=${bingoId}&case=${n}&v=${v}`;

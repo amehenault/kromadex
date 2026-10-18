@@ -509,6 +509,27 @@
   color: var(--noir);
 }
 
+/* Activités à venir (Invocatrice) : bouton turquoise sur toute la largeur, sous l'Espace de l'Invocatrice */
+.profil-acces > .profil-acces-plein {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  min-height: 52px;
+  background: var(--couleur-secondaire);
+  color: var(--noir);
+  border: 1px solid var(--couleur-secondaire);
+}
+.profil-acces > .profil-acces-plein:not(:disabled):hover { background: var(--btn-principal-survol); border-color: var(--btn-principal-survol); color: var(--noir); }
+
+/* Long bouton des collections : toute la largeur, les deux icônes à gauche du titre */
+.profil-acces > .profil-acces-long {
+  grid-column: 1 / -1;
+  flex-direction: row !important;
+  justify-content: flex-start;
+  text-align: left !important;
+  min-height: 64px !important;
+}
+.profil-acces-icones { display: inline-flex; gap: 6px; flex: 0 0 auto; }
+
 .profil-acces > .profil-acces-admin {
   grid-column: 1 / -1;
   flex-direction: row;

@@ -595,3 +595,26 @@ on conflict do nothing;
 
 -- Badges épinglés sur le profil (6 au maximum, clés « genre|détail »), vide = les 6 plus récents
 alter table users add column if not exists badges_epingles jsonb not null default '[]';
+
+-- Crayons à l'unité : entrés à la main dans Collection de crayons (marque, code et couleur de la pastille)
+create table if not exists crayons_unite (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  marque text not null,
+  code text not null,
+  hex text not null default '',
+  cree_le timestamptz not null default now()
+);
+create index if not exists crayons_unite_user on crayons_unite (user_id);
+
+-- Bingos : apparence de chaque case (couleur de fond et de texte), une entrée par case
+alter table bingos add column if not exists styles jsonb not null default '[]';
+-- Image de fond d'une case de bingo (réencodée en WebP par le serveur), servie à part pour garder la liste légère
+create table if not exists bingo_images (
+  bingo_id int not null references bingos(id) on delete cascade,
+  case_no int not null,
+  image_b64 text not null,
+  type text not null default 'image/webp',
+  maj_le timestamptz not null default now(),
+  primary key (bingo_id, case_no)
+);

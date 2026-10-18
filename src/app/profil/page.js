@@ -468,7 +468,7 @@ export default async function ProfilPage() {
           </Link>
         )}
 
-        {/* 1re ligne : Kromadex+ (gauche) et Aide (droite) ; 2e ligne : Statistiques et Missives (droite) */}
+        {/* 1re ligne : Kromadex+ (gauche) et Aide (droite) ; 2e ligne : Statistiques et Quêtes (droite) */}
         {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
         {role !== 'admin' && <Link
           href="/kromadex-plus"
@@ -495,15 +495,11 @@ export default async function ProfilPage() {
           <span>Statistiques</span>
         </Link>
 
-        {role !== 'admin' && <Link
-          href="/missives"
-          className="btn profil-acces-lien"
-          aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
-        >
-          <Mail size={22} aria-hidden="true" />
-          <span>Missives</span>
-          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
-        </Link>}
+        <Link href="/quetes" className="btn profil-acces-lien">
+          <Map size={22} aria-hidden="true" />
+          <span>Quêtes</span>
+        </Link>
+
 
         {role === 'cheffe' && (
           <Link
@@ -531,6 +527,16 @@ export default async function ProfilPage() {
           <span>{nomCollections(visibles)}</span>
         </Link>
 
+        {role !== 'admin' && <Link
+          href="/missives"
+          className="btn profil-acces-lien"
+          aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
+        >
+          <Mail size={22} aria-hidden="true" />
+          <span>Missives</span>
+          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
+        </Link>}
+
         {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
         {faitCozy(profile?.types_pratiques) && (
           <Link href="/palettes" className="btn profil-acces-lien">
@@ -542,11 +548,6 @@ export default async function ProfilPage() {
         <Link href="/coloriages" className="btn profil-acces-lien">
           <Images size={22} aria-hidden="true" />
           <span>Coloriages</span>
-        </Link>
-
-        <Link href="/quetes" className="btn profil-acces-lien">
-          <Map size={22} aria-hidden="true" />
-          <span>Quêtes</span>
         </Link>
 
         <Link href="/aventures" className="btn profil-acces-lien">

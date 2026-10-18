@@ -71,8 +71,14 @@ export default function Recompenses() {
               {g.images.map((i) => (
                 <a key={i.chemin} href={i.chemin} target="_blank" rel="noreferrer"
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: 0, textAlign: 'center', color: 'inherit', textDecoration: 'none' }}>
-                  <span style={{ width: taille, height: taille, maxWidth: '100%', aspectRatio: '1 / 1', outline: '1px dashed var(--btn-secondaire-bordure)', display: 'grid', placeItems: 'center' }}>
-                    <img src={i.chemin} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  {/* Cadre carré de la taille choisie (jamais plus large que la colonne) : l'image y est contenue
+                      sans pouvoir déborder sur le nom du fichier, quelle que soit sa taille d'origine */}
+                  <span style={{
+                    position: 'relative', display: 'block', flex: '0 0 auto', width: `min(${taille}px, 100%)`, aspectRatio: '1 / 1',
+                    overflow: 'hidden', outline: '1px dashed var(--btn-secondaire-bordure)',
+                  }}>
+                    <img src={i.chemin} alt="" loading="lazy"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                   </span>
                   <small style={{ fontWeight: 600, fontSize: '0.7rem', overflowWrap: 'anywhere', lineHeight: 1.2 }}>{i.fichier}</small>
                   <small style={{ ...aide, fontSize: '0.68rem' }}>{i.largeur && i.hauteur ? `${i.largeur} × ${i.hauteur} · ` : ''}{ko(i.octets)}</small>

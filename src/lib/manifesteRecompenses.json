@@ -99,7 +99,7 @@
     "chemin": "/pionniers/kromadex-pionnier-badge.svg",
     "fichier": "kromadex-pionnier-badge.svg",
     "type": "Pionnières et Pionniers",
-    "octets": 28859,
+    "octets": 28708,
     "largeur": 500,
     "hauteur": 500
   },
@@ -107,15 +107,15 @@
     "chemin": "/pionniers/kromadex-pionnier-cadre1.svg",
     "fichier": "kromadex-pionnier-cadre1.svg",
     "type": "Pionnières et Pionniers",
-    "octets": 72409,
-    "largeur": 512,
-    "hauteur": 512
+    "octets": 72552,
+    "largeur": 500,
+    "hauteur": 500
   },
   {
     "chemin": "/pionniers/kromadex-pionnier-cadre2.svg",
     "fichier": "kromadex-pionnier-cadre2.svg",
     "type": "Pionnières et Pionniers",
-    "octets": 38935,
+    "octets": 38598,
     "largeur": 500,
     "hauteur": 500
   },
@@ -147,8 +147,8 @@
     "chemin": "/recompenses-activites/combat/kromadex-tournoi-libre.svg",
     "fichier": "kromadex-tournoi-libre.svg",
     "type": "Tournoi du royaume",
-    "octets": 6919,
-    "largeur": 314,
-    "hauteur": 503
+    "octets": 6975,
+    "largeur": 312,
+    "hauteur": 500
   }
 ]

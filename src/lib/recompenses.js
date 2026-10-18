@@ -1,3 +1,5 @@
+import { nomPionnier } from '@/lib/postes';
+
 // Catalogue des récompenses des activités (utilisable dans le navigateur et sur le serveur).
 //
 // Les images se trouvent dans public/recompenses-activites, un dossier par type d'activité.
@@ -8,6 +10,8 @@
 export const DOSSIER_RECOMPENSES = '/recompenses-activites';
 
 export const RECOMPENSES = {
+  // Badge des Pionnières et Pionniers (bêta) : pas enregistré dans la base, il suit la case Pionnière du membre
+  pionnier: { nom: 'Badge', pluriel: 'badges', chemin: '/pionniers/kromadex-pionnier-badge.svg', prestige: 110, icone: 'Award' },
   relique: { nom: 'Relique', pluriel: 'reliques', dossier: 'epreuve/sentinelles', fichier: 'relique', prestige: 100, icone: 'Crown' },
   coffre: { nom: 'Coffre au trésor', pluriel: 'coffres au trésor', dossier: 'epreuve/mensuelles', fichier: 'coffre', prestige: 95, icone: 'Gem' },
   insigne: { nom: 'Insigne du tournoi', pluriel: 'insignes du tournoi', dossier: 'combat', fichier: 'insigne', prestige: 90, icone: 'Medal' },
@@ -27,6 +31,7 @@ export const RECOMPENSES = {
 export function imageRecompense(r) {
   const c = RECOMPENSES[r.genre];
   if (!c) return null;
+  if (c.chemin) return c.chemin;
   const fichier = (r.image || '').trim() || `${c.fichier}.png`;
   return `${DOSSIER_RECOMPENSES}/${c.dossier}/${/\.[a-z0-9]+$/i.test(fichier) ? fichier : `${fichier}.png`}`;
 }
@@ -49,4 +54,11 @@ export function regrouperRecompenses(liste) {
   }
   return [...groupes.values()].sort((a, b) =>
     (RECOMPENSES[b.genre]?.prestige || 0) - (RECOMPENSES[a.genre]?.prestige || 0) || new Date(b.cree_le) - new Date(a.cree_le));
+}
+
+// Badge de Pionnière, Pionnier ou Pionnier.ère, à ajouter en tête des récompenses d'un membre Pionnier
+// (l'Invocatrice n'en porte pas le nom, elle n'a donc pas le badge)
+export function badgePionnier(membre) {
+  if (!membre?.pionnier || membre.role === 'admin') return [];
+  return [{ id: 'pionnier', genre: 'pionnier', detail: `de ${nomPionnier(membre.genre)}`, source: 'pionnier' }];
 }

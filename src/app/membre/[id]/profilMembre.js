@@ -10,7 +10,9 @@ import { titreNiveau } from '@/lib/titres';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
-import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
+import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
+import PhotoCadre from '@/components/PhotoCadre';
+import { badgePionnier } from '@/lib/recompenses';
 
 // Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 
@@ -51,9 +53,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: 'var(--espace-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           {/* Cadre de profil choisi parmi ceux débloqués (relique complétée, Pionnière ou Pionnier) */}
-          <span title={CADRES[cadre]?.nom} style={{ borderRadius: '50%', display: 'inline-flex', flex: '0 0 auto', margin: cadre ? '9px' : 0, ...styleCadre(cadre) }}>
-            <Avatar x={m} taille={60} />
-          </span>
+          <PhotoCadre cadre={cadre} taille={60}>{(t) => <Avatar x={m} taille={t} />}</PhotoCadre>
           <div style={{ minWidth: 0, flex: 1 }}>
             <b style={{ display: 'block', fontSize: '1.05rem', overflowWrap: 'break-word' }}><Pseudo x={m} /></b>
             {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
@@ -98,7 +98,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
         )}
       </div>
 
-      <MesRecompenses recompenses={recompenses} titre={moi ? 'Mes récompenses' : 'Récompenses'} />
+      <MesRecompenses recompenses={[...badgePionnier(m), ...recompenses]} titre={moi ? 'Mes récompenses' : 'Récompenses'} />
 
       <h3 style={{ margin: '0 0 10px' }}>Coloriages publiés</h3>
       {!fiches.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage publié pour l'instant.</p>}

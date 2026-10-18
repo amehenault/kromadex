@@ -8,7 +8,9 @@ import { typesVisibles, faitCozy } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
-import { CADRES, cadresDebloques, cadreAffiche, styleCadre, nomPionnier } from '@/lib/cadres';
+import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
+import PhotoCadre from '@/components/PhotoCadre';
+import { badgePionnier } from '@/lib/recompenses';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import { listerMesTomes } from '@/lib/mesTomes';
@@ -175,37 +177,40 @@ export default async function ProfilPage() {
             flex: '0 0 auto',
           }}
         >
-          <div
-            style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              background: 'var(--carte)',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--texte-secondaire)',
-              ...styleCadre(cadre),
-            }}
-            title={CADRES[cadre]?.nom}
-          >
-            {profile?.a_avatar ? (
-              <img
-                src={`/api/user/avatar?v=${new Date(
-                  profile.avatar_maj
-                ).getTime()}`}
-                alt=""
+          {/* Photo dans son cadre (anneau ou cadre illustré de Pionnière et Pionnier) */}
+          <PhotoCadre cadre={cadre} taille={72}>
+            {(t) => (
+              <div
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                  width: t,
+                  height: t,
+                  borderRadius: '50%',
+                  background: 'var(--carte)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--texte-secondaire)',
                 }}
-              />
-            ) : (
-              <User size={38} aria-hidden="true" />
+              >
+                {profile?.a_avatar ? (
+                  <img
+                    src={`/api/user/avatar?v=${new Date(
+                      profile.avatar_maj
+                    ).getTime()}`}
+                    alt=""
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <User size={Math.round(t * 0.53)} aria-hidden="true" />
+                )}
+              </div>
             )}
-          </div>
+          </PhotoCadre>
 
           <span
             style={{
@@ -394,7 +399,7 @@ export default async function ProfilPage() {
         </div>
       </div>
 
-      <MesRecompenses recompenses={recompenses.filter((r) => !OBJETS.includes(r.genre))} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
+      <MesRecompenses recompenses={[...badgePionnier(profile), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]} vide="Tes récompenses d’épreuves, de combats et d’aventures apparaîtront ici. Les 3 plus prestigieuses s’affichent, et « Voir plus » montre tout le détail." />
 
       <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} />
 

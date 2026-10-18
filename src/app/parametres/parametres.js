@@ -8,7 +8,8 @@ import PhotoProfil from '@/app/profil/edit/photoProfil';
 import APropos from '@/app/profil/edit/apropos';
 import Preferences from '@/app/profil/edit/preferences';
 import Acces from '@/app/profil/edit/acces';
-import { CADRES, styleCadre } from '@/lib/cadres';
+import { CADRES } from '@/lib/cadres';
+import PhotoCadre from '@/components/PhotoCadre';
 
 const enregistrer = (corps) => fetch('/api/user/parametres', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
@@ -81,7 +82,9 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
               <button key={c} type="button" onClick={() => choisirCadre(c)} aria-pressed={cadre === c}
                 className={cadre === c ? 'btn' : 'btn alt'}
                 style={{ flexDirection: 'column', gap: '12px', padding: '16px 8px', minHeight: '120px', fontSize: '0.8rem', minWidth: 0 }}>
-                <span style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--carte)', ...(c === 'aucun' ? {} : styleCadre(c)) }} />
+                <PhotoCadre cadre={c === 'aucun' ? null : c} taille={40}>
+                  {(t) => <span style={{ width: t, height: t, borderRadius: '50%', background: 'var(--carte)', display: 'block' }} />}
+                </PhotoCadre>
                 {c === 'aucun' ? 'Sans cadre' : CADRES[c].nom}
               </button>
             ))}

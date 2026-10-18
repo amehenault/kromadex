@@ -1,15 +1,19 @@
 // Cadres autour de la photo de profil. Chaque cadre se débloque (Pionnière, relique complétée) ;
 // la personne choisit le sien dans Paramètres (null = le plus prestigieux débloqué, 'aucun' = sans cadre).
+//  - anneau : double anneau de couleur dessiné autour de la photo ;
+//  - image : cadre illustré (public/pionniers) posé par-dessus la photo ; photo = part de la largeur du cadre
+//    occupée par la photo (le centre des cadres est vide sur environ 43 % pour les cristaux et 51 % pour la vigne).
 export const CADRES = {
   relique: { nom: 'Cadre de la relique', anneau: ['#d4a017', '#d4a017'] },
-  pionnier: { nom: 'Cadre de Pionnière et Pionnier', anneau: ['var(--couleur-principale)', 'var(--couleur-secondaire)'] },
+  pionnier: { nom: 'Cadre de Pionnière et Pionnier : cristaux', image: '/pionniers/kromadex-pionnier-cadre1.svg', photo: 0.47 },
+  pionnier2: { nom: 'Cadre de Pionnière et Pionnier : vigne', image: '/pionniers/kromadex-pionnier-cadre2.svg', photo: 0.54 },
 };
 
 // Cadres débloqués : relique complétée, Pionnière ou Pionnier (l'Invocatrice y a droit aussi)
 export function cadresDebloques({ relique, pionnier, role }) {
   const liste = [];
   if (relique) liste.push('relique');
-  if (pionnier || role === 'admin') liste.push('pionnier');
+  if (pionnier || role === 'admin') liste.push('pionnier', 'pionnier2');
   return liste;
 }
 
@@ -23,7 +27,7 @@ export function cadreAffiche(choix, debloques) {
 // Double anneau autour de la photo (le fond de la carte fait l'espace entre les deux)
 export function styleCadre(cle) {
   const c = CADRES[cle];
-  if (!c) return {};
+  if (!c?.anneau) return {};
   const [a, b] = c.anneau;
   return { boxShadow: `0 0 0 3px ${a}, 0 0 0 6px var(--fond-carte), 0 0 0 9px ${b}` };
 }

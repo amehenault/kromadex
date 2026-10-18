@@ -1,13 +1,5 @@
 {
   "crons": [
-    {
-      "path": "/api/rappels",
-      "schedule": "0 13 * * *"
-    }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "securite-beta": false
-    }
-  }
+    { "path": "/api/rappels", "schedule": "0 13 * * *" }
+  ]
 }

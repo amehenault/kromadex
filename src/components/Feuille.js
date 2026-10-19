@@ -2,10 +2,11 @@
 import { X } from 'lucide-react';
 
 // Fenêtre qui monte du bas de l'écran sur téléphone (centrée sur ordinateur), fermée en touchant le fond ou le X
-export default function Feuille({ titre, onFermer, children }) {
+// haute : garde toujours la même hauteur (la barre de recherche ne bouge pas quand la liste se raccourcit)
+export default function Feuille({ titre, onFermer, children, haute }) {
   return (
     <div className="fond-feuille" onClick={onFermer}>
-      <div className="feuille" role="dialog" aria-modal="true" aria-label={titre} onClick={(e) => e.stopPropagation()}
+      <div className={haute ? 'feuille haute' : 'feuille'} role="dialog" aria-modal="true" aria-label={titre} onClick={(e) => e.stopPropagation()}
         style={{ padding: 'var(--espace-3)', gap: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <b style={{ fontSize: '1.05rem', overflowWrap: 'anywhere' }}>{titre}</b>

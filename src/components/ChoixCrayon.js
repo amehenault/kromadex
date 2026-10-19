@@ -47,7 +47,7 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
   );
 
   return (
-    <Feuille titre={pack ? nomPack(pack) : 'Mes packs de couleurs'} onFermer={onFermer}>
+    <Feuille haute titre={pack ? nomPack(pack) : 'Mes packs de couleurs'} onFermer={onFermer}>
       {!donnees && <small style={{ color: 'var(--texte-secondaire)' }}>Chargement…</small>}
 
       {donnees && !donnees.packs.length && (

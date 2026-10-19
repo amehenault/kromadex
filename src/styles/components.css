@@ -725,9 +725,11 @@ div.vide {
   background: var(--fond-carte); border-radius: var(--rayon-l) var(--rayon-l) 0 0;
   display: flex; flex-direction: column;
 }
+.feuille.haute { height: 92dvh; }
 @media (min-width: 600px) {
   .fond-feuille { align-items: center; padding: var(--espace-4); }
   .feuille { border-radius: var(--rayon-l); max-height: 88dvh; }
+  .feuille.haute { height: 88dvh; }
 }
 
 /* Les autres fenêtres du bas (data-feuille) : centrées et arrondies partout sur tablette et ordinateur */

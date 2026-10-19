@@ -10,7 +10,7 @@ import { nomPoste } from '@/lib/postes';
 // Une épreuve dure un mois moins un jour : le verdict se termine la veille du dernier jour du mois
 // et les gagnant.es sont annoncé.es le dernier jour.
 
-// Reliques : chaque groupe de 4 fragments complète une relique (cadre de profil exclusif et 400 XP)
+// Reliques : chaque groupe de 4 fragments complète une relique (400 XP de plus)
 async function verifierReliques(userId) {
   const [{ fragments, reliques }] = await sql`
     SELECT count(*) FILTER (WHERE genre = 'fragment')::int AS fragments, count(*) FILTER (WHERE genre = 'relique')::int AS reliques

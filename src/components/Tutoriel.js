@@ -53,8 +53,8 @@ const ECRANS = [
     icone: Trophy, titre: 'Les épreuves',
     texte: 'Ce sont des challenges de coloriage avec certaines contraintes. Tu peux y remporter des XP, des badges et différentes récompenses.',
     points: [
-      'Épreuves mensuelles : chaque mois, je crée une épreuve. Les participations sont individuelles. La personne gagnante devient Chef.fe des coloristes pour un mois et choisit la thématique d’une prochaine épreuve',
-      'Épreuves des Sentinelles et des Chef.fes : ces deux rôles de la communauté peuvent créer une épreuve sur la thématique de leur choix',
+      'Épreuves mensuelles : chaque mois, je crée une épreuve. Les participations sont individuelles. La personne gagnante devient Cheffe des coloristes pour un mois et choisit la thématique d’une prochaine épreuve',
+      'Épreuves des Sentinelles et des Cheffes : ces deux rôles de la communauté peuvent créer une épreuve sur la thématique de leur choix',
       'Épreuves de groupe : tous les coloristes peuvent créer des épreuves communautaires',
     ],
   },
@@ -85,10 +85,10 @@ const ECRANS = [
     texte: 'La couleur d’un pseudo montre le rôle de la personne.',
     roles: [
       ['var(--coloriste)', 'Coloriste', 'les membres de l’Assemblée'],
-      ['var(--chef)', 'Chef.fe des coloristes', 'a gagné une épreuve mensuelle'],
+      ['var(--chef)', 'Cheffe des coloristes', 'a gagné une épreuve mensuelle'],
       ['var(--sentinelle)', 'Sentinelle', 'veille sur la communauté'],
       ['var(--admin)', 'Invocatrice des couleurs', 'la créatrice de Kromadex'],
-      ['var(--noir)', 'Pionnière ou Pionnier', 'a testé Kromadex avant tout le monde'],
+      ['var(--noir)', 'Pionnière', 'a testé Kromadex avant tout le monde'],
     ],
   },
   {

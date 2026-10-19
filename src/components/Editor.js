@@ -5,6 +5,8 @@ import SymbolPicker from './SymbolPicker';
 import MotsClesColoriage from './MotsClesColoriage';
 import ChoixTome from './ChoixTome';
 import ChoixCrayon from './ChoixCrayon';
+import { useAccord } from '@/components/Genre';
+import { useGardeQuitter } from '@/components/GardeQuitter';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
@@ -259,6 +261,7 @@ function Groupe({ g, maj, retirer, enExport }) {
 }
 
 export default function Editor({ page, initial, bibliotheque = [], mesTypes = [], tomeCatalogue = null, palette: paletteInitiale = null }) {
+  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
   // Palette de couleurs dont s'inspire le coloriage (affichée dans la Communauté)
   const [palette, setPalette] = useState(paletteInitiale);
   const pageRef = useRef(null);
@@ -279,6 +282,11 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [enExport, setEnExport] = useState(false);
+  // Contenu non enregistré : on demande avant de quitter la page (lien, touche Retour, fermeture de l'onglet)
+  const etatPage = JSON.stringify({ f, groupes, publiee, typeColo, palette: palette?.id || null, image: Boolean(image) });
+  const etatDepart = useRef(etatPage);
+  const { confirmer: confirmerQuitter, liberer: libererPage } = useGardeQuitter(etatPage !== etatDepart.current,
+    `Es-tu ${acc('sûre', 'sûr')} de vouloir quitter cette page ? Tu perdras tout le contenu de cette page.`);
   // Logo de Kromadex déjà converti en image intégrée : html-to-image n'a rien à télécharger pendant l'export,
   // donc le logo apparaît toujours en bas de l'image
   const [logoExport, setLogoExport] = useState('/logo.svg');
@@ -299,7 +307,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const pagesFaites = new Set(tomeChoisi?.faites || []);
   function choisirPage(n) {
     const v = String(n).trim();
-    if (v && pagesFaites.has(v) && !confirm('Tu as déjà fait cette page, es-tu sûr.e de vouloir créer un doublon ?')) {
+    if (v && pagesFaites.has(v) && !confirm(`Tu as déjà fait cette page, es-tu ${acc('sûre', 'sûr')} de vouloir créer un doublon ?`)) {
       if (!tomeChoisi?.total) set('page_no', ''); // la liste garde la page d'avant
       return;
     }
@@ -354,7 +362,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     if (image) fd.append('image', image, 'image.jpg');
 
     const res = await fetch(page ? `/api/pages/${page.id}` : '/api/pages', { method: page ? 'PUT' : 'POST', body: fd, cache: 'no-store' });
-    if (res.ok) { window.location.href = '/coloriages'; return; }
+    if (res.ok) { libererPage(); window.location.href = '/coloriages'; return; }
     const reponseJson = await res.json().catch(() => ({}));
     const message = reponseJson.error || `Erreur ${res.status} ${res.statusText || 'API/PAGES'}`;
     setErreur(`Attention, l'application n'est pas en mesure de sauvegarder, ${message}`);
@@ -367,6 +375,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     try {
       const res = await fetch(`/api/pages/${page.id}`, { method: 'DELETE', cache: 'no-store' });
       if (res.ok) {
+        libererPage();
         window.location.href = '/coloriages';
       } else {
         const json = await res.json().catch(() => ({}));
@@ -494,7 +503,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   return (
     <>
       <div className="barre">
-        <button className="btn alt" onClick={() => window.location.href = '/coloriages'}>Retour</button>
+        <button className="btn alt" onClick={() => { if (confirmerQuitter()) { libererPage(); window.location.href = '/coloriages'; } }}>Retour</button>
         <button type="button" className="btn alt" onClick={exporterEnImage} disabled={enExport}>
           <Camera size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />{enExport ? 'Export…' : 'Exporter en image'}
         </button>

@@ -10,48 +10,48 @@
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau1.svg",
     "fichier": "kromadex-sceau1.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 38665,
+    "type": "Épreuve des cheffes",
+    "octets": 98942,
     "largeur": 500,
     "hauteur": 500
   },
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau2.svg",
     "fichier": "kromadex-sceau2.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 19358,
+    "type": "Épreuve des cheffes",
+    "octets": 19325,
     "largeur": 500,
     "hauteur": 500
   },
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau3.svg",
     "fichier": "kromadex-sceau3.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 59140,
+    "type": "Épreuve des cheffes",
+    "octets": 86872,
     "largeur": 500,
     "hauteur": 500
   },
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau4.svg",
     "fichier": "kromadex-sceau4.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 25936,
+    "type": "Épreuve des cheffes",
+    "octets": 44252,
     "largeur": 500,
     "hauteur": 500
   },
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau5.svg",
     "fichier": "kromadex-sceau5.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 16764,
+    "type": "Épreuve des cheffes",
+    "octets": 17015,
     "largeur": 500,
     "hauteur": 500
   },
   {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau6.svg",
     "fichier": "kromadex-sceau6.svg",
-    "type": "Épreuve des chef.fes",
-    "octets": 27674,
+    "type": "Épreuve des cheffes",
+    "octets": 24147,
     "largeur": 500,
     "hauteur": 500
   },
@@ -80,6 +80,46 @@
     "hauteur": 500
   },
   {
+    "chemin": "/recompenses-activites/expedition/kromadex-expeditions-level1.svg",
+    "fichier": "kromadex-expeditions-level1.svg",
+    "type": "Expédition",
+    "octets": 12781,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/expedition/kromadex-expeditions-level2.svg",
+    "fichier": "kromadex-expeditions-level2.svg",
+    "type": "Expédition",
+    "octets": 14923,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/recompenses-activites/expedition/kromadex-expeditions-level3.svg",
+    "fichier": "kromadex-expeditions-level3.svg",
+    "type": "Expédition",
+    "octets": 16409,
+    "largeur": 390,
+    "hauteur": 502
+  },
+  {
+    "chemin": "/recompenses-activites/expedition/kromadex-expeditions-level4.svg",
+    "fichier": "kromadex-expeditions-level4.svg",
+    "type": "Expédition",
+    "octets": 22421,
+    "largeur": 390,
+    "hauteur": 502
+  },
+  {
+    "chemin": "/recompenses-activites/expedition/kromadex-expeditions-level5.svg",
+    "fichier": "kromadex-expeditions-level5.svg",
+    "type": "Expédition",
+    "octets": 22522,
+    "largeur": 398,
+    "hauteur": 500
+  },
+  {
     "chemin": "/inventaire/kromadex-parchemin.svg",
     "fichier": "kromadex-parchemin.svg",
     "type": "Inventaire",
@@ -98,7 +138,7 @@
   {
     "chemin": "/pionniers/kromadex-pionnier-badge.svg",
     "fichier": "kromadex-pionnier-badge.svg",
-    "type": "Pionnières et Pionniers",
+    "type": "Pionnières",
     "octets": 28708,
     "largeur": 500,
     "hauteur": 500
@@ -106,7 +146,7 @@
   {
     "chemin": "/pionniers/kromadex-pionnier-cadre1.svg",
     "fichier": "kromadex-pionnier-cadre1.svg",
-    "type": "Pionnières et Pionniers",
+    "type": "Pionnières",
     "octets": 72552,
     "largeur": 500,
     "hauteur": 500
@@ -114,7 +154,7 @@
   {
     "chemin": "/pionniers/kromadex-pionnier-cadre2.svg",
     "fichier": "kromadex-pionnier-cadre2.svg",
-    "type": "Pionnières et Pionniers",
+    "type": "Pionnières",
     "octets": 38598,
     "largeur": 500,
     "hauteur": 500
@@ -139,8 +179,8 @@
     "chemin": "/recompenses-activites/combat/kromadex-tournoi-couleur.svg",
     "fichier": "kromadex-tournoi-couleur.svg",
     "type": "Tournoi du royaume",
-    "octets": 20026,
-    "largeur": 500,
+    "octets": 13821,
+    "largeur": 481,
     "hauteur": 500
   },
   {

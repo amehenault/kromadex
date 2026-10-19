@@ -61,8 +61,9 @@ export const FETES = [
   { valeur: 'decembre', mois: 12, nom: 'La veillée des flocons', occasion: 'Noël et Jour de l’An', debut: '12-01', fin: '12-31', xp: 215 },
 ];
 export const XP_SECONDAIRE = 10;
-// Boussole : son visuel change à la 1re, à la 3e et à la 5e expédition réussie
-export const PALIERS_BOUSSOLE = [1, 3, 5];
+// Boussole : un nouveau niveau (nouveau visuel) à la 1re, 3e, 5e, 7e et 9e expédition réussie
+// (images public/recompenses-activites/expedition/…level1 à …level5)
+export const PALIERS_BOUSSOLE = [1, 3, 5, 7, 9];
 
 // Épopées : une par saison, deux semaines
 export const MOIS_EPOPEES = [1, 3, 7, 9];

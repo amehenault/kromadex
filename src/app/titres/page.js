@@ -14,7 +14,7 @@ export default async function TitresPage() {
   if (!user) redirect('/login');
   const profil = await getUserProfile(user.id);
   const niveau = calculerNiveau(profil?.xp);
-  const forme = profil?.genre === 'feminin' ? 1 : 0;
+  const forme = profil?.genre === 'masculin' ? 0 : 1; // le féminin prime (masculin seulement pour « masculin »)
 
   return (
     <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>

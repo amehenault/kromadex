@@ -48,7 +48,7 @@ export async function etatEpopee(a) {
   };
 }
 
-// Boussole : son visuel change à la 1re, à la 3e et à la 5e expédition réussie
+// Boussole : un nouveau niveau à la 1re, 3e, 5e, 7e et 9e expédition réussie (voir PALIERS_BOUSSOLE)
 async function verifierBoussole(userId) {
   const [{ n }] = await sql`
     SELECT count(DISTINCT s.aventure_id)::int AS n FROM aventure_soumissions s JOIN aventures a ON a.id = s.aventure_id
@@ -56,7 +56,7 @@ async function verifierBoussole(userId) {
   for (const [i, palier] of PALIERS_BOUSSOLE.entries()) {
     if (n < palier) break;
     await donnerRecompense(userId, {
-      genre: 'boussole', detail: `(${palier} expédition${palier > 1 ? 's' : ''})`, source: `boussole:${palier}`, image: `boussole-${i + 1}.png`,
+      genre: 'boussole', detail: `niveau ${i + 1} (${palier} expédition${palier > 1 ? 's' : ''})`, source: `boussole:${palier}`, image: `level${i + 1}`,
     });
   }
 }

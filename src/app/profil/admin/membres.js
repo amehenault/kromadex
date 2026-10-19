@@ -8,7 +8,7 @@ import Pseudo from '@/components/Pseudo';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
-  { valeur: 'cheffe', label: 'Chef.fe des coloristes (1 mois)' },
+  { valeur: 'cheffe', label: 'Cheffe des coloristes (1 mois)' },
   { valeur: 'modo', label: 'Sentinelle du Kromadex' },
 ];
 
@@ -48,7 +48,7 @@ export default function Membres({ role }) {
   return (
     <div className="carte" style={colonne}>
       <p style={aide}>
-        Tout le monde est <b>coloriste</b> par défaut. Le ou la <b>chef.fe des coloristes</b> a gagné une épreuve mensuelle :
+        Tout le monde est <b>coloriste</b> par défaut. La <b>cheffe des coloristes</b> a gagné une épreuve mensuelle :
         le poste dure 1 mois, avec 7 jours après la nomination pour créer son épreuve. Les <b>sentinelles du Kromadex</b> modèrent.
         Le poste d'<b>Invocatrice des couleurs</b> est unique.
       </p>
@@ -100,7 +100,7 @@ export default function Membres({ role }) {
               {/* Kromadex+ offert : dans l'onglet Kromadex+ ; ici on voit seulement les abonnements payés */}
               {paye(u) && (
                 <small style={aide}>
-                  Abonné.e Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}
+                  Abonnée Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}
                 </small>
               )}
             </>

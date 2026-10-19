@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import MenuBas from '@/components/MenuBas';
 import SansZoom from '@/components/SansZoom';
 import { FuseauProvider } from '@/components/Fuseau';
+import { GenreProvider } from '@/components/Genre';
 import { fuseauDuPays } from '@/lib/pays';
 import { getUser } from '@/lib/auth';
 import { sql } from '@/lib/db';
@@ -33,17 +34,20 @@ export default async function Layout({ children }) {
   const user = await getUser();
   // Visite du jour (série de connexion) ; une erreur ici ne doit jamais bloquer l'affichage
   if (user) await noterConnexion(user.id).catch(() => {});
-  // Photo de profil du menu (versionnée pour éviter le cache) et pays de la personne (pour le fuseau horaire)
-  const [a] = user ? await sql`SELECT avatar_maj, avatar_b64 IS NOT NULL AS a_avatar, pays FROM users WHERE id = ${user.id}` : [];
+  // Photo de profil du menu (versionnée pour éviter le cache), pays de la personne (pour le fuseau horaire)
+  // et son genre (pour accorder les textes : le féminin prime)
+  const [a] = user ? await sql`SELECT avatar_maj, avatar_b64 IS NOT NULL AS a_avatar, pays, genre FROM users WHERE id = ${user.id}` : [];
   const avatar = a?.a_avatar ? `/api/user/avatar?v=${new Date(a.avatar_maj).getTime()}` : null;
   return (
     <html lang="fr">
       <body>
         <FuseauProvider fuseau={fuseauDuPays(a?.pays)}>
-          <SansZoom />
-          <Header />
-          <main className={user ? 'contenu avec-menu-bas' : 'contenu'}>{children}</main>
-          {user && <MenuBas avatar={avatar} />}
+          <GenreProvider genre={a?.genre}>
+            <SansZoom />
+            <Header />
+            <main className={user ? 'contenu avec-menu-bas' : 'contenu'}>{children}</main>
+            {user && <MenuBas avatar={avatar} />}
+          </GenreProvider>
         </FuseauProvider>
       </body>
     </html>

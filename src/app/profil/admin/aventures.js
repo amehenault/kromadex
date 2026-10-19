@@ -253,7 +253,7 @@ export default function Aventures() {
             <b style={{ overflowWrap: 'anywhere' }}>{a.titre}</b>
             <small>
               {a.etapes.length} étape{a.etapes.length > 1 ? 's' : ''} · {a.stats.personnes} personne{a.stats.personnes > 1 ? 's' : ''} · {a.stats.soumissions} soumission{a.stats.soumissions > 1 ? 's' : ''}
-              {a.genre === 'epopee' && ` · ${a.stats.inscrits} inscrit.es · dragon : ${a.epopee.pvRestants} / ${a.pv}${a.epopee.vaincu ? ' (vaincu)' : ''}`}
+              {a.genre === 'epopee' && ` · ${a.stats.inscrits} inscrites · dragon : ${a.epopee.pvRestants} / ${a.pv}${a.epopee.vaincu ? ' (vaincu)' : ''}`}
             </small>
             <div style={actions}>
               <button type="button" className="btn alt" style={petitBtn} onClick={() => setForm({ ...a, xp: a.xp || {} })}><Pencil size={14} aria-hidden="true" /> Modifier</button>

@@ -1,4 +1,5 @@
 'use client';
+import { useAccord } from '@/components/Genre';
 import { useEffect, useState } from 'react';
 import { Crown, Plus, Gift, Image as ImageIcon, Trophy, Check } from 'lucide-react';
 import { TempsRestant, useFuseau } from '@/components/Fuseau';
@@ -15,10 +16,11 @@ const nomRonde = (ronde, taille) => {
   const restants = taille / 2 ** (ronde - 1);
   return restants === 2 ? 'Finale' : restants === 4 ? 'Demi-finales' : restants === 8 ? 'Quarts de finale' : `Ronde ${ronde}`;
 };
-const INFO = `La période d’inscription est de ${TOURNOIS.joursInscription} jours. Pour chaque ronde, les participant.es ont ${TOURNOIS.joursSoumission} jours pour soumettre leur coloriage, puis l’Assemblée a ${TOURNOIS.joursVerdict} jours pour rendre son verdict. Un tournoi dure en moyenne entre 31 et 39 jours et demande un nouveau coloriage à chaque ronde.`;
+const INFO = `La période d’inscription est de ${TOURNOIS.joursInscription} jours. Pour chaque ronde, les participantes ont ${TOURNOIS.joursSoumission} jours pour soumettre leur coloriage, puis l’Assemblée a ${TOURNOIS.joursVerdict} jours pour rendre son verdict. Un tournoi dure en moyenne entre 31 et 39 jours et demande un nouveau coloriage à chaque ronde.`;
 
 // Tournoi du royaume : 8 ou 16 coloristes, duos au hasard, élimination ronde après ronde jusqu'à la finale
 export default function Tournois() {
+  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
   const [donnees, setDonnees] = useState(null);
   const [form, setForm] = useState(null);
   const [choix, setChoix] = useState(null); // { tournoi, match }
@@ -78,12 +80,12 @@ export default function Tournois() {
 
           {t.statut === 'inscriptions' && (
             <>
-              <small style={{ fontWeight: 700 }}>{t.inscrits} / {TOURNOIS.tailles.at(-1)} inscrit.es{t.prolonge ? ' · inscriptions prolongées une fois' : ''}</small>
+              <small style={{ fontWeight: 700 }}>{t.inscrits} / {TOURNOIS.tailles.at(-1)} inscrites{t.prolonge ? ' · inscriptions prolongées une fois' : ''}</small>
               <TempsRestant fin={t.inscriptions_fin} />
-              <small style={{ color: 'var(--texte-secondaire)' }}>{INFO} Il faut 8 ou 16 inscrit.es, sinon le tournoi est annulé.</small>
+              <small style={{ color: 'var(--texte-secondaire)' }}>{INFO} Il faut 8 ou 16 inscrites, sinon le tournoi est annulé.</small>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {t.inscrit
-                  ? <><span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Inscrit.e</span>
+                  ? <><span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> {acc('Inscrite', 'Inscrit')}</span>
                       <button type="button" className="btn alt" style={petit} onClick={() => action({ action: 'desinscrire', id: t.id })}>Me désinscrire</button></>
                   : <button type="button" className="btn" style={petit} onClick={() => action({ action: 'inscrire', id: t.id }, `${INFO}\n\nTu t’inscris ?`)}>M’inscrire</button>}
                 {t.je_cree && <button type="button" className="btn alt danger" style={petit} onClick={() => action({ action: 'annuler', id: t.id }, 'Annuler ce tournoi ?')}>Annuler le tournoi</button>}
@@ -108,7 +110,7 @@ export default function Tournois() {
                   ) : <small>Verdict de l’Assemblée en cours.</small>}
                 </div>
               )}
-              {t.inscrit && !t.encore_en_lice && <small style={{ color: 'var(--texte-secondaire)' }}>Tu as été éliminé.e, merci d’avoir combattu !</small>}
+              {t.inscrit && !t.encore_en_lice && <small style={{ color: 'var(--texte-secondaire)' }}>Tu as été {acc('éliminée', 'éliminé')}, merci d’avoir combattu !</small>}
               {(t.matchs || []).map((m) => (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid var(--bordure-carte)', paddingTop: '6px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -127,7 +129,7 @@ export default function Tournois() {
 
           {t.statut === 'termine' && (
             <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}>
-              <Trophy size={16} aria-hidden="true" /> {t.j_ai_gagne ? 'Tu as remporté ce tournoi !' : `Vainqueur.e : ${t.nom_gagnant || 'membre'}`}
+              <Trophy size={16} aria-hidden="true" /> {t.j_ai_gagne ? 'Tu as remporté ce tournoi !' : `Victoire de ${t.nom_gagnant || 'une coloriste'}`}
             </small>
           )}
           {t.statut === 'annule' && <small style={{ color: 'var(--texte-secondaire)' }}>Tournoi annulé (pas assez d’inscriptions).</small>}

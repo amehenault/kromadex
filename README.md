@@ -60,7 +60,7 @@ dans le nom du fichier.
 | Épée chromatique (duel) | recompenses-activites/combat | duel ou epee |
 | Joute | recompenses-activites/combat | joute |
 | Insigne du tournoi | recompenses-activites/combat | tournoi + libre, couleur ou ambiance |
-| Boussole (expédition) | recompenses-activites/expedition | boussole + numéro (1, 2, 3) |
+| Boussole (expédition) | recompenses-activites/expedition | boussole, expedition ou level + numéro du niveau (1 à 5 : 1re, 3e, 5e, 7e et 9e expédition réussie) |
 | Blason (épopée) | n'importe où dans recompenses-activites | blason ou epopee |
 | Orbe magique (prophétie) | n'importe où dans recompenses-activites | orbe ou prophetie |
 

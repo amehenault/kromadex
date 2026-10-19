@@ -26,7 +26,7 @@ export default function Podium() {
       <b style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
         <Trophy size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Podium de l’Assemblée
       </b>
-      <small style={{ color: 'var(--texte-secondaire)', marginTop: '-6px' }}>Les gagnant.es des 30 derniers jours</small>
+      <small style={{ color: 'var(--texte-secondaire)', marginTop: '-6px' }}>Les gagnantes des 30 derniers jours</small>
       {visibles.map((g, i) => (
         <div key={g.user_id} style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           <span aria-label={`Rang ${i + 1}`} style={{ width: 26, height: 26, flex: '0 0 auto', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -47,7 +47,7 @@ export default function Podium() {
       ))}
       {gagnants.length > 3 && (
         <button type="button" className="btn alt" onClick={() => setTous(!tous)} style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          {tous ? <><ChevronUp size={16} aria-hidden="true" /> Réduire</> : <><ChevronDown size={16} aria-hidden="true" /> Voir tous les gagnant.es ({gagnants.length})</>}
+          {tous ? <><ChevronUp size={16} aria-hidden="true" /> Réduire</> : <><ChevronDown size={16} aria-hidden="true" /> Voir toutes les gagnantes ({gagnants.length})</>}
         </button>
       )}
     </section>

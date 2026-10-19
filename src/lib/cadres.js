@@ -1,18 +1,17 @@
-// Cadres autour de la photo de profil. Chaque cadre se débloque (Pionnière, relique complétée) ;
+// Cadres autour de la photo de profil. Chaque cadre se débloque (Pionnière ou Pionnier) ;
 // la personne choisit le sien dans Paramètres (null = le plus prestigieux débloqué, 'aucun' = sans cadre).
 //  - anneau : double anneau de couleur dessiné autour de la photo ;
 //  - image : cadre illustré (public/pionniers) posé par-dessus la photo ; photo = part de la largeur du cadre
 //    occupée par la photo. Le centre est vide sur environ 47 % (pierres) et 54 % (vigne) ; la photo est un peu
 //    plus grande pour passer sous les ornements, qui sont dessinés par-dessus.
 import IMAGES from '@/lib/manifesteRecompenses.json';
+import { nomPionnier } from '@/lib/postes';
 
 export const CADRES = {
-  relique: { nom: 'Cadre de la relique', anneau: ['#d4a017', '#d4a017'],
-    condition: 'Compléter une relique : réunir 4 fragments de la même collection en gagnant des épreuves des Sentinelles.' },
-  pionnier: { nom: 'Cadre de Pionnière et Pionnier : pierres', image: '/pionniers/kromadex-pionnier-cadre1.svg', photo: 0.56,
-    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière ou Pionnier.' },
-  pionnier2: { nom: 'Cadre de Pionnière et Pionnier : vigne', image: '/pionniers/kromadex-pionnier-cadre2.svg', photo: 0.62,
-    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière ou Pionnier.' },
+  pionnier: { nom: 'Cadre de Pionnière : pierres', image: '/pionniers/kromadex-pionnier-cadre1.svg', photo: 0.56,
+    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière.' },
+  pionnier2: { nom: 'Cadre de Pionnière : vigne', image: '/pionniers/kromadex-pionnier-cadre2.svg', photo: 0.62,
+    condition: 'Avoir participé à la bêta de Kromadex comme Pionnière.' },
 };
 
 // Nouveaux cadres ajoutés automatiquement : tout fichier « …cadre… » déposé dans public/pionniers
@@ -23,16 +22,15 @@ IMAGES.filter((i) => i.chemin.startsWith('/pionniers/') && i.fichier.toLowerCase
     const base = i.fichier.replace(/\.[a-z0-9]+$/i, '');
     const numero = (base.match(/\d+/) || [])[0];
     CADRES[`pionnier_${base}`] = {
-      nom: `Cadre de Pionnière et Pionnier${numero ? ` ${numero}` : ''}`, image: i.chemin, photo: 0.6,
-      condition: 'Avoir participé à la bêta de Kromadex comme Pionnière ou Pionnier.',
+      nom: `Cadre de Pionnière${numero ? ` ${numero}` : ''}`, image: i.chemin, photo: 0.6,
+      condition: 'Avoir participé à la bêta de Kromadex comme Pionnière.',
     };
   });
 
-// Cadres débloqués : relique complétée, Pionnière ou Pionnier (l'Invocatrice y a droit aussi) ;
-// tous les cadres de Pionnière et Pionnier, y compris ceux ajoutés automatiquement
-export function cadresDebloques({ relique, pionnier, role }) {
+// Cadres débloqués : tous les cadres de Pionnière et Pionnier, y compris ceux ajoutés automatiquement
+// (l'Invocatrice y a droit aussi)
+export function cadresDebloques({ pionnier, role }) {
   const liste = [];
-  if (relique) liste.push('relique');
   if (pionnier || role === 'admin') liste.push(...Object.keys(CADRES).filter((c) => c.startsWith('pionnier')));
   return liste;
 }
@@ -52,5 +50,9 @@ export function styleCadre(cle) {
   return { boxShadow: `0 0 0 3px ${a}, 0 0 0 6px var(--fond-carte), 0 0 0 9px ${b}` };
 }
 
-// « Pionnière », « Pionnier » ou « Pionnier.ère » selon le genre (même règle que les postes)
+// « Pionnière », ou « Pionnier » pour le genre masculin (même règle que les postes)
 export { nomPionnier } from '@/lib/postes';
+
+// Nom et condition d'un cadre accordés au genre de la personne (Pionnière, ou Pionnier pour « masculin »)
+export const nomCadre = (cle, genre) => (CADRES[cle]?.nom || '').replace('Pionnière', nomPionnier(genre));
+export const conditionCadre = (cle, genre) => (CADRES[cle]?.condition || '').replace('Pionnière', nomPionnier(genre));

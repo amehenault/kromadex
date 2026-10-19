@@ -43,6 +43,7 @@ import MesRecompenses from '@/components/MesRecompenses';
 import Inventaire from '@/components/Inventaire';
 import BoutonDeconnexion from './boutonDeconnexion';
 import { verifierQuetes } from '@/lib/quetes';
+import { accord } from '@/lib/genre';
 import { quetesDestin } from '@/lib/quetesDestin';
 import QuetesDuDestin from '@/components/QuetesDuDestin';
 
@@ -444,9 +445,11 @@ export default async function ProfilPage() {
       {/* Pages choisies par la Roue du Destin, à colorier */}
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
 
-      {/* Accès rapides : Espace et Activités à venir (toute la largeur), Kromadex+ et Aide, Statistiques et Missives, puis les collections.
+      {/* Accès rapides : bouton spécial (Espace ou épreuve de cheffe) et Activités à venir en tête, sur toute la largeur.
           Libellés sans « Mes / Ma / Mon » ; chaque page ouverte porte exactement le même nom que son bouton. */}
       <div className="profil-acces">
+        {/* Bouton spécial en tête, long et corail : Espace de l'Invocatrice, Espace sentinelle ou épreuve de cheffe */}
+
         {['admin', 'modo'].includes(role) && (
           <Link
             href="/profil/admin"
@@ -461,6 +464,23 @@ export default async function ProfilPage() {
           </Link>
         )}
 
+        {role === 'cheffe' && (
+          <Link
+            href="/profil/admin"
+            className="btn profil-acces-admin"
+          >
+            <Trophy size={22} aria-hidden="true" />
+            <span>
+              Créer l’épreuve de {accord(profile?.genre, 'cheffe', 'chef')}
+              {profile?.cheffe_expires_at && (
+                <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
+                  {accord(profile?.genre, 'Cheffe', 'Chef')} jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
+                </small>
+              )}
+            </span>
+          </Link>
+        )}
+
         {role === 'admin' && (
           <Link href="/activites-a-venir" className="btn profil-acces-plein">
             <CalendarClock size={22} aria-hidden="true" />
@@ -468,7 +488,8 @@ export default async function ProfilPage() {
           </Link>
         )}
 
-        {/* 1re ligne : Kromadex+ (gauche) et Aide (droite) ; 2e ligne : Statistiques et Quêtes (droite) */}
+        {/* Puis, dans l'ordre : Kromadex+, Aide, Statistiques, Missives, Collections, Coloriages, Quêtes, Aventures, Combats */}
+
         {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
         {role !== 'admin' && <Link
           href="/kromadex-plus"
@@ -495,38 +516,6 @@ export default async function ProfilPage() {
           <span>Statistiques</span>
         </Link>
 
-        <Link href="/quetes" className="btn profil-acces-lien">
-          <Map size={22} aria-hidden="true" />
-          <span>Quêtes</span>
-        </Link>
-
-
-        {role === 'cheffe' && (
-          <Link
-            href="/profil/admin"
-            className="btn profil-acces-lien"
-          >
-            <Trophy size={22} aria-hidden="true" />
-            <span>
-              Créer l’épreuve de {profile?.genre === 'feminin' ? 'cheffe' : profile?.genre === 'masculin' ? 'chef' : 'chef.fe'}
-              {profile?.cheffe_expires_at && (
-                <small style={{ display: 'block', fontWeight: 400, fontSize: '0.75rem' }}>
-                  Cheffe jusqu&apos;au {new Date(profile.cheffe_expires_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' })}
-                </small>
-              )}
-            </span>
-          </Link>
-        )}
-
-        {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}
-        <Link href="/profil/collection" className="btn profil-acces-lien profil-acces-long">
-          <span className="profil-acces-icones" aria-hidden="true">
-            <BookOpen size={22} />
-            <Pencil size={22} />
-          </span>
-          <span>{nomCollections(visibles)}</span>
-        </Link>
-
         {role !== 'admin' && <Link
           href="/missives"
           className="btn profil-acces-lien"
@@ -537,17 +526,23 @@ export default async function ProfilPage() {
           {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>}
 
-        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
-        {faitCozy(profile?.types_pratiques) && (
-          <Link href="/palettes" className="btn profil-acces-lien">
-            <Paintbrush size={22} aria-hidden="true" />
-            <span>Palettes de couleurs</span>
-          </Link>
-        )}
+        {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}
+        <Link href="/profil/collection" className="btn profil-acces-lien profil-acces-long">
+          <span className="profil-acces-icones" aria-hidden="true">
+            <BookOpen size={22} />
+            <Pencil size={22} />
+          </span>
+          <span>{nomCollections(visibles)}</span>
+        </Link>
 
         <Link href="/coloriages" className="btn profil-acces-lien">
           <Images size={22} aria-hidden="true" />
           <span>Coloriages</span>
+        </Link>
+
+        <Link href="/quetes" className="btn profil-acces-lien">
+          <Map size={22} aria-hidden="true" />
+          <span>Quêtes</span>
         </Link>
 
         <Link href="/aventures" className="btn profil-acces-lien">
@@ -560,6 +555,13 @@ export default async function ProfilPage() {
           <span>Combats</span>
         </Link>
 
+        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
+        {faitCozy(profile?.types_pratiques) && (
+          <Link href="/palettes" className="btn profil-acces-lien">
+            <Paintbrush size={22} aria-hidden="true" />
+            <span>Palettes de couleurs</span>
+          </Link>
+        )}
       </div>
 
       {/* Déconnexion : bouton corail pleine largeur, tout en bas du profil */}

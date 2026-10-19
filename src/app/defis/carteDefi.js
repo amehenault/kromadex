@@ -10,9 +10,10 @@ import Verdict from '@/components/Verdict';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import { XP_EPREUVES, XP_GROUPE } from '@/lib/activites';
 import Pseudo from '@/components/Pseudo';
+import { useAccord } from '@/components/Genre';
 import NombreParticipants from '@/components/NombreParticipants';
 
-const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de chef.fe', groupe: 'Épreuve de groupe' };
+const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de cheffe', groupe: 'Épreuve de groupe' };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
@@ -23,13 +24,14 @@ function recompenses(d) {
     return `${XP_GROUPE.complete} XP chacun si l’objectif est atteint, sinon ${XP_GROUPE.participation} XP de participation${d.multiple ? ` · ${XP_GROUPE.supplementaire} XP par coloriage supplémentaire` : ''}`;
   }
   const titre = d.titre_gagnant ? ` · titre « ${d.titre_gagnant} »` : '';
-  if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Chef.fe des coloristes`;
+  if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Cheffe des coloristes`;
   if (d.genre === 'modo') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, badge de l’épreuve et un fragment de relique${titre}`;
   return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP et le sceau de la cheffe${titre}`;
 }
 
 // Une épreuve : infos, récompenses, envoyer son coloriage, verdict de l'Assemblée (ou progression pour une épreuve de groupe)
 export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
+  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
   const [choix, setChoix] = useState(false);
   const [galerie, setGalerie] = useState(null);
   const [verdict, setVerdict] = useState(false);
@@ -113,7 +115,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
       {d.cloture && !groupe && (
         <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}>
           <Trophy size={16} aria-hidden="true" />
-          {d.j_ai_gagne ? 'Bravo, tu as gagné cette épreuve !' : d.nom_gagnant ? `Gagnant.e : ${d.nom_gagnant}` : 'Épreuve terminée sans gagnant.e'}
+          {d.j_ai_gagne ? 'Bravo, tu as gagné cette épreuve !' : d.nom_gagnant ? `Victoire de ${d.nom_gagnant}` : 'Épreuve terminée sans gagnante'}
         </small>
       )}
       {d.cloture && groupe && (
@@ -127,7 +129,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
             {groupe && d.mes_envois ? <><Plus size={16} aria-hidden="true" /> Ajouter un coloriage</> : <><ImageIcon size={16} aria-hidden="true" /> {d.ma_page ? 'Changer mon coloriage' : 'Envoyer mon coloriage'}</>}
           </button>
         )}
-        {d.je_participe && <span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Inscrit.e</span>}
+        {d.je_participe && <span style={{ ...petit, fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> {acc('Inscrite', 'Inscrit')}</span>}
         {!groupe && d.coloriages > 0 && (
           <button type="button" className="btn alt" style={petit} onClick={() => setVerdict(!verdict)}>
             <Gavel size={16} aria-hidden="true" /> {verdict ? 'Masquer' : termine ? 'Voir les coloriages' : 'Rendre mon verdict'}

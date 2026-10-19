@@ -8,15 +8,16 @@ import PhotoProfil from '@/app/profil/edit/photoProfil';
 import APropos from '@/app/profil/edit/apropos';
 import Preferences from '@/app/profil/edit/preferences';
 import Acces from '@/app/profil/edit/acces';
-import { CADRES } from '@/lib/cadres';
+import { CADRES, nomCadre, conditionCadre } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
+import { useAccord } from '@/components/Genre';
 
 const enregistrer = (corps) => fetch('/api/user/parametres', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
 }).then((r) => r.ok);
 
 // Paramètres : tout ce qu'une personne peut régler, au même endroit
-export default function Parametres({ clePublique, types, notifs: initiales, cadres, cadre: cadreInitial, role, titre: titreInitial, titres }) {
+export default function Parametres({ clePublique, types, notifs: initiales, cadres, cadre: cadreInitial, role, genre, titre: titreInitial, titres }) {
   const router = useRouter();
   const [notifs, setNotifs] = useState(initiales);
   const [cadre, setCadre] = useState(cadreInitial || cadres[0] || 'aucun');
@@ -90,10 +91,10 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
                     <Lock size={16} />
                   </span>
                 )}
-                <b style={{ fontSize: '0.8rem', overflowWrap: 'anywhere' }}>{c === 'aucun' ? 'Sans cadre' : CADRES[c].nom}</b>
+                <b style={{ fontSize: '0.8rem', overflowWrap: 'anywhere' }}>{c === 'aucun' ? 'Sans cadre' : nomCadre(c, genre)}</b>
                 {!libre && (
                   <small style={{ fontWeight: 400, fontSize: '0.72rem', color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>
-                    {CADRES[c].condition}
+                    {conditionCadre(c, genre)}
                   </small>
                 )}
               </button>
@@ -140,6 +141,7 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
 // Supprimer son compte : confirmation, puis mot de passe (on ne peut pas revenir en arrière)
 function SupprimerCompte({ role }) {
   const router = useRouter();
+  const acc = useAccord();
   const [ouvert, setOuvert] = useState(false);
   const [motDePasse, setMotDePasse] = useState('');
   const [message, setMessage] = useState('');
@@ -147,7 +149,7 @@ function SupprimerCompte({ role }) {
   if (role === 'admin') return null;
 
   function demander() {
-    if (confirm('Es-tu sûr.e de vouloir supprimer ton compte ? Tu perdras l’entièreté de tes données.')) setOuvert(true);
+    if (confirm(`Es-tu ${acc('sûre', 'sûr')} de vouloir supprimer ton compte ? Tu perdras l’entièreté de tes données.`)) setOuvert(true);
   }
   async function supprimer(e) {
     e.preventDefault();

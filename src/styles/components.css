@@ -707,10 +707,11 @@ div.vide {
 
 /* Image exportée : codes couleurs toujours sur 2 colonnes (même depuis un téléphone), logo et adresse en bas */
 .mode-export .grille-codes-deux-colonnes { flex-direction: row !important; }
+/* Logo, puis l'adresse juste dessous, les deux centrés */
 .pied-export {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bordure);
-  font-weight: 700; font-size: 0.85rem; color: var(--texte-principal);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--bordure);
+  font-weight: 700; font-size: 0.85rem; line-height: 1; color: var(--texte-principal); text-align: center;
 }
 .pied-export img { height: 28px; width: auto; }
 

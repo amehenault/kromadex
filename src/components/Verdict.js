@@ -1,11 +1,12 @@
 'use client';
+import { useAccord } from '@/components/Genre';
 import { useEffect, useState } from 'react';
 import { Gavel, Check, Flag } from 'lucide-react';
 import Feuille from './Feuille';
 import { TempsRestant } from './Fuseau';
 
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
-const CONFIRMATION = 'Es-tu sûr.e de vouloir changer le résultat de ton verdict ? Ce choix sera définitif.';
+const CONFIRMATION = (acc) => `Es-tu ${acc('sûre', 'sûr')} de vouloir changer le résultat de ton verdict ? Ce choix sera définitif.`;
 
 // Rond corail numéroté qui remplace la photo et le pseudo dans les combats (anonymat)
 export function PastilleColoriste({ n, taille = 28 }) {
@@ -24,6 +25,7 @@ export function PastilleColoriste({ n, taille = 28 }) {
 // On ne voit ni l'autrice ou l'auteur des coloriages, ni le nombre de verdicts reçus par chacun.
 // signalerDefi : id de l'épreuve, pour signaler un coloriage qui ne correspond pas à ce qui est demandé.
 export default function Verdict({ activite, signalerDefi, onVote }) {
+  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
   const [vue, setVue] = useState(null);
   const [ouverte, setOuverte] = useState(null);
   const [message, setMessage] = useState('');
@@ -36,7 +38,7 @@ export default function Verdict({ activite, signalerDefi, onVote }) {
 
   async function voter(f) {
     setMessage('');
-    if (vue.monVerdict && vue.monVerdict !== f.id && !confirm(CONFIRMATION)) return;
+    if (vue.monVerdict && vue.monVerdict !== f.id && !confirm(CONFIRMATION(acc))) return;
     const r = await fetch('/api/verdicts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activite, pageId: f.id }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { setMessage(d.error || 'Erreur'); return; }

@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 import EspaceAdmin from './espaceAdmin';
+import { accord } from '@/lib/genre';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export default async function AdminPage() {
   const profil = await getUserProfile(user.id);
   if (!['admin', 'modo', 'cheffe'].includes(profil?.role)) redirect('/profil');
 
-  const titre = profil.role === 'admin' ? 'Espace de l’Invocatrice' : profil.role === 'modo' ? 'Espace sentinelle' : `Créer l’épreuve de ${profil.genre === 'feminin' ? 'cheffe' : profil.genre === 'masculin' ? 'chef' : 'chef.fe'}`;
+  const titre = profil.role === 'admin' ? 'Espace de l’Invocatrice' : profil.role === 'modo' ? 'Espace sentinelle' : `Créer l’épreuve de ${accord(profil.genre, 'cheffe', 'chef')}`;
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>

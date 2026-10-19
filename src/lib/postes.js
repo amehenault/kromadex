@@ -3,29 +3,29 @@
 //  cheffe    : Cheffe / Chef des coloristes, gagnant.e d'une épreuve mensuelle
 //  modo      : Sentinelle du Kromadex, modérateur ou modératrice
 //  admin     : Invocatrice des couleurs (unique)
-// Chaque nom s'accorde au genre choisi dans le profil : féminin, masculin, sinon la forme inclusive (Chef.fe).
+// Chaque nom s'accorde au genre choisi dans le profil : le masculin seulement pour « masculin », sinon le féminin prime.
 const FORMES = {
-  coloriste: { f: 'Coloriste', m: 'Coloriste', i: 'Coloriste' },
-  cheffe: { f: 'Cheffe des coloristes', m: 'Chef des coloristes', i: 'Chef.fe des coloristes' },
-  modo: { f: 'Sentinelle du Kromadex', m: 'Sentinelle du Kromadex', i: 'Sentinelle du Kromadex' },
-  admin: { f: 'Invocatrice des couleurs', m: 'Invocateur des couleurs', i: 'Invocatrice des couleurs' },
+  coloriste: { f: 'Coloriste', m: 'Coloriste' },
+  cheffe: { f: 'Cheffe des coloristes', m: 'Chef des coloristes' },
+  modo: { f: 'Sentinelle du Kromadex', m: 'Sentinelle du Kromadex' },
+  admin: { f: 'Invocatrice des couleurs', m: 'Invocateur des couleurs' },
 };
-const forme = (genre) => (genre === 'feminin' ? 'f' : genre === 'masculin' ? 'm' : 'i');
+const forme = (genre) => (genre === 'masculin' ? 'm' : 'f');
 
-// Nom du poste d'une personne, accordé à son genre (sans genre connu : forme inclusive)
+// Nom du poste d'une personne, accordé à son genre (sans genre connu : au féminin)
 export const nomPoste = (role, genre) => (FORMES[role] || FORMES.coloriste)[forme(genre)];
 
-// Noms génériques, quand on parle du poste en général (listes, filtres, explications)
-export const NOMS_POSTES = Object.fromEntries(Object.entries(FORMES).map(([cle, f]) => [cle, f.i]));
+// Noms génériques, quand on parle du poste en général (listes, filtres, explications) : au féminin
+export const NOMS_POSTES = Object.fromEntries(Object.entries(FORMES).map(([cle, f]) => [cle, f.f]));
 export const PLURIELS_POSTES = {
   coloriste: 'Coloristes',
-  cheffe: 'Chef.fes',
+  cheffe: 'Cheffes',
   modo: 'Sentinelles',
   admin: 'Invocatrice',
 };
 
-// « Pionnière », « Pionnier » ou « Pionnier.ère » : s'ajoute au poste des bêta-testrices et bêta-testeurs
-export const nomPionnier = (genre) => ({ f: 'Pionnière', m: 'Pionnier', i: 'Pionnier.ère' })[forme(genre)];
+// « Pionnière » ou « Pionnier » : s'ajoute au poste des bêta-testrices et bêta-testeurs
+export const nomPionnier = (genre) => ({ f: 'Pionnière', m: 'Pionnier' })[forme(genre)];
 
 // Couleur de chaque poste (variables définies dans root.css)
 export const COULEURS_POSTES = {

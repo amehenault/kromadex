@@ -23,6 +23,7 @@ export default async function ParametresPage() {
       cadres={cadresDebloques(u)}
       cadre={u.cadre}
       role={u.role}
+      genre={u.genre}
       titre={u.title || ''}
       titres={(u.unlocked_titles || []).filter((t) => t !== 'Coloriste débutant')}
     />

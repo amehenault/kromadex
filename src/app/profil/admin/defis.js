@@ -10,7 +10,7 @@ import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import { NUMEROS_SCEAUX, imageSceau } from '@/lib/recompenses';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
-const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De chef.fe' };
+const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De cheffe' };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '', titre_gagnant: '', image: '', sceau: 1 });
 const DOSSIER_BADGE = { officiel: 'epreuve/mensuelles', modo: 'epreuve/sentinelles' };
 
@@ -119,7 +119,7 @@ export default function Defis({ role, monId }) {
         {genre === 'cheffe' && (
           <fieldset style={{ ...champ, border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <legend style={{ padding: 0, marginBottom: '6px' }}>Sceau remis à la personne gagnante</legend>
-            {/* Les 6 sceaux de chef.fe (public/recompenses-activites/epreuve/chef) : on touche celui qu'on veut remettre */}
+            {/* Les sceaux de cheffe (public/recompenses-activites/epreuve/chef) : on touche celui qu'on veut remettre */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
               {NUMEROS_SCEAUX.map((n) => (
                 <button key={n} type="button" onClick={() => setForm({ ...form, sceau: n })} aria-pressed={form.sceau === n}
@@ -143,7 +143,7 @@ export default function Defis({ role, monId }) {
 
       {visibles.length > 0 && (
         <div className="carte" style={colonne}>
-          <b>{estAdmin ? 'Épreuves officielles, de sentinelle et de chef.fe' : 'Mes épreuves'}</b>
+          <b>{estAdmin ? 'Épreuves officielles, de sentinelle et de cheffe' : 'Mes épreuves'}</b>
           {visibles.map((d) => (
             <div key={d.id} style={ligneCarte}>
               <small style={{ ...aide, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>

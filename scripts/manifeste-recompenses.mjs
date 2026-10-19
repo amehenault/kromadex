@@ -11,9 +11,9 @@ const EXTENSIONS = /\.(svg|png|webp|jpe?g)$/i;
 // Type affiché (et filtre) d'après le dossier et le nom du fichier
 function typeDe(chemin) {
   const c = chemin.toLowerCase();
-  if (c.startsWith('pionniers/')) return 'Pionnières et Pionniers';
+  if (c.startsWith('pionniers/')) return 'Pionnières';
   if (c.startsWith('inventaire/')) return 'Inventaire';
-  if (c.includes('/epreuve/chef/')) return 'Épreuve des chef.fes';
+  if (c.includes('/epreuve/chef/')) return 'Épreuve des cheffes';
   if (c.includes('/epreuve/mensuelles/')) return 'Épreuve mensuelle';
   if (c.includes('/epreuve/sentinelles/')) return 'Épreuve des Sentinelles';
   if (c.includes('/epreuve/groupe/')) return 'Épreuve de groupe';

@@ -1,6 +1,6 @@
 // Un titre par niveau (1 à 62), au masculin et au féminin.
 // Le genre choisi au profil sert seulement à accorder le titre :
-// féminin = forme féminine ; masculin, non-binaire et autre = forme masculine.
+// masculin = forme masculine ; féminin, non-binaire, autre ou inconnu = forme féminine (le féminin prime).
 export const TITRES = [
   ['Gribouilleur en herbe', 'Gribouilleuse en herbe'],
   ['Futur barbouilleur', 'Future barbouilleuse'],
@@ -74,8 +74,8 @@ export const GENRES = [
 ];
 export const VALEURS_GENRES = GENRES.map((g) => g.valeur);
 
-// Titre d'un niveau selon le genre (non-binaire et autre : masculin par défaut)
+// Titre d'un niveau selon le genre (non-binaire, autre ou inconnu : féminin)
 export function titreNiveau(niveau, genre) {
   const n = Math.min(Math.max(1, Math.floor(niveau) || 1), TITRES.length);
-  return TITRES[n - 1][genre === 'feminin' ? 1 : 0];
+  return TITRES[n - 1][genre === 'masculin' ? 0 : 1];
 }

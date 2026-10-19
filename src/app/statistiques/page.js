@@ -5,6 +5,7 @@ import { NOMS_AVENTURES } from '@/lib/activites';
 import { abonnementDe, JOURS_STATS_GRATUIT } from '@/lib/abonnement';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { accord } from '@/lib/genre';
 import { FUSEAU, BONUS_SERIE, serieEnCours, meilleureSerie, aujourdhuiLocal, joursColories, joursConnectes } from '@/lib/series';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,8 @@ export default async function StatistiquesPage() {
   const user = await getUser();
   if (!user) redirect('/login');
   const uid = user.id;
+  // Genre de la personne : « Inscrite », ou « Inscrit » pour le genre masculin
+  const [{ genre } = {}] = await sql`SELECT genre FROM users WHERE id = ${uid}`;
 
   const aujourdhui = await aujourdhuiLocal();
   const debutMois = `${aujourdhui.slice(0, 7)}-01`;
@@ -237,7 +240,7 @@ export default async function StatistiquesPage() {
           <Link key={`a${a.id}`} href={`/aventures/${a.id}`} style={ligneResume}>
             <Compass size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} />
             <span style={texteResume}>{NOMS_AVENTURES[a.genre]?.singulier} · {a.titre}</span>
-            <small style={petit}>{a.soumis ? `${a.soumis} coloriage${a.soumis > 1 ? 's' : ''} soumis` : 'Inscrit.e'}</small>
+            <small style={petit}>{a.soumis ? `${a.soumis} coloriage${a.soumis > 1 ? 's' : ''} soumis` : accord(genre, 'Inscrite', 'Inscrit')}</small>
           </Link>
         ))}
         {combats.map((c) => (

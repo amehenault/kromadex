@@ -13,9 +13,9 @@ export default async function AdminPage() {
   const user = await getUser();
   if (!user) redirect('/login');
   const profil = await getUserProfile(user.id);
-  if (!['admin', 'modo', 'cheffe'].includes(profil?.role)) redirect('/profil');
+  if (!['admin', 'modo', 'cheffe', 'menestrel'].includes(profil?.role)) redirect('/profil');
 
-  const titre = profil.role === 'admin' ? 'Espace de l’Invocatrice' : profil.role === 'modo' ? 'Espace sentinelle' : `Créer l’épreuve de ${accord(profil.genre, 'cheffe', 'chef')}`;
+  const titre = profil.role === 'admin' ? 'Espace de l’Invocatrice' : profil.role === 'modo' ? 'Espace sentinelle' : profil.role === 'menestrel' ? `Espace ${accord(profil.genre, 'ménestrelle', 'ménestrel')}` : `Créer l’épreuve de ${accord(profil.genre, 'cheffe', 'chef')}`;
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>

@@ -87,6 +87,7 @@ const ECRANS = [
       ['var(--coloriste)', 'Coloriste', 'les membres de l’Assemblée'],
       ['var(--chef)', 'Cheffe des coloristes', 'a gagné une épreuve mensuelle'],
       ['var(--sentinelle)', 'Sentinelle', 'veille sur la communauté'],
+      ['var(--chef)', 'Ménestrelle', 'anime la communauté : une épreuve et un bingo chaque mois'],
       ['var(--admin)', 'Invocatrice des couleurs', 'la créatrice de Kromadex'],
       ['var(--noir)', 'Pionnière', 'a testé Kromadex avant tout le monde'],
     ],

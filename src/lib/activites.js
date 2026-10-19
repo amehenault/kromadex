@@ -5,6 +5,7 @@ export const XP_EPREUVES = {
   officiel: { participation: 200, victoire: 100 },
   modo: { participation: 175, victoire: 75 },
   cheffe: { participation: 135, victoire: 35 },
+  menestrel: { participation: 135, victoire: 35 },
 };
 // Épreuve de groupe : 150 XP chacun si l'objectif est atteint, sinon 10 XP de participation ;
 // 5 XP par coloriage supplémentaire quand plusieurs coloriages par personne sont permis

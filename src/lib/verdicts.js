@@ -18,7 +18,7 @@ async function lice({ genre, id }) {
     const [d] = await sql`
       SELECT (debut <= (now() AT TIME ZONE 'America/Toronto')::date AND fin >= (now() AT TIME ZONE 'America/Toronto')::date AND NOT cloture) AS ouvert,
              (((fin + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin
-      FROM defis WHERE id = ${id} AND genre IN ('officiel', 'modo', 'cheffe')`;
+      FROM defis WHERE id = ${id} AND genre IN ('officiel', 'modo', 'cheffe', 'menestrel')`;
     if (!d) return null;
     const entrees = await sql`
       SELECT dp.user_id, dp.page_id, dp.cree_le AS soumis_le

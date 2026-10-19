@@ -13,7 +13,7 @@ import Pseudo from '@/components/Pseudo';
 import { useAccord } from '@/components/Genre';
 import NombreParticipants from '@/components/NombreParticipants';
 
-const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de cheffe', groupe: 'Épreuve de groupe' };
+const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle', cheffe: 'Épreuve de cheffe', menestrel: 'Épreuve de ménestrelle', groupe: 'Épreuve de groupe' };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
@@ -25,6 +25,7 @@ function recompenses(d) {
   }
   const titre = d.titre_gagnant ? ` · titre « ${d.titre_gagnant} »` : '';
   if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Cheffe des coloristes`;
+  if (d.genre === 'menestrel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP${titre}`;
   if (d.genre === 'modo') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, badge de l’épreuve et un fragment de relique${titre}`;
   return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP et le sceau de la cheffe${titre}`;
 }

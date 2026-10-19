@@ -6,7 +6,7 @@ import { TempsRestant } from '@/components/Fuseau';
 
 const FILTRES = [['a_voter', 'À voter'], ['votees', 'Verdicts donnés'], ['tous', 'Tous en cours']];
 const ICONES = { epreuve: Trophy, combat: Swords, match: Crown };
-const NOMS_EPREUVES = { officiel: 'Épreuve du mois', modo: 'Épreuve des Sentinelles', cheffe: 'Épreuve des Cheffes' };
+const NOMS_EPREUVES = { officiel: 'Épreuve du mois', modo: 'Épreuve des Sentinelles', cheffe: 'Épreuve des Cheffes', menestrel: 'Épreuve des Ménestrelles' };
 const nom = (a) => a.genre === 'epreuve' ? NOMS_EPREUVES[a.sorte] || 'Épreuve'
   : a.genre === 'combat' ? (a.sorte === 'duel' ? 'Duel' : 'Joute') : `Tournoi · ${a.sorte}`;
 

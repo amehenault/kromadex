@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 
-// Postes (noms affichés dans lib/postes.js) : coloriste, cheffe (1 mois), modo, admin (unique)
+// Postes (noms affichés dans lib/postes.js) : coloriste, cheffe (1 mois), modo, menestrel, admin (unique)
 export const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
   { valeur: 'cheffe', label: 'Cheffe des coloristes (1 mois)' },
   { valeur: 'modo', label: 'Sentinelle du Kromadex' },
+  { valeur: 'menestrel', label: 'Ménestrelle (1 épreuve et 1 bingo par mois)' },
 ];
 
 // Vérifie la session et le poste. Renvoie { profil } ou { erreur: NextResponse }

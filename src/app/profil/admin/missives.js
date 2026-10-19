@@ -1,10 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Send, Trash2, Check, X, Pin } from 'lucide-react';
+import { Send, Trash2, Check, X, Pin, BarChart3, Plus } from 'lucide-react';
+import { MIN_REPONSES, MAX_REPONSES, DUREES_SONDAGE, DUREE_PAR_DEFAUT } from '@/lib/sondages';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import { jourQuebec, ajouterJours } from '@/lib/temps';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import Pseudo from '@/components/Pseudo';
+import Sondage from '@/components/Sondage';
 
 const STATUT = { publiee: 'Publiée', en_attente: "En attente de l’Invocatrice des couleurs", refusee: 'Refusée' };
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -19,13 +21,20 @@ export default function Missives({ role }) {
   const [epingler, setEpingler] = useState(false);
   const [echeance, setEcheance] = useState(() => ajouterJours(jourQuebec(), 7));
   const [message, setMessage] = useState('');
+  // Sondage facultatif : 2 à 8 réponses, une ou plusieurs réponses permises, durée (48 heures par défaut)
+  const sondageVide = () => ({ actif: false, options: ['', ''], multiple: false, heures: DUREE_PAR_DEFAUT });
+  const [sondage, setSondage] = useState(sondageVide);
+  const reponses = sondage.options.filter((o) => o.trim()).length;
+  const sondageIncomplet = sondage.actif && reponses < MIN_REPONSES;
   // Brouillon automatique dès qu'on commence à écrire la missive
-  const brouillon = useBrouillon('missive', { titre, contenu, commentaires, epingler, echeance }, Boolean(titre.trim() || contenu.trim()));
+  const brouillon = useBrouillon('missive', { titre, contenu, commentaires, epingler, echeance, sondage }, Boolean(titre.trim() || contenu.trim()));
   function reprendre(d) {
     if (!d) return;
     setTitre(d.titre || ''); setContenu(d.contenu || ''); setCommentaires(d.commentaires !== false);
     setEpingler(Boolean(d.epingler)); if (d.echeance) setEcheance(d.echeance);
+    if (d.sondage) setSondage({ ...sondageVide(), ...d.sondage });
   }
+  const changerReponse = (i, v) => setSondage((x) => ({ ...x, options: x.options.map((o, j) => (j === i ? v : o)) }));
   const estAdmin = role === 'admin';
 
   async function charger() {
@@ -36,9 +45,12 @@ export default function Missives({ role }) {
 
   async function publier(e) {
     e.preventDefault();
-    const r = await envoyer('/api/missives', 'POST', { titre, contenu, commentaires, epingleeJusqu: epingler ? echeance : null });
+    const r = await envoyer('/api/missives', 'POST', {
+      titre, contenu, commentaires, epingleeJusqu: epingler ? echeance : null,
+      sondage: sondage.actif ? { options: sondage.options, multiple: sondage.multiple, heures: sondage.heures } : null,
+    });
     setMessage(r.ok ? (r.statut === 'publiee' ? 'Missive envoyée' : "Missive envoyée à l’Invocatrice des couleurs pour approbation") : r.error);
-    if (r.ok) { setTitre(''); setContenu(''); setEpingler(false); brouillon.effacer(); charger(); }
+    if (r.ok) { setTitre(''); setContenu(''); setEpingler(false); setSondage(sondageVide()); brouillon.effacer(); charger(); }
   }
 
   async function decider(m, statut) {
@@ -88,7 +100,49 @@ export default function Missives({ role }) {
             <input type="date" value={echeance} min={jourQuebec()} onChange={(e) => setEcheance(e.target.value)} style={dateStyle} />
           </label>
         )}
-        <button type="submit" className="btn" disabled={!titre.trim()} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>
+        {/* Sondage */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+          <input type="checkbox" checked={sondage.actif} onChange={(e) => setSondage({ ...sondage, actif: e.target.checked })} style={{ width: '20px', height: '20px', margin: 0 }} />
+          <BarChart3 size={18} aria-hidden="true" /> Ajouter un sondage
+        </label>
+        {sondage.actif && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', borderRadius: 'var(--rayon-m)', background: 'var(--accent-doux)' }}>
+            <small style={aide}>Entre {MIN_REPONSES} et {MAX_REPONSES} réponses.</small>
+            {sondage.options.map((o, i) => (
+              <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <input value={o} onChange={(e) => changerReponse(i, e.target.value)} maxLength={100}
+                  placeholder={`Réponse ${i + 1}`} aria-label={`Réponse ${i + 1}`} style={{ flex: 1, minWidth: 0, margin: 0 }} />
+                {sondage.options.length > MIN_REPONSES && (
+                  <button type="button" className="btn alt" aria-label={`Retirer la réponse ${i + 1}`}
+                    onClick={() => setSondage({ ...sondage, options: sondage.options.filter((_, j) => j !== i) })}
+                    style={{ minWidth: '44px', minHeight: '44px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {sondage.options.length < MAX_REPONSES && (
+              <button type="button" className="btn alt" onClick={() => setSondage({ ...sondage, options: [...sondage.options, ''] })}
+                style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <Plus size={16} aria-hidden="true" /> Ajouter une réponse
+              </button>
+            )}
+            <div role="radiogroup" aria-label="Nombre de réponses permises" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              {[[false, 'Une seule réponse'], [true, 'Plusieurs réponses']].map(([v, l]) => (
+                <button key={l} type="button" role="radio" aria-checked={sondage.multiple === v} onClick={() => setSondage({ ...sondage, multiple: v })}
+                  className={sondage.multiple === v ? 'btn' : 'btn alt'} style={{ minHeight: '44px', fontSize: '0.85rem', minWidth: 0 }}>{l}</button>
+              ))}
+            </div>
+            <label style={champ}>Durée du sondage
+              <select value={sondage.heures} onChange={(e) => setSondage({ ...sondage, heures: Number(e.target.value) })}>
+                {DUREES_SONDAGE.map((d) => <option key={d.heures} value={d.heures}>{d.label}{d.heures === DUREE_PAR_DEFAUT ? ' (par défaut)' : ''}</option>)}
+              </select>
+            </label>
+            {!estAdmin && <small style={aide}>La durée commence quand l’Invocatrice des couleurs approuve la missive.</small>}
+            {sondageIncomplet && <small style={{ color: 'var(--danger)', fontWeight: 600 }}>Écris au moins {MIN_REPONSES} réponses.</small>}
+          </div>
+        )}
+        <button type="submit" className="btn" disabled={!titre.trim() || sondageIncomplet} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>
           <Send size={16} /> {estAdmin ? 'Envoyer à tout le monde' : "Envoyer à l’Invocatrice des couleurs"}
         </button>
         {message && <small>{message}</small>}
@@ -102,6 +156,8 @@ export default function Missives({ role }) {
               <small style={aide}>De <Pseudo x={{ pseudo: m.auteur, role: m.role_auteur }} repli="modo" /></small>
               <b>{m.titre}</b>
               {m.contenu && <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{m.contenu}</p>}
+              {/* Sondage : résultats en lecture seule */}
+              {m.sondage && <Sondage missiveId={m.id} sondage={m.sondage} lectureSeule />}
               <div style={actions}>
                 <button type="button" className="btn" style={petitBtn} onClick={() => decider(m, 'publiee')}><Check size={14} /> Approuver</button>
                 <button type="button" className="btn alt danger" style={petitBtn} onClick={() => decider(m, 'refusee')}><X size={14} /> Refuser</button>

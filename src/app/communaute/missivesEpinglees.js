@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Pin, Mail, MessageCircle, Send, Trash2 } from 'lucide-react';
 import { Avatar, BoutonJaime, nomAuteur, poster } from './outils';
 import Pseudo from '@/components/Pseudo';
+import Sondage from '@/components/Sondage';
 
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
@@ -75,6 +76,12 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide }) {
               {!m.lue && <small style={{ display: 'block', marginTop: '4px', color: 'var(--btn)', fontWeight: 700 }}>Touche pour lire</small>}
             </span>
           </button>
+
+          {/* Sondage : voter compte comme avoir lu la missive */}
+          {m.sondage && (
+            <Sondage missiveId={m.id} sondage={m.sondage}
+              onVote={() => { if (!m.lue) { maj(m.id, { lue: true }); window.dispatchEvent(new Event('kromadex-lu')); } }} />
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
             <BoutonJaime aime={m.aime} likes={m.likes} onClick={() => aimer(m)} />

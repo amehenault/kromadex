@@ -13,7 +13,8 @@ export const nomCategorie = (v) => CATEGORIES_DEFI.find((c) => c.valeur === v)?.
 // modo : une épreuve supplémentaire par modo et par mois
 // cheffe : une épreuve par cheffe et par mois
 // groupe : créée par n'importe quel membre, une par mois
-export const GENRES_DEFI = ['officiel', 'modo', 'cheffe', 'groupe'];
+// menestrel : une par ménestrelle et par mois
+export const GENRES_DEFI = ['officiel', 'modo', 'cheffe', 'menestrel', 'groupe'];
 
 // Un coloriage convient au défi si la catégorie est « tous » ou correspond à son type
 export const pageConvient = (categorie, type) => categorie === 'tous' || categorie === type;

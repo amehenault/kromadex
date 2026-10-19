@@ -8,9 +8,10 @@ import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle
 import Pseudo from '@/components/Pseudo';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import { NUMEROS_SCEAUX, imageSceau } from '@/lib/recompenses';
+import { useAccord } from '@/components/Genre';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
-const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De cheffe' };
+const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De cheffe', menestrel: 'De ménestrelle' };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '', titre_gagnant: '', image: '', sceau: 1 });
 const DOSSIER_BADGE = { officiel: 'epreuve/mensuelles', modo: 'epreuve/sentinelles' };
 
@@ -26,7 +27,10 @@ export default function Defis({ role, monId }) {
   const [message, setMessage] = useState('');
   const estAdmin = role === 'admin';
   const fuseau = useFuseau();
-  const genre = estAdmin ? 'officiel' : role; // 'modo' ou 'cheffe'
+  const genre = estAdmin ? 'officiel' : role; // 'modo', 'menestrel' ou 'cheffe'
+  // Sentinelle et ménestrelle : une épreuve par mois, même fonctionnement
+  const mensuelle = role === 'modo' || role === 'menestrel';
+  const acc = useAccord();
   // Brouillon automatique dès qu'on commence à écrire l'épreuve
   const brouillon = useBrouillon('epreuve', form, Boolean(form.titre.trim() || form.description.trim()));
 
@@ -49,7 +53,7 @@ export default function Defis({ role, monId }) {
     e.preventDefault();
     // Modo et cheffe : dans les 7 premiers jours du mois, on demande quand l'épreuve commence
     const premiersJours = Number((donnees.aujourdhui || '').slice(8, 10)) <= 7;
-    if (role === 'modo' && !form.id && premiersJours) { setChoixDepart(true); return; }
+    if (mensuelle && !form.id && premiersJours) { setChoixDepart(true); return; }
     publier('mois_prochain');
   }
 
@@ -69,7 +73,8 @@ export default function Defis({ role, monId }) {
       ? `Tu as jusqu’au ${formaterInstant(delai.limite, fuseau)} pour créer ton épreuve de cheffe. Elle commence dès que tu l’enregistres et dure jusqu’à la fin de ton mandat.`
       : 'Le délai de 7 jours après ta nomination est passé : tu ne peux plus créer d’épreuve de cheffe pour ce mandat.';
   const titreForm = estAdmin ? (form.id ? "Modifier l'épreuve officielle" : 'Nouvelle épreuve officielle')
-    : role === 'modo' ? 'Mon épreuve de sentinelle du mois' : 'Mon épreuve de chef.fe';
+    : role === 'modo' ? 'Mon épreuve de sentinelle du mois'
+      : role === 'menestrel' ? `Mon épreuve de ${acc('ménestrelle', 'ménestrel')} du mois` : `Mon épreuve de ${acc('cheffe', 'chef')}`;
 
   return (
     <div style={colonne}>
@@ -79,7 +84,7 @@ export default function Defis({ role, monId }) {
         <p style={aide}>
           {estAdmin
             ? "Une épreuve officielle par mois. Choisis ses dates : avec une date de début à venir, elle est programmée et n'apparaît aux membres que ce jour-là. Sans date de fin, elle se termine la veille du dernier jour du mois : la personne gagnante est annoncée le dernier jour."
-            : role === 'modo'
+            : mensuelle
               ? "Ton épreuve commence le 1er du mois prochain. Pendant les 7 premiers jours du mois, tu peux aussi la lancer tout de suite."
               : texteCheffe}
         </p>

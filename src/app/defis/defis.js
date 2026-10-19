@@ -10,8 +10,8 @@ import Combats from '@/app/combats/combats';
 import VerdictsARendre from './verdictsARendre';
 
 // Rôle de la personne qui crée chaque genre d'épreuve, pour le tri
-const ROLE_DU_GENRE = { officiel: 'admin', modo: 'modo', cheffe: 'cheffe', groupe: 'communaute' };
-const FILTRES_ROLE = [['tous', 'Toutes'], ['admin', 'Invocatrice'], ['modo', 'Sentinelles'], ['cheffe', 'Cheffes'], ['communaute', 'Communauté']];
+const ROLE_DU_GENRE = { officiel: 'admin', modo: 'modo', cheffe: 'cheffe', menestrel: 'menestrel', groupe: 'communaute' };
+const FILTRES_ROLE = [['tous', 'Toutes'], ['admin', 'Invocatrice'], ['modo', 'Sentinelles'], ['cheffe', 'Cheffes'], ['menestrel', 'Ménestrelles'], ['communaute', 'Communauté']];
 
 // Verdicts à rendre (vue par défaut), épreuves en cours (triables par rôle), bingos du mois, épreuves de groupe, aventures, combats
 export default function Defis({ monId, integre }) {

@@ -17,7 +17,8 @@ const imagesVides = () => Array.from({ length: NB_CASES }, () => ({ url: '', fic
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 
 // Créer et programmer les bingos : grille de 3 x 3, une tâche courte et sa condition par case
-export default function Bingos() {
+export default function Bingos({ role }) {
+  const menestrel = role === 'menestrel';
   const [bingos, setBingos] = useState([]);
   const [form, setForm] = useState(vide);
   const [caseActive, setCaseActive] = useState(0);
@@ -95,7 +96,7 @@ export default function Bingos() {
           </label>
         </div>
         <p style={aide}>
-          Deux bingos par mois au maximum. Avec une date de début à venir, le bingo est programmé : il apparaît aux membres ce jour-là. Sans date de fin, il se termine la veille du dernier jour du mois : les cases validées rapportent leurs XP le dernier jour.
+          {menestrel ? 'Un bingo par mois.' : 'Deux bingos par mois au maximum.'} Avec une date de début à venir, le bingo est programmé : il apparaît aux membres ce jour-là. Sans date de fin, il se termine la veille du dernier jour du mois : les cases validées rapportent leurs XP le dernier jour.
         </p>
 
         <small style={aide}>Touche une case pour écrire sa tâche et sa condition ({remplies} / {NB_CASES}).</small>
@@ -168,7 +169,7 @@ export default function Bingos() {
       </form>
 
       <div className="carte" style={colonne}>
-        <b>Bingos créés</b>
+        <b>{menestrel ? 'Mes bingos' : 'Bingos créés'}</b>
         {bingos.map((b) => (
           <div key={b.id} style={ligneCarte}>
             <b>{b.titre}</b>

@@ -66,7 +66,7 @@ export async function GET(req) {
            AND (
              d.fin >= (now() AT TIME ZONE 'America/Toronto')::date - 7
            ))
-    ORDER BY array_position(ARRAY['officiel', 'modo', 'cheffe', 'groupe'], d.genre), d.debut DESC
+    ORDER BY array_position(ARRAY['officiel', 'modo', 'cheffe', 'menestrel', 'groupe'], d.genre), d.debut DESC
     LIMIT 200`;
   const cheffe = profil.role === 'cheffe' ? await delaiCheffe(profil.id) : null;
   return NextResponse.json({ defis, moisActuel: premierDuMois(0), moisProchain: premierDuMois(1), aujourdhui: aujourdhui(), cheffe });
@@ -114,15 +114,22 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, id: cree[0].id });
   }
 
-  if (genre === 'modo') {
-    if (profil.role !== 'modo') return NextResponse.json({ error: 'Réservé aux modos' }, { status: 403 });
+  // Sentinelle et ménestrelle : une épreuve par mois chacune, même fonctionnement
+  if (genre === 'modo' || genre === 'menestrel') {
+    if (profil.role !== genre) return NextResponse.json({ error: genre === 'modo' ? 'Réservé aux sentinelles' : 'Réservé aux ménestrelles' }, { status: 403 });
     const premiersJours = Number(ajd.slice(8, 10)) <= 7;
     const debut = premiersJours && c.depart === 'maintenant' ? ajd : premierDuMois(1);
     const mois = `${debut.slice(0, 7)}-01`;
-    await sql`
+    if (genre === 'modo') await sql`
       INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par, titre_gagnant, image)
       VALUES ('modo', ${mois}, ${titre}, ${description}, ${categorie}, ${debut}, ${veilleFinDuMois(debut)}, ${profil.id}, ${titreGagnant}, ${image})
       ON CONFLICT (mois, choisi_par) WHERE genre = 'modo'
+      DO UPDATE SET titre = EXCLUDED.titre, description = EXCLUDED.description, categorie = EXCLUDED.categorie,
+        titre_gagnant = EXCLUDED.titre_gagnant, image = EXCLUDED.image`;
+    else await sql`
+      INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par, titre_gagnant, image)
+      VALUES ('menestrel', ${mois}, ${titre}, ${description}, ${categorie}, ${debut}, ${veilleFinDuMois(debut)}, ${profil.id}, ${titreGagnant}, ${image})
+      ON CONFLICT (mois, choisi_par) WHERE genre = 'menestrel'
       DO UPDATE SET titre = EXCLUDED.titre, description = EXCLUDED.description, categorie = EXCLUDED.categorie,
         titre_gagnant = EXCLUDED.titre_gagnant, image = EXCLUDED.image`;
     return NextResponse.json({ ok: true, debut });
@@ -179,6 +186,6 @@ export async function DELETE(req) {
   if (erreur) return erreur;
   const { id } = await req.json().catch(() => ({}));
   if (profil.role === 'admin') await sql`DELETE FROM defis WHERE id = ${Number(id)}`;
-  else await sql`DELETE FROM defis WHERE id = ${Number(id)} AND genre IN ('modo', 'cheffe', 'groupe') AND choisi_par = ${profil.id}`;
+  else await sql`DELETE FROM defis WHERE id = ${Number(id)} AND genre IN ('modo', 'cheffe', 'menestrel', 'groupe') AND choisi_par = ${profil.id}`;
   return NextResponse.json({ ok: true });
 }

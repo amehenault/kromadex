@@ -450,14 +450,14 @@ export default async function ProfilPage() {
       <div className="profil-acces">
         {/* Bouton spécial en tête, long et corail : Espace de l'Invocatrice, Espace sentinelle ou épreuve de cheffe */}
 
-        {['admin', 'modo'].includes(role) && (
+        {['admin', 'modo', 'menestrel'].includes(role) && (
           <Link
             href="/profil/admin"
             className="btn profil-acces-admin"
           >
             <Shield size={22} aria-hidden="true" />
             <span>
-              {role === 'admin' ? 'Espace de l’Invocatrice' : 'Espace sentinelle'}
+              {role === 'admin' ? 'Espace de l’Invocatrice' : role === 'modo' ? 'Espace sentinelle' : `Espace ${accord(profile?.genre, 'ménestrelle', 'ménestrel')}`}
               {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
             </span>
             {role === 'admin' && nonLus.demandes > 0 && <span className="pastille" aria-hidden="true" />}

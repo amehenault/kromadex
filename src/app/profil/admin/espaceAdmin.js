@@ -24,10 +24,10 @@ const ONGLETS = [
   { cle: 'motscles', label: 'Mots-clefs', icone: Tags, roles: ['admin', 'modo'] },
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
   { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
-  { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe'] },
+  { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe', 'menestrel'] },
   { cle: 'aventures', label: 'Aventure', icone: Compass, roles: ['admin'] },
   { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
-  { cle: 'bingos', label: 'Bingo', icone: Grid3x3, roles: ['admin'] },
+  { cle: 'bingos', label: 'Bingo', icone: Grid3x3, roles: ['admin', 'menestrel'] },
   { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
   { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
   { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
@@ -72,7 +72,7 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'defis' && <Defis role={role} monId={monId} />}
       {actif === 'missives' && <Missives role={role} />}
       {actif === 'titres' && <Titres />}
-      {actif === 'bingos' && <Bingos />}
+      {actif === 'bingos' && <Bingos role={role} />}
       {actif === 'aventures' && <Aventures />}
       {actif === 'validation' && <ValidationBingos />}
       {actif === 'signalements' && <SignalementsEpreuves />}

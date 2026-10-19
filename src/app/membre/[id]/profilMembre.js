@@ -60,7 +60,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             <small style={{ display: 'block', fontWeight: 700 }}>
               Niveau {calculerNiveau(m.xp)}
               {m.pionnier && m.role !== 'admin' && <span style={{ color: couleurPoste(m.role) }}> · {nomPionnier(m.genre)}</span>}
-              {['admin', 'modo', 'cheffe'].includes(m.role) && <span style={{ color: couleurPoste(m.role) }}> · {nomPoste(m.role, m.genre)}</span>}
+              {['admin', 'modo', 'cheffe', 'menestrel'].includes(m.role) && <span style={{ color: couleurPoste(m.role) }}> · {nomPoste(m.role, m.genre)}</span>}
             </small>
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreNiveau(calculerNiveau(m.xp), m.genre)}</small>
           </div>

@@ -10,6 +10,7 @@ const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
   { valeur: 'cheffe', label: 'Cheffe des coloristes (1 mois)' },
   { valeur: 'modo', label: 'Sentinelle du Kromadex' },
+  { valeur: 'menestrel', label: 'Ménestrelle (1 épreuve et 1 bingo par mois)' },
 ];
 
 // Attribuer les postes et le rôle Pionnière (le titre affiché, c'est la personne qui le choisit dans ses Paramètres)

@@ -56,6 +56,8 @@ async function cloturerEpreuve(d) {
       cleXP: `victoire:${source}`, xp, genre: 'sceau', detail: `de ${auteur}`, source, image: `kromadex-sceau${d.sceau || 1}.svg`,
     });
   }
+  // Épreuve de ménestrelle : les XP de la victoire
+  else if (d.genre === 'menestrel') await accorderXP(gagnant, `victoire:${source}`, xp);
   // Titre exclusif créé par la personne qui a lancé l'épreuve
   if (d.titre_gagnant) await donnerTitre(gagnant, d.titre_gagnant);
 }

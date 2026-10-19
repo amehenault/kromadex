@@ -13,7 +13,7 @@ export async function verdictsARendre(userId) {
           (((d.fin + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin,
           EXISTS (SELECT 1 FROM verdicts v WHERE v.activite = 'epreuve:' || d.id AND v.user_id = ${userId}) AS votee
         FROM defis d
-        WHERE d.genre IN ('officiel', 'modo', 'cheffe') AND NOT d.cloture
+        WHERE d.genre IN ('officiel', 'modo', 'cheffe', 'menestrel') AND NOT d.cloture
           AND d.debut <= (now() AT TIME ZONE 'America/Toronto')::date AND d.fin >= (now() AT TIME ZONE 'America/Toronto')::date
           AND EXISTS (SELECT 1 FROM defi_participations dp WHERE dp.defi_id = d.id AND dp.page_id IS NOT NULL AND dp.user_id <> ${userId})`,
     sql`SELECT 'combat:' || c.id AS activite, 'combat' AS genre, c.theme AS titre, c.genre AS sorte, c.verdict_fin AS fin,

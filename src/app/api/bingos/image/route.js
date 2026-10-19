@@ -23,17 +23,17 @@ export async function GET(req) {
   });
 }
 
-// Invocatrice : poser l'image de fond d'une case (formulaire : bingoId, case, image).
+// Invocatrice ou ménestrelle (pour ses bingos) : poser l'image de fond d'une case (formulaire : bingoId, case, image).
 // L'image est vérifiée, réduite à 600 pixels et réencodée en WebP.
 export async function POST(req) {
-  const { erreur } = await exigerPoste('admin');
+  const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
   const f = await req.formData().catch(() => null);
   const bingoId = Number(f?.get('bingoId')) || 0;
   const n = numeroCase(f?.get('case'));
   const fichier = f?.get('image');
   if (!bingoId || n === null || !fichier || typeof fichier !== 'object') return NextResponse.json({ error: 'Image ou case manquante' }, { status: 400 });
-  const [b] = await sql`SELECT 1 FROM bingos WHERE id = ${bingoId}`;
+  const [b] = await sql`SELECT 1 FROM bingos WHERE id = ${bingoId} AND (${profil.role === 'admin'} OR createur = ${profil.id})`;
   if (!b) return NextResponse.json({ error: 'Bingo introuvable' }, { status: 404 });
   try {
     const img = await traiterImage(Buffer.from(await fichier.arrayBuffer()), { coteMax: 600, qualite: 80 });
@@ -47,13 +47,15 @@ export async function POST(req) {
   }
 }
 
-// Invocatrice : retirer l'image de fond d'une case
+// Invocatrice ou ménestrelle (pour ses bingos) : retirer l'image de fond d'une case
 export async function DELETE(req) {
-  const { erreur } = await exigerPoste('admin');
+  const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
   const { bingoId, case: c } = await req.json().catch(() => ({}));
   const n = numeroCase(c);
   if (n === null) return NextResponse.json({ error: 'Case invalide' }, { status: 400 });
-  await sql`DELETE FROM bingo_images WHERE bingo_id = ${Number(bingoId) || 0} AND case_no = ${n}`;
+  await sql`DELETE FROM bingo_images i USING bingos b
+    WHERE i.bingo_id = ${Number(bingoId) || 0} AND i.case_no = ${n} AND b.id = i.bingo_id
+      AND (${profil.role === 'admin'} OR b.createur = ${profil.id})`;
   return NextResponse.json({ ok: true });
 }

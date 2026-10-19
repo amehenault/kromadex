@@ -12,7 +12,10 @@ const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
-  const gestion = new URL(req.url).searchParams.get('gestion') === '1' && profil.role === 'admin';
+  const demandeGestion = new URL(req.url).searchParams.get('gestion') === '1';
+  const gestion = demandeGestion && profil.role === 'admin';
+  // Ménestrelle : seulement ses propres bingos dans son Espace
+  const gestionMenestrel = demandeGestion && profil.role === 'menestrel';
   const categories = categoriesBingoVisibles(await mesTypesVisibles(profil.id));
   await cloturerBingos();
   const bingos = await sql`
@@ -29,17 +32,19 @@ export async function GET(req) {
            (SELECT count(*)::int FROM bingo_inscriptions i WHERE i.bingo_id = b.id) AS participants
     FROM bingos b
     WHERE ${gestion}
+       OR (${gestionMenestrel} AND b.createur = ${profil.id})
        OR (b.categorie = ANY(${categories}) AND b.debut <= (now() AT TIME ZONE 'America/Toronto')::date AND COALESCE(b.fin, (date_trunc('month', b.debut) + interval '1 month - 2 days')::date) >= (now() AT TIME ZONE 'America/Toronto')::date)
     ORDER BY b.debut DESC NULLS LAST, b.cree_le DESC LIMIT 50`;
   return NextResponse.json({ bingos });
 }
 
-// Admin : créer, modifier ou programmer un bingo (9 cases, chacune avec sa condition).
-// Deux bingos au maximum par mois (selon la date de début). Sans date de fin : la veille du dernier jour du mois,
+// Admin ou ménestrelle : créer, modifier ou programmer un bingo (9 cases, chacune avec sa condition).
+// Admin : deux bingos au maximum par mois (selon la date de début). Ménestrelle : un par mois, et seulement les siens. Sans date de fin : la veille du dernier jour du mois,
 // pour que les XP soient versés le dernier jour.
 export async function POST(req) {
-  const { erreur } = await exigerPoste('admin');
+  const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
+  const menestrel = profil.role === 'menestrel';
   const { id, titre, cases, conditions, categorie, debut, fin, styles } = await req.json();
   // Apparence de chaque case : couleur de fond et de texte (codes hex), vide = apparence normale
   const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c.toUpperCase() : '');
@@ -58,10 +63,24 @@ export async function POST(req) {
   if (!d) return NextResponse.json({ error: 'Choisis la date de début' }, { status: 400 });
   const f = date(fin);
   if (f && f < d) return NextResponse.json({ error: 'La fin doit être après le début' }, { status: 400 });
-  const [{ n }] = await sql`
-    SELECT count(*)::int AS n FROM bingos
-    WHERE date_trunc('month', debut) = date_trunc('month', ${d}::date) AND id <> ${Number(id) || 0}`;
-  if (n >= 2) return NextResponse.json({ error: 'Il y a déjà 2 bingos ce mois-là' }, { status: 409 });
+  if (menestrel && id) {
+    const [mien] = await sql`SELECT 1 FROM bingos WHERE id = ${Number(id)} AND createur = ${profil.id}`;
+    if (!mien) return NextResponse.json({ error: 'Tu ne peux modifier que tes bingos' }, { status: 403 });
+  }
+  if (menestrel) {
+    // Un bingo par mois pour chaque ménestrelle
+    const [{ n }] = await sql`
+      SELECT count(*)::int AS n FROM bingos
+      WHERE createur = ${profil.id} AND date_trunc('month', debut) = date_trunc('month', ${d}::date) AND id <> ${Number(id) || 0}`;
+    if (n >= 1) return NextResponse.json({ error: 'Tu as déjà créé ton bingo pour ce mois-là' }, { status: 409 });
+  } else {
+    // Les bingos des ménestrelles ne comptent pas dans les 2 bingos par mois de l'Invocatrice
+    const [{ n }] = await sql`
+      SELECT count(*)::int AS n FROM bingos b
+      WHERE date_trunc('month', b.debut) = date_trunc('month', ${d}::date) AND b.id <> ${Number(id) || 0}
+        AND (b.createur IS NULL OR NOT EXISTS (SELECT 1 FROM users u WHERE u.id = b.createur AND u.role = 'menestrel'))`;
+    if (n >= 2) return NextResponse.json({ error: 'Il y a déjà 2 bingos ce mois-là' }, { status: 409 });
+  }
 
   const t = titre.trim().slice(0, 100);
   if (id) {
@@ -70,16 +89,18 @@ export async function POST(req) {
       WHERE id = ${Number(id)}`;
     return NextResponse.json({ ok: true, id: Number(id) });
   }
-  const [b] = await sql`INSERT INTO bingos (titre, cases, conditions, categorie, debut, fin, styles)
-    VALUES (${t}, ${liste}, ${conds}, ${cat}, ${d}, ${f}, ${JSON.stringify(apparences)}::jsonb) RETURNING id`;
+  const [b] = await sql`INSERT INTO bingos (titre, cases, conditions, categorie, debut, fin, styles, createur)
+    VALUES (${t}, ${liste}, ${conds}, ${cat}, ${d}, ${f}, ${JSON.stringify(apparences)}::jsonb, ${profil.id}) RETURNING id`;
   // L'id sert à envoyer ensuite les images de fond des cases
   return NextResponse.json({ ok: true, id: b.id });
 }
 
+// Supprimer : l'admin, tous les bingos ; la ménestrelle, seulement les siens
 export async function DELETE(req) {
-  const { erreur } = await exigerPoste('admin');
+  const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
   const { id } = await req.json();
-  await sql`DELETE FROM bingos WHERE id = ${Number(id)}`;
+  if (profil.role === 'admin') await sql`DELETE FROM bingos WHERE id = ${Number(id)}`;
+  else await sql`DELETE FROM bingos WHERE id = ${Number(id)} AND createur = ${profil.id}`;
   return NextResponse.json({ ok: true });
 }

@@ -2,12 +2,14 @@
 //  coloriste : membre de base
 //  cheffe    : Cheffe / Chef des coloristes, gagnant.e d'une épreuve mensuelle
 //  modo      : Sentinelle du Kromadex, modérateur ou modératrice
+//  menestrel : Ménestrelle ou Ménestrel, anime la communauté (1 épreuve et 1 bingo par mois)
 //  admin     : Invocatrice des couleurs (unique)
 // Chaque nom s'accorde au genre choisi dans le profil : le masculin seulement pour « masculin », sinon le féminin prime.
 const FORMES = {
   coloriste: { f: 'Coloriste', m: 'Coloriste' },
   cheffe: { f: 'Cheffe des coloristes', m: 'Chef des coloristes' },
   modo: { f: 'Sentinelle du Kromadex', m: 'Sentinelle du Kromadex' },
+  menestrel: { f: 'Ménestrelle', m: 'Ménestrel' },
   admin: { f: 'Invocatrice des couleurs', m: 'Invocateur des couleurs' },
 };
 const forme = (genre) => (genre === 'masculin' ? 'm' : 'f');
@@ -21,6 +23,7 @@ export const PLURIELS_POSTES = {
   coloriste: 'Coloristes',
   cheffe: 'Cheffes',
   modo: 'Sentinelles',
+  menestrel: 'Ménestrelles',
   admin: 'Invocatrice',
 };
 
@@ -32,6 +35,7 @@ export const COULEURS_POSTES = {
   coloriste: 'var(--coloriste)',
   cheffe: 'var(--chef)',
   modo: 'var(--sentinelle)',
+  menestrel: 'var(--chef)', // même couleur que les Cheffes
   admin: 'var(--admin)',
 };
 export const couleurPoste = (role) => COULEURS_POSTES[role] || COULEURS_POSTES.coloriste;

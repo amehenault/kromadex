@@ -395,7 +395,7 @@
   place-items: center;
 }
 
-.voile { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / 0.4); display: flex; align-items: flex-end; }
+.voile { position: fixed; inset: 0; z-index: 1000; background: rgb(0 0 0 / 0.4); display: flex; align-items: flex-end; }
 .tiroir { width: 100%; max-height: 70vh; overflow: auto; background: var(--carte); border-radius: var(--rayon-l) var(--rayon-l) 0 0; padding: var(--espace-3) var(--espace-3) calc(var(--espace-3) + env(safe-area-inset-bottom)); }
 .onglets { display: flex; gap: var(--espace-1); margin-bottom: var(--espace-3); }
 .onglets button { flex: 1; min-height: var(--cible-tactile); border: 1px solid var(--bordure); border-radius: var(--rayon-s); background: var(--blanc); color: var(--texte); font: inherit; cursor: pointer; }

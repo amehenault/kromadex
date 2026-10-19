@@ -385,7 +385,7 @@ export default async function ProfilPage() {
             </small>
           </div>
 
-          <div style={stat}>
+          <Link href="/profil/progression" style={{ ...stat, color: 'inherit', textDecoration: 'none' }}>
             <div
               style={{
                 fontSize: '1.2rem',
@@ -404,7 +404,7 @@ export default async function ProfilPage() {
             >
               {voitMystere && voitCozy ? 'Tomes et livres' : voitCozy ? 'Livres' : 'Tomes'}
             </small>
-          </div>
+          </Link>
         </div>
       </div>
 

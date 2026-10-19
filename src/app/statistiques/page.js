@@ -5,6 +5,9 @@ import { NOMS_AVENTURES } from '@/lib/activites';
 import { abonnementDe, JOURS_STATS_GRATUIT } from '@/lib/abonnement';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
+import { getUserProfile } from '@/lib/user';
+import { listerMesTomes } from '@/lib/mesTomes';
+import { typesVisibles } from '@/lib/typesColoriage';
 import { accord } from '@/lib/genre';
 import { FUSEAU, BONUS_SERIE, serieEnCours, meilleureSerie, aujourdhuiLocal, joursColories, joursConnectes } from '@/lib/series';
 
@@ -93,6 +96,18 @@ export default async function StatistiquesPage() {
     : c.soumis ? 'Coloriage envoyé' : 'Coloriage à envoyer';
   const rienEnCours = !defis.length && !bingos.length && !aventures.length && !combats.length && !tournois.length && !tirages.length;
 
+  // Nombre de tomes (coloriage mystère) et de livres (Cozy colo), comme dans Collections > Ma collection
+  const [profile, mesTomes] = await Promise.all([getUserProfile(uid), listerMesTomes(uid)]);
+  const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
+  const voitMystere = visibles.includes('mystere');
+  const voitCozy = visibles.includes('cozy');
+  const estLivre = (t) => t.type === 'cozy' || (t.type !== 'mystere' && voitCozy && !voitMystere);
+  const nbLivres = mesTomes.filter(estLivre).length;
+  const parType = [
+    voitMystere && { cle: 'mystere', n: mesTomes.length - nbLivres, mot: 'Tome', type: 'Coloriage mystère' },
+    voitCozy && { cle: 'cozy', n: nbLivres, mot: 'Livre', type: 'Cozy colo' },
+  ].filter(Boolean);
+
   const serieColo = serieEnCours(colories, aujourdhui);
   const serieCo = serieEnCours(connectes, aujourdhui);
   const resteColo = 7 - (serieColo.longueur % 7);
@@ -148,6 +163,18 @@ export default async function StatistiquesPage() {
           <Sparkles size={14} aria-hidden="true" /> {bonus.xp} XP gagnés grâce à tes séries
         </p>
       )}
+
+      {/* Tomes et livres par type de coloriage */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${parType.length}, minmax(0, 1fr))`, gap: '8px', marginBottom: 'var(--espace-3)' }}>
+        {parType.map((t) => (
+          <Link key={t.cle} href="/profil/progression" style={{ ...tuile, textDecoration: 'none', color: 'inherit' }}>
+            <BookOpen size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} />
+            <span style={grand}>{t.n}</span>
+            <b style={{ fontSize: '0.85rem' }}>{t.mot}{t.n > 1 ? 's' : ''}</b>
+            <small style={{ ...petit, display: 'block' }}>{t.type}</small>
+          </Link>
+        ))}
+      </div>
 
       {/* Mois en cours */}
       <div className="carte" style={carte}>

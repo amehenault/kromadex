@@ -8,7 +8,7 @@ import MesTomes from '../mesTomes';
 
 export const dynamic = 'force-dynamic';
 
-// Collections > Tomes et livres > Ma collection : tomes (coloriage mystère) et livres (Cozy colo) commencés séparés, puis les non commencés.
+// Collections > Tomes et livres > Ma collection : tomes (coloriage mystère) et livres (Cozy colo) séparés, commencés puis non commencés.
 // Un tome perso ou d'un autre type va avec les tomes, sauf pour une personne qui ne voit que le Cozy colo.
 export default async function ProgressionPage() {
   const user = await getUser();
@@ -20,12 +20,11 @@ export default async function ProgressionPage() {
   const voitMystere = visibles.includes('mystere');
   const voitCozy = visibles.includes('cozy');
   const estLivre = (t) => t.type === 'cozy' || (t.type !== 'mystere' && voitCozy && !voitMystere);
-  const nonCommences = voitMystere && !voitCozy ? 'Tomes non commencés'
-    : voitCozy && !voitMystere ? 'Livres non commencés' : 'Tomes et livres non commencés';
   const groupes = [
     { cle: 'tomes', titre: 'Tomes commencés', tomes: mesTomes.filter((t) => t.faites > 0 && !estLivre(t)) },
     { cle: 'livres', titre: 'Livres commencés', tomes: mesTomes.filter((t) => t.faites > 0 && estLivre(t)) },
-    { cle: 'non', titre: nonCommences, tomes: mesTomes.filter((t) => !t.faites) },
+    { cle: 'tomes-non', titre: 'Tomes non commencés', tomes: mesTomes.filter((t) => !t.faites && !estLivre(t)) },
+    { cle: 'livres-non', titre: 'Livres non commencés', tomes: mesTomes.filter((t) => !t.faites && estLivre(t)) },
   ].filter((g) => g.tomes.length);
 
   return (

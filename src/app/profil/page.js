@@ -516,7 +516,8 @@ export default async function ProfilPage() {
           <span>Statistiques</span>
         </Link>
 
-        {role !== 'admin' && <Link
+        {/* Missives : visible pour tout le monde, l'Invocatrice comprise (à droite de Statistiques) */}
+        <Link
           href="/missives"
           className="btn profil-acces-lien"
           aria-label={nonLus.missives ? `Missives, ${nonLus.missives} non lue${nonLus.missives > 1 ? 's' : ''}` : undefined}
@@ -524,7 +525,7 @@ export default async function ProfilPage() {
           <Mail size={22} aria-hidden="true" />
           <span>Missives</span>
           {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
-        </Link>}
+        </Link>
 
         {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}
         <Link href="/profil/collection" className="btn profil-acces-lien profil-acces-long">

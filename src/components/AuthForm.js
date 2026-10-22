@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Inscription from './Inscription';
-import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION } from '@/lib/pagesLegales';
+import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION, MENTIONS_LEGALES } from '@/lib/pagesLegales';
 
 // Connexion, mot de passe oublié, et inscription (formulaire en 2 étapes)
 export default function AuthForm() {
@@ -80,6 +80,7 @@ export default function AuthForm() {
       <small style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginTop: 'var(--espace-2)', color: 'var(--texte-secondaire)' }}>
         <a href={POLITIQUE_CONFIDENTIALITE} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Confidentialité</a>
         <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Conditions d’utilisation</a>
+        <a href={MENTIONS_LEGALES} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Mentions légales</a>
       </small>
     </form>
   );

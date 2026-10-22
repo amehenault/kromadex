@@ -2,11 +2,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
-import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION } from '@/lib/pagesLegales';
+import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION, MENTIONS_LEGALES } from '@/lib/pagesLegales';
 
 const PAGES_LEGALES = [
   { href: POLITIQUE_CONFIDENTIALITE, label: 'Politique de confidentialité' },
   { href: CONDITIONS_UTILISATION, label: 'Conditions d’utilisation' },
+  { href: MENTIONS_LEGALES, label: 'Mentions légales' },
 ];
 
 // Déconnexion : bouton corail pleine largeur, tout en bas du profil, puis les pages légales (soulignées, une sous l'autre)

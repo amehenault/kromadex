@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Pin, Mail, MessageCircle, Send, Trash2 } from 'lucide-react';
+import { Pin, Mail, MessageCircle, Send, Trash2, Pencil, Check } from 'lucide-react';
+import { jourQuebec } from '@/lib/temps';
 import { Avatar, BoutonJaime, nomAuteur, poster } from './outils';
 import Pseudo from '@/components/Pseudo';
 import Sondage from '@/components/Sondage';
@@ -12,7 +13,8 @@ const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', mo
 // Missives : « Non lue » tant qu'on ne l'a pas ouverte, puis « Lue ». Les épinglées passent en premier.
 // seulementEpinglees : accueil, où seules les missives épinglées (jusqu'à leur échéance) s'affichent.
 // J'aime toujours possible, commentaires selon la missive.
-export default function MissivesEpinglees({ monId, seulementEpinglees, vide }) {
+// gestion (Invocatrice) : une missive ouverte montre aussi Modifier, Épingler jusqu'au… et Supprimer
+export default function MissivesEpinglees({ monId, seulementEpinglees, vide, gestion }) {
   const [missives, setMissives] = useState(null);
   const [ouverte, setOuverte] = useState(null);
 
@@ -94,11 +96,69 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide }) {
             )}
           </div>
 
+          {gestion && ouverte === m.id && (
+            <OutilsMissive m={m} onMaj={(champs) => maj(m.id, champs)}
+              onSupprimee={() => { setMissives((l) => l.filter((x) => x.id !== m.id)); setOuverte(null); }} />
+          )}
+
           {ouverte === m.id && (m.commentaires || m.nb_commentaires > 0) && (
             <Commentaires missive={m} monId={monId} onNombre={(n) => maj(m.id, { nb_commentaires: n })} />
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+// Outils de l'Invocatrice sur une missive ouverte : modifier le titre et le texte, épingler jusqu'à une date, supprimer
+function OutilsMissive({ m, onMaj, onSupprimee }) {
+  const [edition, setEdition] = useState(false);
+  const [titre, setTitre] = useState(m.titre);
+  const [contenu, setContenu] = useState(m.contenu || '');
+  const [message, setMessage] = useState('');
+  const aujourdhui = jourQuebec();
+  const envoyerPut = (corps) => fetch('/api/missives', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id, ...corps }) });
+
+  async function enregistrer() {
+    const r = await envoyerPut({ titre, contenu });
+    if (r.ok) { onMaj({ titre: titre.trim(), contenu }); setEdition(false); setMessage('Missive modifiée'); }
+    else setMessage((await r.json().catch(() => ({}))).error || 'Erreur, réessaie.');
+  }
+  async function epingler(date) {
+    const r = await envoyerPut({ epingleeJusqu: date });
+    if (r.ok) { onMaj({ epinglee_jusqu: date, epinglee: Boolean(date && date >= aujourdhui) }); setMessage(date ? 'Épinglage enregistré' : 'Missive désépinglée'); }
+  }
+  async function supprimer() {
+    if (!confirm(`Supprimer la missive « ${m.titre} » pour tout le monde ?`)) return;
+    const r = await fetch('/api/missives', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id }) });
+    if (r.ok) onSupprimee();
+  }
+
+  const bouton = { minHeight: '44px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' };
+  return (
+    <div style={{ borderTop: '1px solid var(--bordure-carte)', marginTop: '6px', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <small style={{ fontWeight: 700, color: 'var(--texte-secondaire)' }}>Gestion de la missive</small>
+      {edition ? (
+        <>
+          <input value={titre} onChange={(e) => setTitre(e.target.value)} maxLength={120} aria-label="Titre de la missive" />
+          <textarea rows={5} value={contenu} onChange={(e) => setContenu(e.target.value)} maxLength={4000} aria-label="Texte de la missive" style={{ resize: 'vertical', font: 'inherit' }} />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button type="button" className="btn" style={bouton} disabled={!titre.trim()} onClick={enregistrer}><Check size={14} aria-hidden="true" /> Enregistrer</button>
+            <button type="button" className="btn alt" style={bouton} onClick={() => { setEdition(false); setTitre(m.titre); setContenu(m.contenu || ''); }}>Annuler</button>
+          </div>
+        </>
+      ) : (
+        <button type="button" className="btn alt" style={{ ...bouton, alignSelf: 'flex-start' }} onClick={() => setEdition(true)}><Pencil size={14} aria-hidden="true" /> Modifier</button>
+      )}
+      <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem', fontWeight: 600 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Pin size={14} aria-hidden="true" /> Épinglée sur l’accueil jusqu’au</span>
+        <span style={{ display: 'flex', gap: '6px', minWidth: 0 }}>
+          <input type="date" value={m.epinglee_jusqu || ''} min={aujourdhui} onChange={(e) => epingler(e.target.value || null)} style={{ flex: 1, minWidth: 0 }} />
+          {m.epinglee_jusqu && <button type="button" className="btn alt" style={bouton} onClick={() => epingler(null)}>Désépingler</button>}
+        </span>
+      </label>
+      <button type="button" className="btn alt danger" style={{ ...bouton, alignSelf: 'flex-start' }} onClick={supprimer}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
+      {message && <small style={{ fontWeight: 700 }}>{message}</small>}
     </div>
   );
 }

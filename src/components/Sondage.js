@@ -119,7 +119,7 @@ export default function Sondage({ missiveId, sondage: initial, lectureSeule = fa
       )}
 
       <small style={{ color: 'var(--texte-secondaire)' }}>
-        {votants} personne{votants > 1 ? 's ont' : ' a'} voté{sondage.ouvert ? ' · résultats en direct' : ' · sondage terminé'}
+        {votants} personne{votants > 1 ? 's ont' : ' a'} voté{!sondage.ouvert && ' · sondage terminé'}
       </small>
       {sondage.ouvert && sondage.fin && <TempsRestant fin={sondage.fin} />}
       {!lectureSeule && sondage.ouvert && aVote && !modifier && (

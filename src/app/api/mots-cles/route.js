@@ -8,7 +8,7 @@ import { cleMot } from '@/lib/cleMot';
 const RAISONS = ['repetition', 'faux', 'inapproprie'];
 const propre = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
 
-// ?tome=id : mots-clefs d'un tome
+// ?tome=id : mots-clefs d'un tome (sans dire qui les a ajoutés : seule l'Invocatrice le voit, dans ?gestion=1)
 // ?q=texte : recherche de tomes et livres par nom ou par mot-clef (barre de recherche)
 // ?gestion=1 : tous les mots-clefs, les plus signalés en premier (admin et sentinelles)
 export async function GET(req) {
@@ -31,16 +31,16 @@ export async function GET(req) {
   if (p.get('nom')) {
     const [t] = await sql`SELECT id FROM tome_catalog WHERE lower(nom) = lower(${String(p.get('nom')).slice(0, 120)}) LIMIT 1`;
     if (!t) return NextResponse.json({ tome: null, mots: [] });
-    const mots = await sql`SELECT m.id, m.mot, m.page_no, u.pseudo, u.role, (m.user_id = ${profil.id}) AS moi
-      FROM mots_cles m LEFT JOIN users u ON u.id = m.user_id WHERE m.tome_id = ${t.id} ORDER BY lower(m.mot)`;
+    const mots = await sql`SELECT m.id, m.mot, m.page_no, (m.user_id = ${profil.id}) AS moi
+      FROM mots_cles m WHERE m.tome_id = ${t.id} ORDER BY lower(m.mot)`;
     return NextResponse.json({ tome: t.id, mots });
   }
 
   if (p.get('tome')) {
     const mots = await sql`
-      SELECT m.id, m.mot, m.page_no, u.pseudo, u.role, (m.user_id = ${profil.id}) AS moi,
+      SELECT m.id, m.mot, m.page_no, (m.user_id = ${profil.id}) AS moi,
              (SELECT raison FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id AND s.user_id = ${profil.id}) AS mon_signalement
-      FROM mots_cles m LEFT JOIN users u ON u.id = m.user_id
+      FROM mots_cles m
       WHERE m.tome_id = ${Number(p.get('tome'))}
       ORDER BY lower(m.mot), m.page_no`;
     return NextResponse.json({ mots });
@@ -103,7 +103,12 @@ export async function POST(req) {
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
-  const { id, mot } = await req.json().catch(() => ({}));
+  const { id, mot, garder } = await req.json().catch(() => ({}));
+  // Mot-clef signalé mais correct ({ id, garder: true }) : ses signalements sont effacés (le point rouge disparaît)
+  if (garder) {
+    await sql`DELETE FROM mot_cle_signalements WHERE mot_cle_id = ${Number(id)}`;
+    return NextResponse.json({ ok: true });
+  }
   const m = propre(mot);
   if (m.length < 2) return NextResponse.json({ error: 'Mot-clef trop court' }, { status: 400 });
   // La nouvelle écriture ne doit pas devenir le doublon d'un autre mot-clef de la même page

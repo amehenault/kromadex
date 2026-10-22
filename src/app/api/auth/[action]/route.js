@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { hashPassword, verifyPassword, createSession, destroySession } from '@/lib/auth';
+import { hashPassword, verifyPassword, createSession, destroySession, getUser } from '@/lib/auth';
 import { VALEURS_GENRES } from '@/lib/titres';
 import { VALEURS_PAYS } from '@/lib/pays';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
@@ -16,8 +16,15 @@ const FAUSSE_EMPREINTE = hashPassword('kromadex-empreinte-factice');
 
 export async function POST(req, { params }) {
   const { action } = await params;
-  // Déconnexion : le navigateur vide aussi son cache (photos et coloriages gardés en mémoire), là où il le permet
-  if (action === 'logout') { await destroySession(); return NextResponse.json({ ok: true }, { headers: { 'Clear-Site-Data': '"cache"' } }); }
+  // Déconnexion. { endpoint } : les notifications de ce compte s'arrêtent sur cet appareil (dans la même requête,
+  // pour que la déconnexion reste immédiate)
+  if (action === 'logout') {
+    const { endpoint } = await req.json().catch(() => ({}));
+    const user = endpoint ? await getUser() : null;
+    if (user) await sql`DELETE FROM push_abonnements WHERE endpoint = ${String(endpoint)} AND user_id = ${user.id}`;
+    await destroySession();
+    return NextResponse.json({ ok: true });
+  }
   const b = await req.json().catch(() => ({}));
   const email = String(b.email || '').trim().toLowerCase();
   const pw = String(b.password || '');

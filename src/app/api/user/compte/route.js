@@ -74,6 +74,5 @@ export async function DELETE(req) {
     sql`DELETE FROM users WHERE id = ${id}`,
   ]);
   await destroySession().catch(() => {});
-  // Le navigateur vide aussi son cache (photos et coloriages gardés en mémoire), là où il le permet
-  return NextResponse.json({ ok: true }, { headers: { 'Clear-Site-Data': '"cache"' } });
+  return NextResponse.json({ ok: true });
 }

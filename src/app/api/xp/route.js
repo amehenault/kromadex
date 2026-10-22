@@ -3,21 +3,29 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { calculerNiveau } from '@/lib/niveaux';
 import { titreNiveau } from '@/lib/titres';
+import { raisonsXP } from '@/lib/raisonsXP';
 
 export const dynamic = 'force-dynamic';
 
-// XP gagnés pas encore montrés (pop-up « Bravo … tu as gagné … XP ! »), avec le titre de la personne :
-// son titre spécial choisi dans Paramètres, sinon le titre de son niveau
+// XP gagnés pas encore montrés (pop-up « Bravo … tu as gagné … XP car tu as … ! »), avec le titre de la personne :
+// son titre spécial choisi dans Paramètres, sinon le titre de son niveau. gains : [{ xp, raison }], du plus ancien au plus récent.
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  const [r] = await sql`
-    SELECT COALESCE(sum(j.xp) FILTER (WHERE j.xp > 0), 0)::int AS xp, u.xp AS total, u.title, u.genre
-    FROM users u LEFT JOIN xp_journal j ON j.user_id = u.id AND NOT j.vu
-    WHERE u.id = ${user.id} GROUP BY u.id`;
-  if (!r) return NextResponse.json({ xp: 0 });
-  const titre = r.title && r.title !== 'Coloriste débutant' ? r.title : titreNiveau(calculerNiveau(r.total || 0), r.genre);
-  return NextResponse.json({ xp: r.xp, titre, feminin: r.genre !== 'masculin' });
+  const [[u], lignes] = await Promise.all([
+    sql`SELECT xp, title, genre FROM users WHERE id = ${user.id}`,
+    sql`SELECT cle, xp FROM xp_journal WHERE user_id = ${user.id} AND NOT vu AND xp > 0 ORDER BY cree_le LIMIT 20`,
+  ]);
+  if (!u || !lignes.length) return NextResponse.json({ xp: 0, gains: [] });
+  // Une raison introuvable n'empêche jamais le pop-up : « participé à une activité » par défaut
+  const raisons = await raisonsXP(user.id, lignes.map((l) => l.cle)).catch((e) => { console.error('Raisons des XP :', e.message); return {}; });
+  const titre = u.title && u.title !== 'Coloriste débutant' ? u.title : titreNiveau(calculerNiveau(u.xp || 0), u.genre);
+  return NextResponse.json({
+    xp: lignes.reduce((t, l) => t + l.xp, 0),
+    gains: lignes.map((l) => ({ xp: l.xp, raison: raisons[l.cle] || 'participé à une activité' })),
+    titre,
+    feminin: u.genre !== 'masculin',
+  });
 }
 
 // Pop-up fermé : les gains sont marqués comme vus (les pénalités aussi, elles n'ont pas de pop-up)

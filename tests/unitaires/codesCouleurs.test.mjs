@@ -42,3 +42,12 @@ test('les autres coloriages ne sont jamais concernés : la fonction ne modifie p
   appliquerCode(avant, 'a', '119', '');
   assert.equal(JSON.stringify(avant), copie);
 });
+
+test('nouvelle ligne ou nouveau symbole : le code déjà choisi pour ce symbole est retrouvé', async () => {
+  const { codeDuSymbole } = await import('../../src/lib/codesCouleurs.js');
+  const g = coloriage();
+  assert.deepEqual(codeDuSymbole(g, '2'), { num: '45 Prisma', hex: '' });
+  assert.equal(codeDuSymbole(g, '3'), null);
+  assert.equal(codeDuSymbole(g, '2', 'd'), null); // la ligne elle-même ne compte pas
+  assert.equal(codeDuSymbole(g, ''), null);
+});

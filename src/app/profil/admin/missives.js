@@ -7,12 +7,13 @@ import { jourQuebec, ajouterJours } from '@/lib/temps';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import Pseudo from '@/components/Pseudo';
 import Sondage from '@/components/Sondage';
+import MissivesEpinglees from '@/app/communaute/missivesEpinglees';
 
 const STATUT = { publiee: 'Publiée', en_attente: "En attente de l’Invocatrice des couleurs", refusee: 'Refusée' };
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 
 // Écrire des missives : l'admin publie directement, la modo envoie à l'admin pour approbation
-export default function Missives({ role }) {
+export default function Missives({ role, monId }) {
   const [missives, setMissives] = useState([]);
   const [titre, setTitre] = useState('');
   const [contenu, setContenu] = useState('');
@@ -167,8 +168,17 @@ export default function Missives({ role }) {
         </div>
       )}
 
-      <div className="carte" style={colonne}>
-        <b>{estAdmin ? 'Toutes les missives' : 'Missives'}</b>
+      {/* Invocatrice : le fil des missives comme le voient les membres (sondages compris) ;
+          une missive ouverte montre Modifier, Épingler jusqu'au… et Supprimer */}
+      {estAdmin && (
+        <div style={colonne}>
+          <b>Toutes les missives</b>
+          <MissivesEpinglees monId={String(monId || '')} gestion vide="Aucune missive pour le moment." />
+        </div>
+      )}
+
+      {!estAdmin && <div className="carte" style={colonne}>
+        <b>Missives</b>
         {missives.filter((m) => !(estAdmin && m.statut === 'en_attente')).map((m) => (
           <div key={m.id} style={{ ...ligneCarte, opacity: m.statut === 'refusee' ? 0.6 : 1 }}>
             <small style={aide}>
@@ -177,6 +187,7 @@ export default function Missives({ role }) {
             </small>
             <b>{m.titre}</b>
             {m.contenu && <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{m.contenu}</p>}
+            {m.sondage && <Sondage missiveId={m.id} sondage={m.sondage} lectureSeule />}
             {m.epinglee_jusqu && m.epinglee_jusqu >= jourQuebec() && (
               <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
                 <Pin size={14} aria-hidden="true" /> Épinglée jusqu'au {jourLong(m.epinglee_jusqu)}
@@ -201,7 +212,7 @@ export default function Missives({ role }) {
           </div>
         ))}
         {!missives.length && <p style={aide}>Aucune missive pour le moment.</p>}
-      </div>
+      </div>}
     </div>
   );
 }

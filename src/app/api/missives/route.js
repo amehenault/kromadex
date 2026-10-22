@@ -74,6 +74,7 @@ export async function GET(req) {
   const missives = await sql`
     SELECT m.id, m.titre, m.contenu, m.cree_le, m.commentaires, (l.user_id IS NOT NULL) AS lue,
            COALESCE(m.epinglee_jusqu >= (now() AT TIME ZONE 'America/Toronto')::date, false) AS epinglee,
+           to_char(m.epinglee_jusqu, 'YYYY-MM-DD') AS epinglee_jusqu,
            (SELECT count(*)::int FROM missive_likes k WHERE k.missive_id = m.id) AS likes,
            EXISTS (SELECT 1 FROM missive_likes k WHERE k.missive_id = m.id AND k.user_id = ${profil.id}) AS aime,
            (SELECT count(*)::int FROM missive_commentaires c WHERE c.missive_id = m.id) AS nb_commentaires,
@@ -158,11 +159,18 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, statut });
 }
 
-// Admin : approuver ou refuser une missive en attente, ou changer son épinglage ({ id, epingleeJusqu })
+// Admin : approuver ou refuser une missive en attente, changer son épinglage ({ id, epingleeJusqu }) ou la modifier ({ id, titre, contenu })
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const { id, statut, ...corps } = await req.json();
+  // Modifier le titre et le texte d'une missive ({ id, titre, contenu })
+  if ('titre' in corps) {
+    const titre = String(corps.titre || '').trim().slice(0, 120);
+    if (!titre) return NextResponse.json({ error: 'Titre requis' }, { status: 400 });
+    await sql`UPDATE missives SET titre = ${titre}, contenu = ${String(corps.contenu || '').slice(0, 4000)} WHERE id = ${Number(id)}`;
+    return NextResponse.json({ ok: true });
+  }
   if ('epingleeJusqu' in corps) {
     await sql`UPDATE missives SET epinglee_jusqu = ${dateEpingle(corps.epingleeJusqu)} WHERE id = ${Number(id)}`;
     return NextResponse.json({ ok: true });

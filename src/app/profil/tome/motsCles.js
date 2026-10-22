@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { Plus, Tags, X, Flag, Trash2 } from 'lucide-react';
-import Pseudo from '@/components/Pseudo';
 
 const RAISONS = [['repetition', 'Répétition'], ['faux', 'Faux'], ['inapproprie', 'Inapproprié']];
 
@@ -98,7 +97,7 @@ export default function MotsCles({ tomeId, possede }) {
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <b style={{ overflowWrap: 'anywhere' }}>{m.mot}</b>
                       <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>
-                        {m.page_no ? `Page ${m.page_no}` : 'Tout le livre'}{m.pseudo && <> · ajouté par <Pseudo x={m} /></>}
+                        {m.page_no ? `Page ${m.page_no}` : 'Tout le livre'}
                         {m.mon_signalement ? ' · signalé' : ''}
                       </small>
                     </span>

@@ -79,7 +79,7 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 
 - Tous les envois d'images passent par `traiterImage` : coloriages, photo de profil, couvertures, images de bingo. Ce traitement vérifie le vrai format, réencode l'image et retire les métadonnées EXIF et GPS (tests unitaires d'images).
 - **Corrigé** : les coloriages et photos de profil sont gardés en cache **1 jour** au plus (avant : 1 an), en privé.
-- **Corrigé** : à la déconnexion et à la suppression du compte, le navigateur reçoit `Clear-Site-Data: "cache"` pour vider son cache. Chrome, Edge et Firefox le respectent ; Safari seulement en partie.
+- La déconnexion ne force pas le vidage du cache du navigateur (`Clear-Site-Data` rendait la déconnexion très lente dans Chrome) : la durée de cache d'un jour suffit à limiter ce risque.
 - **Corrigé** : la déconnexion désactive aussi les notifications de ce compte sur l'appareil.
 - Limite : une copie déjà téléchargée ou une capture d'écran ne peut pas être rappelée.
 
@@ -135,7 +135,7 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 - Le nettoyage ne supprimera rien tant que `NETTOYAGE_AUTO=actif` n'est pas mis : c'est voulu, puisque tu dois donner ton accord pour supprimer des données de production.
 - Pièces comptables : gardées chez ThriveCart et Stripe (option A choisie).
 - Les textes libres écrits par d'autres membres qui nomment une personne supprimée restent.
-- `Clear-Site-Data` n'est pas respecté partout (Safari).
+- Après une déconnexion, une image déjà vue peut rester jusqu'à un jour dans le cache de cet appareil.
 - Je n'ai pas pu vérifier les réglages de Vercel, Neon, ThriveCart et Resend (sauf la liste des domaines Resend, lue par l'API).
 
 ## 11. Tableau : affirmation de la politique → preuve → statut
@@ -154,7 +154,7 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 | Image non publiée réservée à sa propriétaire | `/api/pages/[id]/image` ; test 9b | Vérifié et testé |
 | Image soumise à une activité visible des membres connectés | Même route ; avertissement de soumission | Vérifié, texte ajouté |
 | Images réencodées, métadonnées retirées | `traiterImage` ; tests d'images | Vérifié et testé |
-| Cache des images jusqu'à 1 an | `Cache-Control: private, max-age=86400` + `Clear-Site-Data` | Corrigé et testé (1 jour) |
+| Cache des images jusqu'à 1 an | `Cache-Control: private, max-age=86400` | Corrigé et testé (1 jour) |
 | Cookies `cm_session` 30 j et `cm_appareil` 1 an, HttpOnly | `auth.js`, `limites.js` ; test 6 | Vérifié et testé |
 | Suppression du compte par Paramètres avec mot de passe | `/api/user/compte` ; test 10 | Vérifié et testé |
 | Abonnement actif à annuler avant la suppression | Même route ; test 10 (annulé : permis) | Vérifié et testé |
@@ -168,7 +168,7 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 
 - **Section 2, Kromadex+** : remplacer « dont le contenu reçu, sauf le secret d'authentification principal retiré par l'application » par « une liste limitée de champs (événement, identifiant de l'événement, mode, montant, formule, identifiant du compte) et le courriel utilisé pour payer ; le reste de l'avis (nom, adresse, renseignements de carte) n'est pas conservé ».
 - **Section 2, Communauté / modération** : ajouter « signalements de contenu (raison et précisions, liés au compte qui signale) ».
-- **Section 8** : remplacer « avec une durée autorisée pouvant atteindre un an » par « pendant un jour au plus ; à la déconnexion, le navigateur est invité à vider ce cache (selon le navigateur) ».
+- **Section 8** : remplacer « avec une durée autorisée pouvant atteindre un an » par « pendant un jour au plus ».
 - **Section 9** :
   - Supprimer « La suppression automatique selon les délais de 30 jours n'est pas encore en place » **une fois `NETTOYAGE_AUTO=actif` mis en production**.
   - Remplacer « nettoyées lors des connexions lorsqu'elles ont plus de deux jours » par « supprimées chaque jour lorsqu'elles ont plus de deux jours ».

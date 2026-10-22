@@ -31,7 +31,7 @@ export default function ContenuSignale() {
     if (action === 'retirer' && !confirm(`${RETIRER[s.genre]} ?`)) return;
     const r = await envoyer('/api/signalements', 'PUT', { genre: s.genre, cible: s.cible, action });
     setMessage(r.ok ? (action === 'retirer' ? 'Contenu retiré' : 'Signalement ignoré') : r.error);
-    if (r.ok) charger();
+    if (r.ok) { charger(); window.dispatchEvent(new Event('kromadex-lu')); }
   }
   async function sanctionner(s, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();

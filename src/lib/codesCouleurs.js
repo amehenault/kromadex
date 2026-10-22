@@ -11,3 +11,11 @@ export function appliquerCode(groupes, rowId, num, hex) {
     rows: (g.rows || []).map((r) => (r.id === rowId || (sym && r.sym === sym && [ancien, ''].includes(r.num || '')) ? { ...r, num, hex } : r)),
   }));
 }
+
+// Code déjà choisi pour ce symbole ailleurs dans ce coloriage ({ num, hex }), ou null.
+// Sert quand on ajoute une ligne ou qu'on change son symbole : elle reçoit tout de suite le code de ce symbole.
+export function codeDuSymbole(groupes, sym, saufId) {
+  if (!sym) return null;
+  const r = groupes.flatMap((g) => g.rows || []).find((x) => x.id !== saufId && x.sym === sym && x.num);
+  return r ? { num: r.num, hex: r.hex || '' } : null;
+}

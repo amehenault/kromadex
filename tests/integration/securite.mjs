@@ -272,7 +272,13 @@ try {
   const signale = r.donnees?.signalements?.find((x) => x.cible === brouillon.id);
   verifier('Sentinelle : le coloriage signalé est dans la liste', r.status === 200 && signale?.nombre === 1);
   verifier('Sentinelle : aucun courriel dans les signalements', !/@kromadex\.test|exemple\.invalid/.test(r.texte));
+  r = await appel('/api/notifications', { cookie: s3 });
+  const signalesAvant = r.donnees?.signales || 0;
+  verifier('Sentinelle : point rouge pour le contenu signalé', signalesAvant >= 1, JSON.stringify(r.donnees));
+  r = await appel('/api/notifications', { cookie: s1 });
+  verifier('Coloriste : jamais de point rouge de signalements', (r.donnees?.signales || 0) === 0 && (r.donnees?.mots_cles_signales || 0) === 0);
   r = await appel('/api/signalements', { methode: 'PUT', cookie: s3, json: { genre: 'coloriage', cible: brouillon.id, action: 'retirer' } });
+  verifier('le point rouge baisse une fois le signalement traité', ((await appel('/api/notifications', { cookie: s3 })).donnees?.signales || 0) === signalesAvant - 1);
   const [retire] = await sql`SELECT publiee FROM pages WHERE id = ${brouillon.id}`;
   verifier('Sentinelle : « retirer » dépublie le coloriage', r.status === 200 && retire.publiee === false, r.status);
   verifier('le signalement est marqué traité', (await sql`SELECT traite FROM signalements WHERE genre = 'coloriage' AND cible = ${brouillon.id}`).every((x) => x.traite));
@@ -289,8 +295,15 @@ try {
   verifier('Sentinelle : image refusée elle aussi (404)', r.status === 404, r.status);
   r = await appel(`/api/communaute?vue=fiche&id=${brouillon.id}`, { cookie: s2 });
   verifier('autre membre : fiche (codes, titre) refusée (404)', r.status === 404, r.status);
-  r = await appel('/api/auth/logout', { methode: 'POST', cookie: s2 });
-  verifier('déconnexion : le navigateur est invité à vider son cache', /cache/.test(r.headers.get('clear-site-data') || ''), r.headers.get('clear-site-data'));
+  // Déconnexion rapide : pas de vidage de cache imposé (lent dans Chrome) ; les notifications de l'appareil sont retirées en même temps
+  const endpoint = `https://push.exemple.invalid/${marque}`;
+  await sql`INSERT INTO push_abonnements (user_id, endpoint, cles) VALUES (${comptes.test2.id}, ${endpoint}, '{}')`;
+  const debutDeconnexion = Date.now();
+  r = await appel('/api/auth/logout', { methode: 'POST', cookie: s2, json: { endpoint } });
+  verifier('déconnexion rapide, sans vidage de cache imposé', r.status === 200 && !r.headers.get('clear-site-data') && Date.now() - debutDeconnexion < 3000, `${Date.now() - debutDeconnexion} ms`);
+  verifier('déconnexion : les notifications de cet appareil sont retirées', (await sql`SELECT 1 FROM push_abonnements WHERE endpoint = ${endpoint}`).length === 0);
+  r = await appel('/api/roles', { cookie: s2 });
+  verifier('déconnexion : la session ne fonctionne plus', r.status === 401, r.status);
 
   console.log('\n10. Suppression d’un compte');
   const emailJetable = `${marque}@kromadex.test`;
@@ -434,6 +447,8 @@ try {
   verifier('mots-clefs ajoutés avant l’enregistrement gardés (sans doublon ni mot trop court)', JSON.stringify(avecMots?.mots_cles) === JSON.stringify(['lapin', 'renard']), JSON.stringify(avecMots?.mots_cles));
   r = await appel('/api/xp', { cookie: s1 });
   verifier('pop-up d’XP : 100 XP gagnés avec le titre de la personne', r.status === 200 && r.donnees?.xp >= 100 && Boolean(r.donnees?.titre), JSON.stringify(r.donnees));
+  verifier('pop-up d’XP : la raison est donnée (le coloriage ajouté, avec son nom)',
+    (r.donnees?.gains || []).some((g) => g.xp === 100 && g.raison === `ajouté le coloriage « ${marque}-motscles »`), JSON.stringify(r.donnees?.gains));
   await appel('/api/xp', { methode: 'POST', cookie: s1 });
   r = await appel('/api/xp', { cookie: s1 });
   verifier('pop-up fermé : plus rien à montrer', r.donnees?.xp === 0, JSON.stringify(r.donnees));
@@ -453,10 +468,37 @@ try {
   verifier('le même mot reste permis sur une autre page', r.status === 200, r.status);
   r = await appel(`/api/mots-cles?tome=${livre.id}`, { cookie: s2b });
   const page3 = (r.donnees?.mots || []).filter((m) => m.page_no === '3' && m.mot.toLowerCase().startsWith('zébu'));
-  verifier('tout membre voit les mots-clefs des autres, une seule fois', page3.length === 1 && page3[0].moi === false && Boolean(page3[0].pseudo), JSON.stringify(page3));
+  verifier('tout membre voit les mots-clefs des autres, une seule fois', page3.length === 1 && page3[0].moi === false, JSON.stringify(page3));
+  verifier('personne ne voit qui a ajouté un mot-clef (ni pseudo ni nom)', !/pseudo|"name"/.test(r.texte));
+  await sql`UPDATE users SET role = 'admin' WHERE id = ${comptes.test3.id}`;
+  r = await appel('/api/mots-cles?gestion=1', { cookie: s3 });
+  await sql`UPDATE users SET role = ${comptes.test3.role} WHERE id = ${comptes.test3.id}`;
+  verifier('l’Invocatrice voit qui a ajouté chaque mot-clef dans son Espace', (r.donnees?.mots || []).some((m) => m.mot === motTest && (m.pseudo || m.auteur_id)));
   r = await appel(`/api/mots-cles?nom=${encodeURIComponent(livre.nom)}`, { cookie: s2b });
   verifier('nouveau coloriage : les mots-clefs du tome sont retrouvés par son nom', r.donnees?.tome === livre.id && r.donnees.mots.some((m) => m.mot === motTest));
+  // Mot-clef signalé : point rouge pour la modération, qui disparaît avec « Il est correct »
+  const [motSignale] = await sql`SELECT id FROM mots_cles WHERE tome_id = ${livre.id} AND page_no = '3' AND cle LIKE 'zebu%'`;
+  r = await appel('/api/mots-cles', { methode: 'POST', cookie: s2b, json: { signaler: motSignale.id, raison: 'faux' } });
+  const motsAvant = (await appel('/api/notifications', { cookie: s3 })).donnees?.mots_cles_signales || 0;
+  verifier('mot-clef signalé : point rouge sur Mots-clefs', r.status === 200 && motsAvant >= 1, motsAvant);
+  r = await appel('/api/mots-cles', { methode: 'PUT', cookie: s3, json: { id: motSignale.id, garder: true } });
+  verifier('« Il est correct » : signalements effacés, point rouge retiré',
+    r.status === 200 && ((await appel('/api/notifications', { cookie: s3 })).donnees?.mots_cles_signales || 0) === motsAvant - 1, r.status);
   await sql`DELETE FROM mots_cles WHERE tome_id = ${livre.id} AND cle LIKE 'zebu%' AND cree_le >= ${debut.toISOString()}`;
+
+  console.log('\n16. Missives : modification par l’Invocatrice');
+  const [missive] = await sql`INSERT INTO missives (titre, contenu, statut) VALUES (${marque + '-missive'}, 'Texte', 'publiee') RETURNING id`;
+  r = await appel('/api/missives', { methode: 'PUT', cookie: s1, json: { id: missive.id, titre: 'Pirate', contenu: 'x' } });
+  verifier('un membre ne peut pas modifier une missive (403)', r.status === 403, r.status);
+  await sql`UPDATE users SET role = 'admin' WHERE id = ${comptes.test3.id}`;
+  r = await appel('/api/missives', { methode: 'PUT', cookie: s3, json: { id: missive.id, titre: `${marque}-missive modifiée`, contenu: 'Nouveau texte' } });
+  const rEpingle = await appel('/api/missives', { methode: 'PUT', cookie: s3, json: { id: missive.id, epingleeJusqu: '2099-01-01' } });
+  await sql`UPDATE users SET role = ${comptes.test3.role} WHERE id = ${comptes.test3.id}`;
+  const [modifiee] = await sql`SELECT titre, contenu, to_char(epinglee_jusqu, 'YYYY-MM-DD') AS jusqu FROM missives WHERE id = ${missive.id}`;
+  verifier('l’Invocatrice modifie et épingle la missive', r.status === 200 && rEpingle.status === 200 && modifiee.titre === `${marque}-missive modifiée` && modifiee.contenu === 'Nouveau texte' && modifiee.jusqu === '2099-01-01');
+  r = await appel('/api/missives', { cookie: s1 });
+  verifier('le fil des missives donne la date d’épinglage', r.donnees?.missives?.find((m) => m.id === missive.id)?.epinglee_jusqu === '2099-01-01');
+  await sql`DELETE FROM missives WHERE id = ${missive.id}`;
   await sql`DELETE FROM user_tomes WHERE user_id = ${String(comptes.test2.id)} AND tome_id = ${livre.id}`;
 } catch (e) {
   echecs++;

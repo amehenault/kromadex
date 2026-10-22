@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION } from '@/lib/pagesLegales';
@@ -11,25 +12,29 @@ const PAGES_LEGALES = [
 // Déconnexion : bouton corail pleine largeur, tout en bas du profil, puis les pages légales (soulignées, une sous l'autre)
 export default function BoutonDeconnexion() {
   const r = useRouter();
+  const [occupe, setOccupe] = useState(false);
+
   async function sortir() {
-    // Les notifications de ce compte s'arrêtent sur cet appareil (ex. appareil partagé)
-    try {
-      const abonnement = await (await navigator.serviceWorker?.getRegistration())?.pushManager.getSubscription();
-      if (abonnement) {
-        await fetch('/api/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: abonnement.endpoint }) });
-        await abonnement.unsubscribe();
-      }
-    } catch {}
-    await fetch('/api/auth/logout', { method: 'POST' });
+    setOccupe(true);
+    // Notifications de cet appareil (ex. appareil partagé) : on lit l'abonnement sans jamais attendre plus de 300 ms,
+    // le serveur le retire dans la même requête que la déconnexion, puis le navigateur s'en désabonne sans qu'on l'attende
+    const abonnement = await Promise.race([
+      navigator.serviceWorker?.getRegistration().then((reg) => reg?.pushManager.getSubscription()).catch(() => null),
+      new Promise((ok) => setTimeout(() => ok(null), 300)),
+    ]);
+    await fetch('/api/auth/logout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: abonnement?.endpoint || '' }),
+    }).catch(() => {});
+    abonnement?.unsubscribe().catch(() => {});
     r.replace('/login');
     r.refresh();
   }
   return (
     <>
-      <button type="button" className="btn btn-corail" onClick={sortir}
+      <button type="button" className="btn btn-corail" onClick={sortir} disabled={occupe}
         style={{ display: 'flex', width: '100%', minHeight: '52px', boxSizing: 'border-box', gap: '8px', fontWeight: 700, marginBottom: 'var(--espace-2)' }}>
         <LogOut size={20} aria-hidden="true" />
-        <span>Déconnexion</span>
+        <span>{occupe ? 'Déconnexion…' : 'Déconnexion'}</span>
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--espace-3)' }}>
         {PAGES_LEGALES.map((p) => (

@@ -2,6 +2,7 @@ import { sql } from '@/lib/db';
 
 // Contenu à lire : missives publiées non lues, réponses de l'Invocatrice pas encore vues,
 // et pour l'Invocatrice, les nouvelles demandes d'aide (elle n'a pas de missives à lire : elle les écrit).
+// Invocatrice et Sentinelles : contenus et mots-clefs signalés à traiter (point rouge sur l'Espace et sur l'onglet).
 // Sondages : ceux qui sont terminés et dont on n'a pas encore vu le résultat final (si on a voté ou si on l'a écrit)
 export async function aLire(userId) {
   const [r] = await sql`
@@ -15,7 +16,13 @@ export async function aLire(userId) {
           AND (m.auteur = u.id OR EXISTS (SELECT 1 FROM missive_votes v WHERE v.missive_id = m.id AND v.user_id = u.id))
           AND NOT EXISTS (SELECT 1 FROM sondages_vus s WHERE s.missive_id = m.id AND s.user_id = u.id)) AS sondages,
       (SELECT count(*)::int FROM demandes WHERE user_id = u.id AND NOT reponse_vue) AS reponses,
-      CASE WHEN u.role = 'admin' THEN (SELECT count(*)::int FROM demandes WHERE statut = 'nouvelle') ELSE 0 END AS demandes
+      CASE WHEN u.role = 'admin' THEN (SELECT count(*)::int FROM demandes WHERE statut = 'nouvelle') ELSE 0 END AS demandes,
+      -- Invocatrice et Sentinelles : contenus signalés pas encore traités (Contenu signalé) et mots-clefs signalés (Mots-clefs)
+      CASE WHEN u.role IN ('admin', 'modo') THEN
+        (SELECT count(*)::int FROM (SELECT DISTINCT genre, cible FROM signalements WHERE NOT traite) s)
+        + (SELECT count(*)::int FROM (SELECT DISTINCT defi_id, page_id FROM defi_signalements WHERE NOT traite) d)
+      ELSE 0 END AS signales,
+      CASE WHEN u.role IN ('admin', 'modo') THEN (SELECT count(DISTINCT mot_cle_id)::int FROM mot_cle_signalements) ELSE 0 END AS mots_cles_signales
     FROM users u WHERE u.id = ${userId}`;
-  return r || { missives: 0, sondages: 0, reponses: 0, demandes: 0 };
+  return r || { missives: 0, sondages: 0, reponses: 0, demandes: 0, signales: 0, mots_cles_signales: 0 };
 }

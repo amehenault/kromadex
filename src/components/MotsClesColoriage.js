@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Tags, Plus, X, Trash2 } from 'lucide-react';
-import Pseudo from '@/components/Pseudo';
 import { cleMot } from '@/lib/cleMot';
 
 // Mots-clefs d'un de mes coloriages, affichés directement sur le coloriage (pas besoin d'ouvrir la fenêtre).
@@ -15,7 +14,7 @@ import { cleMot } from '@/lib/cleMot';
 export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom, pageNo, image, enAttente, onAttente }) {
   const attente = Boolean(onAttente);
   const [ouvert, setOuvert] = useState(false);
-  const [partages, setPartages] = useState([]); // mots-clefs de la page, de tous les membres : [{ id, mot, pseudo, role, moi }]
+  const [partages, setPartages] = useState([]); // mots-clefs de la page, de tous les membres : [{ id, mot, page_no, moi }]
   const [perso, setPerso] = useState([]); // mots-clefs gardés sur le coloriage (tome hors catalogue)
   const [tomeTrouve, setTomeTrouve] = useState(null); // nouveau coloriage : tome du catalogue retrouvé par son nom
   const [mot, setMot] = useState('');
@@ -84,11 +83,10 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
 
   const carre = { minWidth: '44px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' };
 
-  // Un mot-clef : le mot, qui l'a mis (si c'est quelqu'un d'autre), et la poubelle pour les siens
+  // Un mot-clef : seulement le mot (personne ne voit qui l'a mis, sauf l'Invocatrice dans son Espace), et la poubelle pour les siens
   const pastille = (m, petit) => (
     <span key={m.id || `${m.enAttente ? 'a' : 'p'}-${m.mot}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', paddingLeft: '12px', paddingRight: m.moi && !petit ? 0 : '12px', minHeight: petit ? '32px' : undefined, borderRadius: '999px', border: '1px solid var(--bordure-carte)', background: 'var(--accent-doux)', maxWidth: '100%' }}>
       <span style={{ overflowWrap: 'anywhere', fontWeight: 600, fontSize: petit ? '0.85rem' : undefined }}>{m.mot}</span>
-      {m.pseudo && !m.moi && <small style={{ color: 'var(--texte-secondaire)' }}>par <Pseudo x={m} /></small>}
       {!petit && m.moi && (
         <button type="button" aria-label={`Retirer le mot-clef ${m.mot}`} onClick={() => retirer(m)}
           style={{ ...carre, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)' }}>

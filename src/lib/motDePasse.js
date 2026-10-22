@@ -5,7 +5,7 @@ import { hashPassword } from '@/lib/auth';
 const sha = (t) => createHash('sha256').update(t).digest('hex');
 
 // Adresse de contact de Kromadex : les réponses au courriel y arrivent et elle est écrite dans le courriel.
-// L'expéditeur (EMAIL_FROM) doit être sur un domaine vérifié chez Resend : info@kromadex.com une fois kromadex.com vérifié.
+// L'expéditeur (EMAIL_FROM, par défaut info@kromadex.com) doit être sur un domaine vérifié chez Resend (kromadex.com l'est).
 const CONTACT = (process.env.EMAIL_REPLY_TO || 'info@kromadex.com').trim();
 
 // Envoi du lien par Resend si une clé est configurée (RESEND_API_KEY, EMAIL_FROM : mêmes variables que Planidae).
@@ -17,7 +17,7 @@ async function envoyerCourriel(email, lien) {
     method: 'POST',
     headers: { Authorization: `Bearer ${cle}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: (process.env.EMAIL_FROM || process.env.MAIL_FROM || 'Kromadex <onboarding@resend.dev>').trim(),
+      from: (process.env.EMAIL_FROM || process.env.MAIL_FROM || 'Kromadex <info@kromadex.com>').trim(),
       to: [email],
       reply_to: CONTACT,
       subject: 'Réinitialiser ton mot de passe Kromadex',

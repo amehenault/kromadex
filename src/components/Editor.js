@@ -10,7 +10,7 @@ import { useGardeQuitter } from '@/components/GardeQuitter';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
-import { appliquerCode } from '@/lib/codesCouleurs';
+import { appliquerCode, codeDuSymbole } from '@/lib/codesCouleurs';
 import { X, Camera, AlertTriangle, Check } from 'lucide-react';
 
 const uid = () => crypto.randomUUID();
@@ -171,14 +171,21 @@ function ChampEtiquette({ value, onChange }) {
 }
 
 // colonnes : nombre de colonnes de codes dans l'image exportée (2 à l'écran)
-function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode }) {
+function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode, codePour = () => null }) {
   const [glisserIndex, setGlisserIndex] = useState(null);
 
-  const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => (r.id === id ? { ...r, [k]: v } : r)) });
-  
+  // Nouveau symbole choisi pour une ligne sans code : elle reçoit tout de suite le code de ce symbole dans ce coloriage
+  const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => {
+    if (r.id !== id) return r;
+    const code = k === 'sym' && !r.num ? codePour(v, id) : null;
+    return code ? { ...r, [k]: v, num: code.num, hex: code.hex } : { ...r, [k]: v };
+  }) });
+
+  // Nouvelle ligne : symbole suivant, avec son code s'il est déjà choisi ailleurs dans ce coloriage
   const ajouter = () => {
-    const dernierSym = g.rows.at(-1)?.sym;
-    maj({ ...g, rows: [...g.rows, { id: uid(), label: '', sym: suivant(dernierSym), num: '' }] });
+    const sym = suivant(g.rows.at(-1)?.sym);
+    const code = codePour(sym);
+    maj({ ...g, rows: [...g.rows, { id: uid(), label: '', sym, num: code?.num || '', hex: code?.hex || '' }] });
   };
 
   const deplacer = (from, to) => {
@@ -534,10 +541,10 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
 
       <div className="liste-sous-categories">
         {groupes.map((g) => (
-          <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={exp} colonnes={exportColonnes} changerCode={changerCode} />
+          <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={exp} colonnes={exportColonnes} changerCode={changerCode} codePour={(sym, saufId) => codeDuSymbole(groupes, sym, saufId)} />
         ))}
         {!exp && (
-          <button type="button" className="btn alt ajout-groupe ajout-groupe-bas" onClick={() => setGroupes((l) => [...l, groupeVide()])}>
+          <button type="button" className="btn alt ajout-groupe ajout-groupe-bas" onClick={() => setGroupes((l) => { const g = groupeVide(); Object.assign(g.rows[0], codeDuSymbole(l, g.rows[0].sym) || {}); return [...l, g]; })}>
             + Sous-catégorie
           </button>
         )}

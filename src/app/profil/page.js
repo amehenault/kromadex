@@ -464,7 +464,8 @@ export default async function ProfilPage() {
               {role === 'admin' ? 'Espace de l’Invocatrice' : role === 'modo' ? 'Espace sentinelle' : `Espace ${accord(profile?.genre, 'ménestrelle', 'ménestrel')}`}
               {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
             </span>
-            {role === 'admin' && nonLus.demandes + nonLus.sondages > 0 && <span className="pastille" aria-hidden="true" />}
+            {/* Point rouge : demandes d'aide et sondages (Invocatrice), contenus et mots-clefs signalés (Invocatrice et Sentinelles) */}
+            {((role === 'admin' && nonLus.demandes + nonLus.sondages > 0) || nonLus.signales + nonLus.mots_cles_signales > 0) && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 

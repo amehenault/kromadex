@@ -48,12 +48,19 @@ export default function MotsCles() {
   async function enregistrer() {
     const r = await envoyer('/api/mots-cles', 'PUT', edition);
     setMessage(r.ok ? 'Mot-clef modifié' : r.error);
-    if (r.ok) { setEdition(null); charger(); }
+    if (r.ok) { setEdition(null); charger(); window.dispatchEvent(new Event('kromadex-lu')); }
+  }
+  // Signalé à tort : on garde le mot-clef et ses signalements sont effacés
+  async function garder(m) {
+    const r = await envoyer('/api/mots-cles', 'PUT', { id: m.id, garder: true });
+    setMessage(r.ok ? `« ${m.mot} » est gardé, signalements effacés` : r.error);
+    if (r.ok) { charger(); window.dispatchEvent(new Event('kromadex-lu')); }
   }
   async function supprimer(m) {
     if (!confirm(`Supprimer le mot-clef « ${m.mot} » ?`)) return;
     await envoyer('/api/mots-cles', 'DELETE', { id: m.id });
     charger();
+    window.dispatchEvent(new Event('kromadex-lu'));
   }
   async function sanctionner(m, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();
@@ -121,6 +128,7 @@ export default function MotsCles() {
             ) : (
               <button type="button" className="btn alt" style={petitBtn} onClick={() => setEdition({ id: m.id, mot: m.mot })}><Pencil size={14} aria-hidden="true" /> Modifier</button>
             )}
+            {m.signalements > 0 && <button type="button" className="btn alt" style={petitBtn} onClick={() => garder(m)}><Check size={14} aria-hidden="true" /> Il est correct</button>}
             <button type="button" className="btn alt danger" style={petitBtn} onClick={() => supprimer(m)}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
           </div>
           {m.auteur_id && !['admin', 'modo'].includes(m.role_auteur) && (

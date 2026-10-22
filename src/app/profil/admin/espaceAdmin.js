@@ -49,6 +49,17 @@ export default function EspaceAdmin({ role, monId }) {
     if (onglets.some((x) => x.cle === o)) setActif(o);
   }, []);
 
+  // Points rouges des onglets : demandes nouvelles, contenus signalés et mots-clefs signalés à traiter
+  // (rechargés après chaque action qui envoie l'événement « kromadex-lu »)
+  const [aTraiter, setATraiter] = useState({});
+  useEffect(() => {
+    const verifier = () => fetch('/api/notifications').then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setATraiter({ demandes: d.demandes, signalements: d.signales, motscles: d.mots_cles_signales })).catch(() => {});
+    verifier();
+    window.addEventListener('kromadex-lu', verifier);
+    return () => window.removeEventListener('kromadex-lu', verifier);
+  }, []);
+
   return (
     <>
       {/* Onglets : tous visibles d'un coup, 3 par rangée ; les mots passent à la ligne entiers, jamais coupés */}
@@ -59,11 +70,14 @@ export default function EspaceAdmin({ role, monId }) {
         }}>
           {onglets.map(({ cle, label, icone: Icone }) => (
             <button key={cle} type="button" onClick={() => setActif(cle)} className={actif === cle ? 'btn' : 'btn alt'}
+              aria-label={aTraiter[cle] > 0 ? `${label}, ${aTraiter[cle]} à traiter` : undefined}
               style={{
+                position: 'relative',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px',
                 minHeight: '54px', padding: '6px 4px', fontSize: '0.78rem', lineHeight: 1.2, minWidth: 0, overflowWrap: 'normal', wordBreak: 'normal', hyphens: 'manual',
               }}>
               <Icone size={18} /> {label}
+              {aTraiter[cle] > 0 && <span className="pastille" aria-hidden="true" style={{ position: 'absolute', top: 6, right: 6 }} />}
             </button>
           ))}
         </div>
@@ -73,7 +87,7 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'membres' && <Membres role={role} />}
       {actif === 'moderation' && <Moderation role={role} monId={monId} />}
       {actif === 'defis' && <Defis role={role} monId={monId} />}
-      {actif === 'missives' && <Missives role={role} />}
+      {actif === 'missives' && <Missives role={role} monId={monId} />}
       {actif === 'titres' && <Titres />}
       {actif === 'bingos' && <Bingos role={role} />}
       {actif === 'aventures' && <Aventures />}

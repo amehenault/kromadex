@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, Crown, PlayCircle, HelpCircle, ChevronRight, Trash2, Award } from 'lucide-react';
+import { ArrowLeft, Bell, Award, Trash2 } from 'lucide-react';
 import NotificationsAppareil from '@/components/NotificationsAppareil';
 import PhotoProfil from '@/app/profil/edit/photoProfil';
 import APropos from '@/app/profil/edit/apropos';
@@ -15,55 +15,59 @@ const enregistrer = (corps) => fetch('/api/user/parametres', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
 }).then((r) => r.ok);
 
-// Paramètres : tout ce qu'une personne peut régler, au même endroit
-export default function Parametres({ clePublique, types, notifs: initiales, cadres, cadre: cadreInitial, role, genre, titre: titreInitial, titres }) {
-  const router = useRouter();
-  const [notifs, setNotifs] = useState(initiales);
-  const [titre, setTitre] = useState(titreInitial === 'Coloriste débutant' ? '' : titreInitial);
+const carte = { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' };
+const titre_ = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
+const ligne = { display: 'flex', alignItems: 'center', gap: '10px', minHeight: '48px', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' };
 
+// Page de Paramètres : flèche de retour (vers le menu des Paramètres, ou vers le profil pour le menu lui-même) et titre
+export function PageParametres({ titre, retour = '/parametres', children }) {
+  return (
+    <div className="contenu edition-profil" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-3)' }}>
+      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Link href={retour} className="btn alt" aria-label={retour === '/profil' ? 'Retour au profil' : 'Retour aux Paramètres'} style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <ArrowLeft size={16} aria-hidden="true" />
+        </Link>
+        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{titre}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Notifications : l'appareil, puis chaque type
+export function Notifications({ clePublique, types, notifs: initiales }) {
+  const [notifs, setNotifs] = useState(initiales);
+  async function basculer(cle, v) {
+    setNotifs((n) => ({ ...n, [cle]: v }));
+    if (!(await enregistrer({ notifs: { [cle]: v } }))) setNotifs((n) => ({ ...n, [cle]: !v }));
+  }
+  return (
+    <section className="carte" style={carte}>
+      <h3 style={titre_}><Bell size={20} aria-hidden="true" /> Notifications</h3>
+      <NotificationsAppareil clePublique={clePublique} />
+      <small style={{ color: 'var(--texte-secondaire)' }}>Choisis ce qui t’envoie une notification (sur chaque appareil activé) :</small>
+      {types.map((t) => (
+        <label key={t.cle} style={{ ...ligne, justifyContent: 'space-between' }}>
+          <span style={{ minWidth: 0 }}>{t.label}</span>
+          <input type="checkbox" checked={notifs[t.cle] !== false} onChange={(e) => basculer(t.cle, e.target.checked)}
+            style={{ width: '22px', height: '22px', margin: 0, flex: '0 0 auto' }} />
+        </label>
+      ))}
+    </section>
+  );
+}
+
+// Titre et cadre affichés : le titre sous le niveau (parmi les titres gagnés), puis le cadre autour de la photo
+export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titres }) {
+  const router = useRouter();
+  const [titre, setTitre] = useState(titreInitial === 'Coloriste débutant' ? '' : titreInitial);
   async function choisirTitre(t) {
     const avant = titre;
     setTitre(t);
     if (await enregistrer({ titre: t })) router.refresh(); else setTitre(avant);
   }
-
-  async function basculer(cle, v) {
-    setNotifs((n) => ({ ...n, [cle]: v }));
-    if (!(await enregistrer({ notifs: { [cle]: v } }))) setNotifs((n) => ({ ...n, [cle]: !v }));
-  }
-
-  const carte = { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: 'var(--espace-3)' };
-  const titre_ = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
-  const ligne = { display: 'flex', alignItems: 'center', gap: '10px', minHeight: '48px', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' };
-  const lien = { ...ligne, color: 'inherit', textDecoration: 'none', borderTop: '1px solid var(--bordure-carte)' };
-
   return (
-    <div className="contenu edition-profil" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-3)' }}>
-      <div style={{ marginBottom: 'var(--espace-3)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <ArrowLeft size={16} aria-hidden="true" />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Paramètres</h2>
-      </div>
-
-      {/* Notifications : l'appareil, puis chaque type */}
-      <section className="carte" style={carte}>
-        <h3 style={titre_}><Bell size={20} aria-hidden="true" /> Notifications</h3>
-        <NotificationsAppareil clePublique={clePublique} />
-        <small style={{ color: 'var(--texte-secondaire)' }}>Choisis ce qui t’envoie une notification (sur chaque appareil activé) :</small>
-        {types.map((t) => (
-          <label key={t.cle} style={{ ...ligne, justifyContent: 'space-between' }}>
-            <span style={{ minWidth: 0 }}>{t.label}</span>
-            <input type="checkbox" checked={notifs[t.cle] !== false} onChange={(e) => basculer(t.cle, e.target.checked)}
-              style={{ width: '22px', height: '22px', margin: 0, flex: '0 0 auto' }} />
-          </label>
-        ))}
-      </section>
-
-      <PhotoProfil />
-      <ChoixCadre cadres={cadres} cadre={cadreInitial} genre={genre} />
-
-      {/* Titre affiché sous le niveau, parmi les titres gagnés (ex. Cheffe des coloristes, titre d'une épreuve) */}
+    <>
       <section className="carte" style={carte}>
         <h3 style={titre_}><Award size={20} aria-hidden="true" /> Titre affiché</h3>
         {titres.length ? (
@@ -75,26 +79,22 @@ export default function Parametres({ clePublique, types, notifs: initiales, cadr
           <small style={{ color: 'var(--texte-secondaire)' }}>Gagne une épreuve ou une activité pour débloquer des titres spéciaux à afficher sur ton profil.</small>
         )}
       </section>
+      <ChoixCadre cadres={cadres} cadre={cadre} genre={genre} />
+    </>
+  );
+}
 
+// Mes informations : photo de profil, pseudo, nom et présentation, préférences de coloriage, courriel et mot de passe,
+// puis la suppression du compte
+export function MesInformations({ role }) {
+  return (
+    <>
+      <PhotoProfil />
       <APropos />
       <Preferences />
       <Acces />
-
-      {/* Le reste : abonnement, présentation, aide (la déconnexion est en bas du profil) */}
-      <section className="carte" style={{ ...carte, gap: 0 }}>
-        <Link href="/kromadex-plus" style={{ ...lien, borderTop: 'none' }}>
-          <Crown size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Kromadex+ et mon abonnement</span> <ChevronRight size={18} aria-hidden="true" />
-        </Link>
-        <Link href="/?tutoriel=1" style={lien}>
-          <PlayCircle size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Revoir la présentation de Kromadex</span> <ChevronRight size={18} aria-hidden="true" />
-        </Link>
-        <Link href="/aide" style={lien}>
-          <HelpCircle size={20} aria-hidden="true" /> <span style={{ flex: 1 }}>Aide</span> <ChevronRight size={18} aria-hidden="true" />
-        </Link>
-      </section>
-
       <SupprimerCompte role={role} />
-    </div>
+    </>
   );
 }
 

@@ -47,7 +47,7 @@ export default function ActivitesAVenir({ clePublique }) {
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' }}>
         <b>Rappels sur cet appareil</b>
         <NotificationsAppareil clePublique={clePublique} />
-        <Link href="/parametres" style={{ color: 'inherit', fontWeight: 600, fontSize: '0.85rem', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Choisir mes notifications dans Paramètres</Link>
+        <Link href="/parametres/notifications" style={{ color: 'inherit', fontWeight: 600, fontSize: '0.85rem', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Choisir mes notifications dans Paramètres</Link>
       </div>
       {!donnees && <p>Chargement…</p>}
       {aPlanifier.length > 0 && <h3 style={{ margin: '0 0 8px', fontSize: '1rem' }}>À planifier</h3>}

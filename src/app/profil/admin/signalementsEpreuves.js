@@ -24,7 +24,7 @@ export default function SignalementsEpreuves() {
     if (action === 'retirer' && !confirm('Retirer ce coloriage de l’épreuve ? La personne perdra le double des points gagnés avec.')) return;
     const r = await envoyer('/api/defis/signalements', 'PUT', { defiId: s.defi_id, pageId: s.page_id, action });
     setMessage(r.ok ? (action === 'retirer' ? 'Coloriage retiré, points repris en double' : 'Signalement ignoré') : r.error);
-    if (r.ok) charger();
+    if (r.ok) { charger(); window.dispatchEvent(new Event('kromadex-lu')); }
   }
   async function sanctionner(s, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();

@@ -4,16 +4,18 @@ import { getUser } from '@/lib/auth';
 import { typesPour } from '@/lib/typesNotifications';
 import { cadresDebloques } from '@/lib/cadres';
 import { MAX_EPINGLES } from '@/lib/recompenses';
+import { titresNiveauAtteints } from '@/lib/titres';
+import { calculerNiveau } from '@/lib/niveaux';
 
 export const dynamic = 'force-dynamic';
 
 // Paramètres : notifications voulues par type ({ notifs: { missives: false, … } }), cadre de profil ({ cadre })
-// et titre affiché ({ titre } parmi les titres débloqués, '' = aucun)
+// et titre affiché ({ titre } parmi les titres spéciaux débloqués ou les titres de niveau atteints, '' = titre du niveau actuel)
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const b = await req.json().catch(() => ({}));
-  const [u] = await sql`SELECT role, pionnier, notifs, unlocked_titles,
+  const [u] = await sql`SELECT role, pionnier, notifs, unlocked_titles, xp, genre,
       EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'relique') AS relique
     FROM users WHERE id = ${user.id}`;
 
@@ -40,7 +42,8 @@ export async function POST(req) {
   }
   if ('titre' in b) {
     const titre = String(b.titre || '');
-    if (titre && !(u.unlocked_titles || []).includes(titre)) {
+    const permis = [...(u.unlocked_titles || []), ...titresNiveauAtteints(calculerNiveau(u.xp || 0), u.genre)];
+    if (titre && !permis.includes(titre)) {
       return NextResponse.json({ error: 'Ce titre n’est pas encore débloqué' }, { status: 403 });
     }
     await sql`UPDATE users SET title = ${titre || null} WHERE id = ${user.id}`;

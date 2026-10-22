@@ -6,10 +6,12 @@ import { ArrowLeft, Sparkles, UserPlus, UserCheck, X, Swords } from 'lucide-reac
 import { Avatar, BoutonJaime, imagePage, poster } from '@/app/communaute/outils';
 import FicheDetail from '@/app/communaute/ficheDetail';
 import { calculerNiveau } from '@/lib/niveaux';
-import { titreNiveau } from '@/lib/titres';
+import { titreAffiche } from '@/lib/titres';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
+import TexteAjuste from '@/components/TexteAjuste';
+import { memeQuePseudo } from '@/lib/memePseudo';
 import BoutonSignaler from '@/components/BoutonSignaler';
 import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
@@ -56,14 +58,15 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
           {/* Cadre de profil choisi parmi ceux débloqués (relique complétée, Pionnière ou Pionnier) */}
           <PhotoCadre cadre={cadre} taille={60}>{(t) => <Avatar x={m} taille={t} />}</PhotoCadre>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <b style={{ display: 'block', fontSize: '1.05rem', overflowWrap: 'break-word' }}><Pseudo x={m} /></b>
-            {m.pseudo && m.name && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
+            {/* Pseudo sur une seule ligne (plus petit s'il est long) ; le nom seulement s'il est différent du pseudo */}
+            <b style={{ display: 'block' }}><TexteAjuste taille={1.05}><Pseudo x={m} /></TexteAjuste></b>
+            {m.pseudo && m.name && !memeQuePseudo(m.name, m.pseudo) && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
             <small style={{ display: 'block', fontWeight: 700 }}>
               Niveau {calculerNiveau(m.xp)}
               {m.pionnier && m.role !== 'admin' && <span style={{ color: couleurPoste(m.role) }}> · {nomPionnier(m.genre)}</span>}
               {['admin', 'modo', 'cheffe', 'menestrel'].includes(m.role) && <span style={{ color: couleurPoste(m.role) }}> · {nomPoste(m.role, m.genre)}</span>}
             </small>
-            <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreNiveau(calculerNiveau(m.xp), m.genre)}</small>
+            <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Sparkles size={13} aria-hidden="true" /> {titreAffiche(m.title, calculerNiveau(m.xp), m.genre)}</small>
           </div>
         </div>
 

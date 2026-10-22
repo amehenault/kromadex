@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { calculerNiveau } from '@/lib/niveaux';
-import { titreNiveau } from '@/lib/titres';
+import { titreAffiche } from '@/lib/titres';
 import { raisonsXP } from '@/lib/raisonsXP';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export async function GET() {
   if (!u || !lignes.length) return NextResponse.json({ xp: 0, gains: [] });
   // Une raison introuvable n'empêche jamais le pop-up : « participé à une activité » par défaut
   const raisons = await raisonsXP(user.id, lignes.map((l) => l.cle)).catch((e) => { console.error('Raisons des XP :', e.message); return {}; });
-  const titre = u.title && u.title !== 'Coloriste débutant' ? u.title : titreNiveau(calculerNiveau(u.xp || 0), u.genre);
+  const titre = titreAffiche(u.title, calculerNiveau(u.xp || 0), u.genre);
   return NextResponse.json({
     xp: lignes.reduce((t, l) => t + l.xp, 0),
     gains: lignes.map((l) => ({ xp: l.xp, raison: raisons[l.cle] || 'participé à une activité' })),

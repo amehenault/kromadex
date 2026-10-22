@@ -2,6 +2,7 @@
 import { useAccord } from '@/components/Genre';
 import { useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
+import { CLE_NOTIFS_DESACTIVEES } from './ReabonnementNotifications';
 
 const versOctets = (base64) => {
   const b = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
@@ -33,6 +34,7 @@ export default function NotificationsAppareil({ clePublique }) {
       const r = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(abonnement.toJSON()) });
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error);
       setEtat('actives');
+      try { localStorage.removeItem(CLE_NOTIFS_DESACTIVEES); } catch {}
       // Notification d'essai pour confirmer que tout fonctionne
       await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ essai: true }) });
     } catch (e) { setMessage(e.message || 'Impossible d’activer les notifications sur cet appareil.'); }
@@ -45,6 +47,8 @@ export default function NotificationsAppareil({ clePublique }) {
       await fetch('/api/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: abonnement.endpoint }) });
       await abonnement.unsubscribe();
     }
+    // Choix de la personne : pas de réabonnement automatique à la prochaine connexion sur cet appareil
+    try { localStorage.setItem(CLE_NOTIFS_DESACTIVEES, '1'); } catch {}
     setEtat('inactives');
   }
 

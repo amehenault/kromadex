@@ -57,8 +57,9 @@ export function Notifications({ clePublique, types, notifs: initiales }) {
   );
 }
 
-// Titre et cadre affichés : le titre sous le niveau (parmi les titres gagnés), puis le cadre autour de la photo
-export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titres }) {
+// Titre et cadre affichés : un seul titre est affiché sur le profil, celui choisi ici (par défaut, celui du niveau actuel).
+// On peut choisir n'importe quel titre de niveau déjà atteint (du premier à l'actuel) ou un titre spécial gagné. Puis le cadre.
+export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titreActuel, titresNiveau = [], titres }) {
   const router = useRouter();
   const [titre, setTitre] = useState(titreInitial === 'Coloriste débutant' ? '' : titreInitial);
   async function choisirTitre(t) {
@@ -70,14 +71,22 @@ export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titres
     <>
       <section className="carte" style={carte}>
         <h3 style={titre_}><Award size={20} aria-hidden="true" /> Titre affiché</h3>
-        {titres.length ? (
-          <select value={titre} onChange={(e) => choisirTitre(e.target.value)} aria-label="Titre affiché">
-            <option value="">Aucun titre spécial</option>
-            {titres.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        ) : (
-          <small style={{ color: 'var(--texte-secondaire)' }}>Gagne une épreuve ou une activité pour débloquer des titres spéciaux à afficher sur ton profil.</small>
-        )}
+        <select value={titre} onChange={(e) => choisirTitre(e.target.value)} aria-label="Titre affiché">
+          <option value="">Titre de mon niveau actuel : {titreActuel}</option>
+          {titresNiveau.length > 0 && (
+            <optgroup label="Titres de niveau déjà atteints">
+              {titresNiveau.map((t) => <option key={t} value={t}>{t}</option>)}
+            </optgroup>
+          )}
+          {titres.length > 0 && (
+            <optgroup label="Titres spéciaux gagnés">
+              {titres.map((t) => <option key={t} value={t}>{t}</option>)}
+            </optgroup>
+          )}
+        </select>
+        <small style={{ color: 'var(--texte-secondaire)' }}>
+          Ce titre remplace celui de ton niveau sur ton profil. Gagne des épreuves et des activités pour débloquer des titres spéciaux.
+        </small>
       </section>
       <ChoixCadre cadres={cadres} cadre={cadre} genre={genre} />
     </>

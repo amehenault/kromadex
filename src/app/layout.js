@@ -5,6 +5,8 @@ import Header from '@/components/Header';
 import MenuBas from '@/components/MenuBas';
 import SondagesTermines from '@/components/SondagesTermines';
 import XPGagnes from '@/components/XPGagnes';
+import ReabonnementNotifications from '@/components/ReabonnementNotifications';
+import { pushActif } from '@/lib/push';
 import SansZoom from '@/components/SansZoom';
 import { FuseauProvider } from '@/components/Fuseau';
 import { GenreProvider } from '@/components/Genre';
@@ -51,6 +53,7 @@ export default async function Layout({ children }) {
             {user && <MenuBas avatar={avatar} />}
             {user && <SondagesTermines />}
             {user && <XPGagnes />}
+            {user && pushActif() && <ReabonnementNotifications clePublique={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />}
           </GenreProvider>
         </FuseauProvider>
       </body>

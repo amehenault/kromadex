@@ -25,7 +25,9 @@ export async function notifier(userId, { titre, texte, lien = '/' }) {
       await webpush.sendNotification({ endpoint: a.endpoint, keys: a.cles }, JSON.stringify({ titre, texte, lien }));
       envoyes++;
     } catch (e) {
+      // Appareil expiré : abonnement retiré ; toute autre erreur (ex. clés VAPID différentes) est notée dans les journaux
       if ([404, 410].includes(e.statusCode)) await sql`DELETE FROM push_abonnements WHERE endpoint = ${a.endpoint}`;
+      else console.error('Notification push refusée :', e.statusCode || '', e.body || e.message);
     }
   }
   return envoyes;

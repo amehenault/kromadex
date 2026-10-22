@@ -3,7 +3,7 @@ import { getUser } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
-import { titreNiveau } from '@/lib/titres';
+import { titreNiveau, titreAffiche } from '@/lib/titres';
 import { typesVisibles, faitCozy, nomCollections } from '@/lib/typesColoriage';
 import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
@@ -42,6 +42,8 @@ import { rappelsDuJour } from '@/lib/planification';
 import MesRecompenses from '@/components/MesRecompenses';
 import Inventaire from '@/components/Inventaire';
 import BoutonDeconnexion from './boutonDeconnexion';
+import TexteAjuste from '@/components/TexteAjuste';
+import { memeQuePseudo } from '@/lib/memePseudo';
 import PhotoEtCadre from './photoEtCadre';
 import { verifierQuetes } from '@/lib/quetes';
 import { accord } from '@/lib/genre';
@@ -239,15 +241,10 @@ export default async function ProfilPage() {
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
-          {nomAffiche && (
-            <b
-              style={{
-                display: 'block',
-                fontSize: '1.15rem',
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {nomAffiche}
+          {/* Nom au-dessus du pseudo, sur une seule ligne ; caché s'il est identique au pseudo (pas de doublon) */}
+          {nomAffiche && !memeQuePseudo(nomAffiche, pseudoAffiche) && (
+            <b style={{ display: 'block' }}>
+              <TexteAjuste taille={1.15}>{nomAffiche}</TexteAjuste>
             </b>
           )}
 
@@ -284,15 +281,9 @@ export default async function ProfilPage() {
               aria-hidden="true"
               style={{ flexShrink: 0 }}
             />
-            {titreNiveau(niv.niveau, profile?.genre)}
+            {/* Un seul titre : celui choisi dans Paramètres (titre spécial ou d'un niveau atteint), sinon celui du niveau */}
+            {titreAffiche(profile?.title, niv.niveau, profile?.genre)}
           </Link>
-
-          {/* Titre spécial choisi par la personne dans ses Paramètres (ex. Cheffe des coloristes) */}
-          {profile?.title && profile.title !== 'Coloriste débutant' && (
-            <small style={{ display: 'block', fontWeight: 600, color: 'var(--texte-secondaire)' }}>
-              {profile.title}
-            </small>
-          )}
 
           {/* Kromadex+ offert par l'Invocatrice : jusqu'à quand */}
           {role !== 'admin' && offertActif(profile) && (

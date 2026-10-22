@@ -37,10 +37,10 @@ export default function BoutonDeconnexion() {
         <LogOut size={20} aria-hidden="true" />
         <span>{occupe ? 'Déconnexion…' : 'Déconnexion'}</span>
       </button>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--espace-3)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '-12px' }}>
         {PAGES_LEGALES.map((p) => (
           <a key={p.href} href={p.href} target="_blank" rel="noopener noreferrer"
-            style={{ color: 'var(--texte-secondaire)', textDecoration: 'underline', fontSize: '0.85rem', padding: '10px 8px', minHeight: '44px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center' }}>
+            style={{ color: 'var(--texte-secondaire)', textDecoration: 'underline', fontSize: '0.85rem', padding: '0 8px', minHeight: '36px', boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center' }}>
             {p.label}
           </a>
         ))}

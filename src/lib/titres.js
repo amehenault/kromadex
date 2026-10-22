@@ -79,3 +79,15 @@ export function titreNiveau(niveau, genre) {
   const n = Math.min(Math.max(1, Math.floor(niveau) || 1), TITRES.length);
   return TITRES[n - 1][genre === 'masculin' ? 0 : 1];
 }
+
+// Titres de niveau déjà atteints : du premier jusqu'à celui du niveau actuel (on peut afficher n'importe lequel)
+export function titresNiveauAtteints(niveau, genre) {
+  const n = Math.min(Math.max(1, Math.floor(niveau) || 1), TITRES.length);
+  return Array.from({ length: n }, (_, i) => titreNiveau(i + 1, genre));
+}
+
+// Titre affiché sur le profil : celui choisi dans Paramètres (titre spécial ou titre d'un niveau atteint),
+// sinon le titre du niveau actuel. Un seul titre, jamais deux.
+export function titreAffiche(choisi, niveau, genre) {
+  return choisi && choisi !== 'Coloriste débutant' ? choisi : titreNiveau(niveau, genre);
+}

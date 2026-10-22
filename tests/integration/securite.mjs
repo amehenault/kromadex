@@ -455,6 +455,15 @@ try {
   r = await appel('/api/xp');
   verifier('pop-up d’XP : rien sans connexion (401)', r.status === 401, r.status);
 
+  // Titre affiché : un titre de niveau déjà atteint est permis, pas un titre de niveau pas encore atteint
+  const [{ genre: genre1 }] = await sql`SELECT genre FROM users WHERE id = ${comptes.test1.id}`;
+  const premier = genre1 === 'masculin' ? 'Gribouilleur en herbe' : 'Gribouilleuse en herbe';
+  r = await appel('/api/user/parametres', { methode: 'POST', cookie: s1, json: { titre: premier } });
+  verifier('titre du premier niveau choisi', r.status === 200 && (await sql`SELECT title FROM users WHERE id = ${comptes.test1.id}`)[0].title === premier, r.status);
+  r = await appel('/api/user/parametres', { methode: 'POST', cookie: s1, json: { titre: 'Légende des couleurs inventée' } });
+  verifier('titre pas encore débloqué refusé (403)', r.status === 403, r.status);
+  await appel('/api/user/parametres', { methode: 'POST', cookie: s1, json: { titre: '' } });
+
   console.log('\n15. Mots-clefs partagés : un seul exemplaire du même mot par page');
   await sql`INSERT INTO user_tomes (user_id, tome_id) VALUES (${String(comptes.test2.id)}, ${livre.id}) ON CONFLICT DO NOTHING`;
   const motTest = `Zébu${Date.now() % 100000}`;

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Check, X } from 'lucide-react';
 import Pseudo from '@/components/Pseudo';
+import TexteAjuste from '@/components/TexteAjuste';
 
 // Pseudo du profil, dans la couleur du poste : modifiable à tout moment, avec vérification en direct
 // qu'aucune autre personne ne l'utilise déjà
@@ -45,11 +46,12 @@ export default function ModifierPseudo({ pseudo, role }) {
     return (
       <button type="button" onClick={() => setEdition(true)} aria-label={pseudo ? `Modifier mon pseudo @${pseudo}` : 'Choisir un pseudo'}
         style={{
-          all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px',
-          minHeight: '44px', maxWidth: '100%', boxSizing: 'border-box',
+          all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+          minHeight: '44px', width: '100%', boxSizing: 'border-box',
         }}>
         {pseudo
-          ? <Pseudo x={{ pseudo }} role={role} style={{ fontSize: '0.95rem' }} />
+          // Toujours sur une seule ligne : un pseudo long devient plus petit au lieu de passer à la ligne
+          ? <span style={{ flex: '0 1 auto', minWidth: 0 }}><TexteAjuste taille={0.95}><Pseudo x={{ pseudo }} role={role} /></TexteAjuste></span>
           : <small style={{ color: 'var(--texte-secondaire)', fontWeight: 700 }}>Choisir un pseudo</small>}
         <Pencil size={15} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--texte-secondaire)' }} />
       </button>

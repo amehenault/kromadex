@@ -9,8 +9,8 @@ const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
 // Choisir un de ses coloriages pour une activité.
 // type : mystere | cozy | autre (sinon tous) · tomes : seulement la section Tomes / Livres · publiees : seulement les publiés
-// Le message d'avertissement est toujours affiché avant de soumettre.
-export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, tomes, publiees, exclure = [], aide, onChoisir, onFermer, erreur }) {
+// nonPubliees : seulement ceux pas encore publiés · avertissement : message des activités (affiché par défaut avant de soumettre)
+export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, tomes, publiees, nonPubliees, avertissement = true, exclure = [], aide, onChoisir, onFermer, erreur }) {
   const [fiches, setFiches] = useState(null);
   const [tout, setTout] = useState(false);
 
@@ -19,8 +19,9 @@ export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, 
     if (type && type !== 'tous') p.set('type', type);
     if (tomes) p.set('tomes', '1');
     if (publiees) p.set('publiees', '1');
+    if (nonPubliees) p.set('nonpubliees', '1');
     fetch(`/api/mes-coloriages?${p}`).then((r) => r.json()).then((d) => setFiches(d.fiches || [])).catch(() => setFiches([]));
-  }, [type, tomes, publiees]);
+  }, [type, tomes, publiees, nonPubliees]);
 
   // Section Tomes / Livres : rangée par tome ; le filtre « Tout mélangé » montre tous les coloriages ensemble
   const visibles = (fiches || []).filter((f) => !exclure.includes(f.id));
@@ -43,10 +44,12 @@ export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, 
 
   return (
     <Feuille titre={titre} onFermer={onFermer}>
-      <p style={{ margin: 0, display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger)', fontWeight: 600 }}>
-        <AlertTriangle size={18} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: '1px' }} />
-        <span>{AVERTISSEMENT_SOUMISSION}</span>
-      </p>
+      {avertissement && (
+        <p style={{ margin: 0, display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger)', fontWeight: 600 }}>
+          <AlertTriangle size={18} aria-hidden="true" style={{ flex: '0 0 auto', marginTop: '1px' }} />
+          <span>{AVERTISSEMENT_SOUMISSION}</span>
+        </p>
+      )}
       {aide && <small style={{ color: 'var(--texte-secondaire)' }}>{aide}</small>}
       {tomes && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>

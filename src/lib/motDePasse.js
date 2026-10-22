@@ -4,6 +4,10 @@ import { hashPassword } from '@/lib/auth';
 
 const sha = (t) => createHash('sha256').update(t).digest('hex');
 
+// Adresse de contact de Kromadex : les réponses au courriel y arrivent et elle est écrite dans le courriel.
+// L'expéditeur (EMAIL_FROM) doit être sur un domaine vérifié chez Resend : info@kromadex.com une fois kromadex.com vérifié.
+const CONTACT = (process.env.EMAIL_REPLY_TO || 'info@kromadex.com').trim();
+
 // Envoi du lien par Resend si une clé est configurée (RESEND_API_KEY, EMAIL_FROM : mêmes variables que Planidae).
 // Sans clé ou si l'envoi échoue, la demande arrive dans l'espace admin (onglet Demandes) avec le lien à transmettre.
 async function envoyerCourriel(email, lien) {
@@ -15,8 +19,9 @@ async function envoyerCourriel(email, lien) {
     body: JSON.stringify({
       from: (process.env.EMAIL_FROM || process.env.MAIL_FROM || 'Kromadex <onboarding@resend.dev>').trim(),
       to: [email],
+      reply_to: CONTACT,
       subject: 'Réinitialiser ton mot de passe Kromadex',
-      text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 1 heure) :\n${lien}\n\nSi tu n'as rien demandé, ignore ce courriel.\n\nKromadex`,
+      text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 1 heure) :\n${lien}\n\nSi tu n'as rien demandé, ignore ce courriel.\nUne question ? Écris-nous à ${CONTACT}\n\nKromadex`,
       // Version HTML : un vrai bouton cliquable (certaines boîtes, comme Hotmail, ne rendent pas le lien du texte cliquable)
       html: `
         <div style="font-family:'Trebuchet MS',Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#273136;background:#fbfbfb;border-radius:12px;">
@@ -28,6 +33,7 @@ async function envoyerCourriel(email, lien) {
           </p>
           <p style="font-size:13px;color:#5f6b70;">Si le bouton ne fonctionne pas, copie ce lien dans ton navigateur :<br><a href="${lien}" style="color:#245b50;word-break:break-all;">${lien}</a></p>
           <p style="font-size:13px;color:#5f6b70;">Si tu n'as rien demandé, ignore ce courriel.</p>
+          <p style="font-size:13px;color:#5f6b70;">Une question ? Écris-nous à <a href="mailto:${CONTACT}" style="color:#245b50;">${CONTACT}</a></p>
         </div>`,
     }),
   });

@@ -10,7 +10,7 @@ export async function GET() {
   const { profil, erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const [inscrits, [totaux], [moi]] = await Promise.all([
-    sql`SELECT id, pseudo, name, email, role, genre, pays, types_pratiques, created_at
+    sql`SELECT id, pseudo, name, role, genre, pays, types_pratiques, created_at
         FROM users WHERE role <> 'admin' ORDER BY created_at DESC LIMIT 500`,
     sql`SELECT count(*)::int AS tous,
                count(*) FILTER (WHERE (created_at AT TIME ZONE 'America/Toronto')::date = (now() AT TIME ZONE 'America/Toronto')::date)::int AS aujourdhui,

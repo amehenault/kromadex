@@ -4,6 +4,7 @@ import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { ajouterCodes } from '@/lib/palettesServeur';
+import { VALEURS_TYPES } from '@/lib/typesColoriage';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +51,8 @@ export async function GET(req) {
       SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
            u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (SELECT count(*)::int FROM page_likes l WHERE l.page_id = p.id) AS likes,
-           EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime, p.codes
+           EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime, p.codes,
+           (p.user_id = ${moi}) AS mienne
       FROM pages p JOIN users u ON u.id = p.user_id
       WHERE p.publiee AND p.id = ${id}`;
     if (!fiche) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
@@ -97,11 +99,19 @@ export async function GET(req) {
   return NextResponse.json({ fiches });
 }
 
-// Aimer ou ne plus aimer un coloriage publié ({ id })
+// Aimer ou ne plus aimer un coloriage publié ({ id }),
+// ou publier un de ses coloriages (avec image) depuis la section Coloriages terminés ({ publier: id, type })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  const { id } = await req.json().catch(() => ({}));
+  const { id, publier, type } = await req.json().catch(() => ({}));
+  if (publier) {
+    if (!isId(String(publier)) || !VALEURS_TYPES.includes(type)) return NextResponse.json({ error: 'Choisis le type de coloriage' }, { status: 400 });
+    const maj = await sql`UPDATE pages SET publiee = true, type_coloriage = ${type}, publiee_le = COALESCE(publiee_le, now())
+      WHERE id = ${publier} AND user_id = ${user.id} AND image_b64 IS NOT NULL RETURNING id`;
+    if (!maj.length) return NextResponse.json({ error: 'Coloriage introuvable (il faut une photo pour le publier)' }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  }
   if (!isId(id || '')) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   const [p] = await sql`SELECT 1 FROM pages WHERE id = ${id} AND publiee`;
   if (!p) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });

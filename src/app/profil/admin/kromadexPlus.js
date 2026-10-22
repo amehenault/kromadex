@@ -29,7 +29,7 @@ export default function KromadexPlus() {
     if (q.length < 2) return [];
     const deja = new Set(offerts.map((o) => String(o.id)));
     return membres.filter((u) => u.role !== 'admin' && !deja.has(String(u.id))
-      && [u.pseudo, u.name, u.email].some((x) => (x || '').toLowerCase().includes(q))).slice(0, 8);
+      && [u.pseudo, u.name].some((x) => (x || '').toLowerCase().includes(q))).slice(0, 8);
   }, [recherche, membres, offerts]);
 
   async function enregistrer(e) {
@@ -39,7 +39,7 @@ export default function KromadexPlus() {
     if (r.ok) { setForm(null); setRecherche(''); charger(); }
   }
   async function retirer(o) {
-    if (!confirm(`Retirer Kromadex+ offert à ${o.pseudo ? `@${o.pseudo}` : o.name || o.email} ?`)) return;
+    if (!confirm(`Retirer Kromadex+ offert à ${o.pseudo ? `@${o.pseudo}` : o.name || 'ce membre'} ?`)) return;
     const r = await envoyer('/api/abonnement', 'DELETE', { userId: o.id });
     setMessage(r.ok ? 'Kromadex+ retiré' : r.error);
     charger();

@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { prevenir } from '@/lib/push';
+import { cleMot } from '@/lib/cleMot';
 
 const RAISONS = ['repetition', 'faux', 'inapproprie'];
 const propre = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
@@ -18,12 +19,21 @@ export async function GET(req) {
   if (p.get('gestion') === '1') {
     if (!['admin', 'modo'].includes(profil.role)) return NextResponse.json({ error: 'Accès restreint' }, { status: 403 });
     const mots = await sql`
-      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, CASE WHEN ${profil.role === 'admin'} THEN u.email END AS email, u.role AS role_auteur, u.genre AS genre_auteur,
+      SELECT m.id, m.mot, m.page_no, m.cree_le, c.nom AS tome, u.id AS auteur_id, u.pseudo, u.role AS role_auteur, u.genre AS genre_auteur,
              (SELECT count(*)::int FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id) AS signalements,
              (SELECT json_object_agg(r, n) FROM (SELECT raison AS r, count(*)::int AS n FROM mot_cle_signalements s WHERE s.mot_cle_id = m.id GROUP BY raison) x) AS raisons
       FROM mots_cles m JOIN tome_catalog c ON c.id = m.tome_id LEFT JOIN users u ON u.id = m.user_id
       ORDER BY signalements DESC, m.cree_le DESC LIMIT 500`;
     return NextResponse.json({ mots });
+  }
+
+  // ?nom=Nom du tome : ses mots-clefs partagés, retrouvés par le nom (nouveau coloriage pas encore enregistré)
+  if (p.get('nom')) {
+    const [t] = await sql`SELECT id FROM tome_catalog WHERE lower(nom) = lower(${String(p.get('nom')).slice(0, 120)}) LIMIT 1`;
+    if (!t) return NextResponse.json({ tome: null, mots: [] });
+    const mots = await sql`SELECT m.id, m.mot, m.page_no, u.pseudo, u.role, (m.user_id = ${profil.id}) AS moi
+      FROM mots_cles m LEFT JOIN users u ON u.id = m.user_id WHERE m.tome_id = ${t.id} ORDER BY lower(m.mot)`;
+    return NextResponse.json({ tome: t.id, mots });
   }
 
   if (p.get('tome')) {
@@ -79,7 +89,11 @@ export async function POST(req) {
   if (!possede) return NextResponse.json({ error: 'Tu peux ajouter des mots-clefs aux tomes que tu possèdes ou que tu as déjà coloriés' }, { status: 403 });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM mots_cles WHERE user_id = ${profil.id} AND cree_le > now() - interval '1 day'`;
   if (n >= 50) return NextResponse.json({ error: 'Tu as déjà ajouté 50 mots-clefs aujourd’hui' }, { status: 429 });
-  const cree = await sql`INSERT INTO mots_cles (tome_id, page_no, mot, user_id) VALUES (${Number(b.tomeId)}, ${pageNo}, ${mot}, ${profil.id})
+  // Même mot déjà sur cette page, ajouté par n'importe qui (Lapin = lapin = Lapins) : on garde le premier
+  const cle = cleMot(mot);
+  const [existant] = await sql`SELECT mot FROM mots_cles WHERE tome_id = ${Number(b.tomeId)} AND page_no = ${pageNo} AND cle = ${cle}`;
+  if (existant) return NextResponse.json({ error: `« ${existant.mot} » est déjà un mot-clef de cette page` }, { status: 409 });
+  const cree = await sql`INSERT INTO mots_cles (tome_id, page_no, mot, cle, user_id) VALUES (${Number(b.tomeId)}, ${pageNo}, ${mot}, ${cle}, ${profil.id})
     ON CONFLICT DO NOTHING RETURNING id`;
   if (!cree.length) return NextResponse.json({ error: 'Ce mot-clef existe déjà pour cette page' }, { status: 409 });
   return NextResponse.json({ ok: true });
@@ -92,7 +106,11 @@ export async function PUT(req) {
   const { id, mot } = await req.json().catch(() => ({}));
   const m = propre(mot);
   if (m.length < 2) return NextResponse.json({ error: 'Mot-clef trop court' }, { status: 400 });
-  await sql`UPDATE mots_cles SET mot = ${m} WHERE id = ${Number(id)}`;
+  // La nouvelle écriture ne doit pas devenir le doublon d'un autre mot-clef de la même page
+  const dejaLa = await sql`SELECT 1 FROM mots_cles a JOIN mots_cles b ON b.tome_id = a.tome_id AND b.page_no = a.page_no AND b.id <> a.id
+    WHERE a.id = ${Number(id)} AND b.cle = ${cleMot(m)}`;
+  if (dejaLa.length) return NextResponse.json({ error: 'Ce mot-clef existe déjà pour cette page' }, { status: 409 });
+  await sql`UPDATE mots_cles SET mot = ${m}, cle = ${cleMot(m)} WHERE id = ${Number(id)}`;
   // Les signalements portaient sur l'ancien mot : on repart de zéro
   await sql`DELETE FROM mot_cle_signalements WHERE mot_cle_id = ${Number(id)}`;
   return NextResponse.json({ ok: true });

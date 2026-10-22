@@ -52,6 +52,6 @@ export async function POST(req) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erreur POST /api/markers/sets :', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.' }, { status: 500 });
   }
 }

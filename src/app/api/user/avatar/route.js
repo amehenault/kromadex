@@ -17,7 +17,8 @@ export async function GET(req) {
   if (!r?.avatar_b64) return new NextResponse(null, { status: 404 });
   // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
   const contenu = Buffer.from(r.avatar_b64, 'base64');
-  const entetes = enTetesImage(contenu, 'private, max-age=31536000, immutable');
+  // Copie gardée 1 jour au plus sur l'appareil (l'adresse change à chaque nouvelle photo)
+  const entetes = enTetesImage(contenu, 'private, max-age=86400');
   if (!entetes) return new NextResponse(null, { status: 404 });
   return new NextResponse(contenu, { headers: entetes });
 }

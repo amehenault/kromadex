@@ -57,7 +57,7 @@ export default function MotsCles() {
   }
   async function sanctionner(m, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();
-    if (!confirm(`Confirmer : ${libelle} @${m.pseudo || m.email} pour le mot-clef « ${m.mot} » ?`)) return;
+    if (!confirm(`Confirmer : ${libelle} ${m.pseudo ? `@${m.pseudo}` : 'ce membre'} pour le mot-clef « ${m.mot} » ?`)) return;
     const r = await envoyer('/api/moderation', 'POST', { userId: m.auteur_id, motif: `Mot-clef inapproprié : « ${m.mot} » (${m.tome})`, jours });
     setMessage(r.ok ? 'Sanction envoyée' : r.error);
   }

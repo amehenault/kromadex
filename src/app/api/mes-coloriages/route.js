@@ -5,6 +5,7 @@ import { getUser } from '@/lib/auth';
 // Mes coloriages, pour en choisir un à soumettre à une activité.
 // Le type d'un coloriage sans type est celui de son tome dans le catalogue.
 // ?type=mystere|cozy|autre : seulement ce type · ?tomes=1 : seulement ceux de ma section Tomes / Livres · ?publiees=1 : seulement ceux publiés
+// ?nonpubliees=1 : seulement ceux pas encore publiés (Communauté, Coloriages terminés)
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -12,6 +13,7 @@ export async function GET(req) {
   const type = ['mystere', 'cozy', 'autre'].includes(q.get('type')) ? q.get('type') : null;
   const tomes = q.get('tomes') === '1';
   const publiees = q.get('publiees') === '1';
+  const nonPubliees = q.get('nonpubliees') === '1';
   const fiches = await sql`
     SELECT id, title, tome, page_no, COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') AS type_coloriage, publiee, OCTET_LENGTH(image_b64) AS img_size
     FROM pages
@@ -19,6 +21,7 @@ export async function GET(req) {
       AND (${type}::text IS NULL OR COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') = ${type})
       AND (NOT ${tomes} OR tome <> '')
       AND (NOT ${publiees} OR publiee)
+      AND (NOT ${nonPubliees} OR NOT publiee)
     ORDER BY created_at DESC LIMIT 300`;
   return NextResponse.json({ fiches });
 }

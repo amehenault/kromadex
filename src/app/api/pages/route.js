@@ -6,6 +6,7 @@ import { lirePublication, lirePalette } from '@/lib/pages';
 import { accorderSerie } from '@/lib/series';
 import { accorderXPColoriage } from '@/lib/xpColoriage';
 import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
+import { enregistrerMotsEnAttente } from '@/lib/motsCles';
 
 export async function POST(req) {
   try {
@@ -51,8 +52,13 @@ export async function POST(req) {
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     // Série de coloriage : bonus d'XP à chaque tranche de 7 jours consécutifs
     await accorderSerie(user.id, 'coloriage').catch(() => {});
+    // Mots-clefs ajoutés avant le premier enregistrement
+    let attente = [];
+    try { attente = JSON.parse(String(formData.get('mots_cles_attente') || '[]')); } catch {}
+    await enregistrerMotsEnAttente(user.id, { id: nouvelle.id, tome, page_no }, attente).catch(() => {});
     revalidatePath('/');
-    return NextResponse.json({ success: true });
+    // L'identifiant permet de rester sur le coloriage après l'enregistrement
+    return NextResponse.json({ success: true, id: nouvelle.id });
   } catch (err) {
     if (err instanceof ErreurImage) return reponseErreurImage(err);
     console.error('Erreur lors de la création :', err);

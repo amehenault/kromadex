@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { toPng } from 'html-to-image';
-import SymbolPicker from './SymbolPicker';
+import SymbolPicker, { Glyph } from './SymbolPicker';
 import MotsClesColoriage from './MotsClesColoriage';
 import ChoixTome from './ChoixTome';
 import ChoixCrayon from './ChoixCrayon';
@@ -10,7 +10,8 @@ import { useGardeQuitter } from '@/components/GardeQuitter';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
-import { X, Camera, AlertTriangle } from 'lucide-react';
+import { appliquerCode } from '@/lib/codesCouleurs';
+import { X, Camera, AlertTriangle, Check } from 'lucide-react';
 
 const uid = () => crypto.randomUUID();
 const groupeVide = () => ({ id: uid(), name: '', rows: [{ id: uid(), label: '', sym: 'A', num: '' }] });
@@ -89,12 +90,19 @@ const Pastille = ({ hex }) => (hex ? (
   <span aria-hidden="true" style={{ width: 16, height: 16, flex: '0 0 auto', borderRadius: '50%', background: hex, border: '1px solid rgba(0,0,0,0.15)' }} />
 ) : null);
 
+// Largeur de l'image exportée (px) selon le nombre de colonnes de codes
+const LARGEUR_EXPORT = { 2: 390, 3: 560, 4: 740 };
+
 // Code couleur d'une ligne : une liste « Choisir dans mes packs de couleurs » ou « Écrire manuellement ».
 // Un code déjà rempli est protégé : on confirme avant de le changer.
-function ChampCodeCouleur({ value, hex, onChange, enExport }) {
+function ChampCodeCouleur({ value, hex, onChange, enExport, sym, label }) {
   const [mode, setMode] = useState(value ? 'rempli' : 'choix'); // choix | manuel | rempli
   const [packs, setPacks] = useState(false);
   const champ = useHauteurAuto([value, mode, enExport]);
+  // Code rempli (ou vidé) depuis une autre ligne du même symbole : l'affichage suit
+  useEffect(() => {
+    setMode((m) => (value ? (m === 'choix' ? 'rempli' : m) : (m === 'rempli' ? 'choix' : m)));
+  }, [value]);
 
   if (enExport) {
     return (
@@ -141,6 +149,8 @@ function ChampCodeCouleur({ value, hex, onChange, enExport }) {
       )}
       {packs && (
         <ChoixCrayon
+          // Rappel de la ligne qu'on remplit : symbole, lettre ou numéro, et nom de la couleur
+          rappel={<>Couleur pour <span style={{ fontSize: '1.4rem', fontFamily: 'var(--typo-code)', minWidth: '28px', textAlign: 'center', lineHeight: 1 }}><Glyph v={sym} /></span>{label?.trim() ? <span style={{ fontWeight: 400, overflowWrap: 'anywhere' }}>· {label}</span> : null}</>}
           onFermer={() => setPacks(false)}
           onManuel={() => { setPacks(false); choisirMode('manuel'); }}
           onChoisir={(c) => { onChange(`${c.code} ${c.marque}`.trim(), c.hex || ''); setPacks(false); setMode('rempli'); }}
@@ -160,7 +170,8 @@ function ChampEtiquette({ value, onChange }) {
   );
 }
 
-function Groupe({ g, maj, retirer, enExport }) {
+// colonnes : nombre de colonnes de codes dans l'image exportée (2 à l'écran)
+function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode }) {
   const [glisserIndex, setGlisserIndex] = useState(null);
 
   const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => (r.id === id ? { ...r, [k]: v } : r)) });
@@ -184,12 +195,23 @@ function Groupe({ g, maj, retirer, enExport }) {
     }
   };
 
-  const totalCodes = g.rows.length;
-  const milieu = Math.ceil(totalCodes / 2);
-  const codesGauche = g.rows.slice(0, milieu);
-  const codesDroite = g.rows.slice(milieu);
+  // Les codes se lisent colonne par colonne : on remplit la première, puis la suivante
+  const nbColonnes = enExport ? colonnes : 2;
+  const parColonne = Math.ceil(g.rows.length / nbColonnes);
+  const colonnesCodes = Array.from({ length: nbColonnes }, (_, c) => g.rows.slice(c * parColonne, (c + 1) * parColonne));
 
-  const RendreLigne = (r, reelIdx) => (
+  // Image exportée : une ligne compacte (symbole à gauche, nom de la couleur et code à droite) pour que l'image reste courte
+  const RendreLigneExport = (r) => (
+    <div className="code-export" key={r.id}>
+      <SymbolPicker value={r.sym} onChange={() => {}} />
+      <div style={{ minWidth: 0 }}>
+        {r.label?.trim() && <div className="code-export-nom">{r.label}</div>}
+        <ChampCodeCouleur value={r.num} hex={r.hex} enExport />
+      </div>
+    </div>
+  );
+
+  const RendreLigne = (r, reelIdx) => enExport ? RendreLigneExport(r) : (
     <div 
       className={`item-code-bloc ${glisserIndex === reelIdx ? 'glisser' : ''}`} 
       key={r.id}
@@ -220,8 +242,8 @@ function Groupe({ g, maj, retirer, enExport }) {
 
         <div className="ligne">
           <SymbolPicker value={r.sym} onChange={(v) => setRow(r.id, 'sym', v)} />
-          <ChampCodeCouleur value={r.num} hex={r.hex} enExport={enExport}
-            onChange={(num, hex) => maj({ ...g, rows: g.rows.map((x) => (x.id === r.id ? { ...x, num, hex } : x)) })} />
+          <ChampCodeCouleur value={r.num} hex={r.hex} enExport={enExport} sym={r.sym} label={r.label}
+            onChange={(num, hex) => changerCode(r.id, num, hex)} />
         </div>
       </div>
 
@@ -247,12 +269,11 @@ function Groupe({ g, maj, retirer, enExport }) {
       </div>
 
       <div className="grille-codes-deux-colonnes">
-        <div className="colonne-codes">
-          {codesGauche.map((r, i) => RendreLigne(r, i))}
-        </div>
-        <div className="colonne-codes">
-          {codesDroite.map((r, i) => RendreLigne(r, milieu + i))}
-        </div>
+        {colonnesCodes.map((liste, c) => (
+          <div className="colonne-codes" key={c}>
+            {liste.map((r, i) => RendreLigne(r, c * parColonne + i))}
+          </div>
+        ))}
       </div>
 
       <button type="button" className="plus" aria-label="Ajouter une ligne" onClick={ajouter}>+</button>
@@ -282,6 +303,16 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [enExport, setEnExport] = useState(false);
+  // Mots-clefs d'un nouveau coloriage, enregistrés avec lui
+  const [motsAttente, setMotsAttente] = useState([]);
+  // Message « Coloriage enregistré » après un enregistrement (?enregistre=1), puis l'adresse est nettoyée
+  const [enregistre, setEnregistre] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('enregistre')) {
+      setEnregistre(true);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
   // Contenu non enregistré : on demande avant de quitter la page (lien, touche Retour, fermeture de l'onglet)
   const etatPage = JSON.stringify({ f, groupes, publiee, typeColo, palette: palette?.id || null, image: Boolean(image) });
   const etatDepart = useRef(etatPage);
@@ -320,10 +351,16 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   }
 
   const majGroupe = (g) => setGroupes((l) => l.map((x) => (x.id === g.id ? g : x)));
+  // Code couleur d'une ligne : les autres lignes du même symbole de ce coloriage suivent (lib/codesCouleurs.js)
+  const changerCode = (rowId, num, hex) => setGroupes((l) => appliquerCode(l, rowId, num, hex));
   const retirerGroupe = (g) => {
     if (g.rows.length && !confirm('Retirer cette sous-catégorie et ses codes?')) return;
     setGroupes((l) => l.filter((x) => x.id !== g.id));
   };
+
+  // Image exportée : plus il y a de codes, plus elle s'élargit (2, 3 ou 4 colonnes) pour rester à peu près carrée
+  const nbCodes = groupes.reduce((n, g) => n + (g.rows?.length || 0), 0);
+  const exportColonnes = nbCodes <= 12 ? 2 : nbCodes <= 30 ? 3 : 4;
 
   // L'image est faite à partir d'une copie hors de l'écran : la page visible ne bouge pas pendant l'export
   async function exporterEnImage() {
@@ -360,9 +397,17 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     fd.append('type_coloriage', typeFinal);
     fd.append('palette_id', palette ? String(palette.id) : '');
     if (image) fd.append('image', image, 'image.jpg');
+    // Nouveau coloriage : les mots-clefs ajoutés avant l'enregistrement partent avec lui
+    if (!page) fd.append('mots_cles_attente', JSON.stringify(motsAttente));
 
     const res = await fetch(page ? `/api/pages/${page.id}` : '/api/pages', { method: page ? 'PUT' : 'POST', body: fd, cache: 'no-store' });
-    if (res.ok) { libererPage(); window.location.href = '/coloriages'; return; }
+    // Enregistré : on reste sur ce coloriage (rechargé depuis la base, avec un message de confirmation)
+    if (res.ok) {
+      const d = await res.json().catch(() => ({}));
+      libererPage();
+      window.location.replace(`/pages/${page?.id || d.id}?enregistre=1`);
+      return;
+    }
     const reponseJson = await res.json().catch(() => ({}));
     const message = reponseJson.error || `Erreur ${res.status} ${res.statusText || 'API/PAGES'}`;
     setErreur(`Attention, l'application n'est pas en mesure de sauvegarder, ${message}`);
@@ -489,7 +534,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
 
       <div className="liste-sous-categories">
         {groupes.map((g) => (
-          <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={exp} />
+          <Groupe key={g.id} g={g} maj={majGroupe} retirer={() => retirerGroupe(g)} enExport={exp} colonnes={exportColonnes} changerCode={changerCode} />
         ))}
         {!exp && (
           <button type="button" className="btn alt ajout-groupe ajout-groupe-bas" onClick={() => setGroupes((l) => [...l, groupeVide()])}>
@@ -512,7 +557,20 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       </div>
 
       {/* Coloriage déjà enregistré : mots-clefs du coloriage (et de sa page dans le tome) */}
-      {page && <MotsClesColoriage pageId={page.id} tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null} />}
+      {/* Nouveau coloriage : les mots-clefs sont gardés et enregistrés avec lui */}
+      {page
+        ? <MotsClesColoriage pageId={page.id} tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null} />
+        : <MotsClesColoriage tomeNom={f.tome} pageNo={f.page_no} image={apercu} enAttente={motsAttente} onAttente={setMotsAttente} />}
+
+      {enregistre && (
+        <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--accent-doux)', padding: '4px 4px 4px 16px', borderRadius: '8px', margin: '12px 0', fontWeight: 'bold' }}>
+          <Check size={18} aria-hidden="true" /> <span style={{ flex: 1 }}>Coloriage enregistré</span>
+          <button type="button" aria-label="Fermer" onClick={() => setEnregistre(false)}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', minWidth: '44px', minHeight: '44px', color: 'inherit' }}>
+            <X size={16} aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       {erreur && (
         <div style={{ background: '#fee2e2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', border: '1px solid #fca5a5', margin: '12px 0', fontWeight: 'bold', textAlign: 'center' }}>
@@ -528,7 +586,8 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       {/* Copie pour l'image, hors de l'écran, avec le logo et l'adresse de Kromadex en bas */}
       {enExport && (
         <div aria-hidden="true" style={{ position: 'fixed', left: '-10000px', top: 0, pointerEvents: 'none' }}>
-          <div ref={pageRef} className="zone-export-conteneur mode-export" style={{ background: 'var(--arriere-plan, #e4f0ec)' }}>
+          <div ref={pageRef} className="zone-export-conteneur mode-export"
+            style={{ background: 'var(--arriere-plan, #e4f0ec)', '--largeur-export': `${LARGEUR_EXPORT[exportColonnes]}px` }}>
             {contenu(true)}
             <div className="pied-export">
               {/* Le logo (4228 x 732) a une taille fixe : sans largeur ni hauteur propres, il pouvait disparaître de l'image */}

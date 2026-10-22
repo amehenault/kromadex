@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award, BookOpen } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -9,6 +9,8 @@ import Bingos from './bingos';
 import Aventures from './aventures';
 import ValidationBingos from './validationBingos';
 import SignalementsEpreuves from './signalementsEpreuves';
+import ContenuSignale from './contenuSignale';
+import TomesAdmin from './tomesAdmin';
 import Moderation from './moderation';
 import Demandes from './demandes';
 import MotsCles from './motsCles';
@@ -19,7 +21,7 @@ import Recompenses from './recompenses';
 // Ordre d'affichage : de gauche à droite, puis de haut en bas (3 par rangée)
 const ONGLETS = [
   { cle: 'demandes', label: 'Demandes', icone: Inbox, roles: ['admin'] },
-  { cle: 'signalements', label: 'Signalés', icone: Flag, roles: ['admin', 'modo'] },
+  { cle: 'signalements', label: 'Contenu signalé', icone: Flag, roles: ['admin', 'modo'] },
   { cle: 'moderation', label: 'Modération', icone: ShieldAlert, roles: ['admin', 'modo'] },
   { cle: 'motscles', label: 'Mots-clefs', icone: Tags, roles: ['admin', 'modo'] },
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
@@ -32,6 +34,7 @@ const ONGLETS = [
   { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
   { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
   { cle: 'recompenses', label: 'Récompenses', icone: Award, roles: ['admin'] },
+  { cle: 'tomes', label: 'Tomes et livres', icone: BookOpen, roles: ['admin'] },
 ];
 
 export default function EspaceAdmin({ role, monId }) {
@@ -75,11 +78,12 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'bingos' && <Bingos role={role} />}
       {actif === 'aventures' && <Aventures />}
       {actif === 'validation' && <ValidationBingos />}
-      {actif === 'signalements' && <SignalementsEpreuves />}
+      {actif === 'signalements' && <><ContenuSignale /><SignalementsEpreuves /></>}
       {actif === 'motscles' && <MotsCles />}
       {actif === 'plus' && <KromadexPlus />}
       {actif === 'lancement' && <Lancement />}
       {actif === 'recompenses' && <Recompenses />}
+      {actif === 'tomes' && <TomesAdmin />}
     </>
   );
 }

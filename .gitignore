@@ -5,3 +5,6 @@ screenshot/
 
 .vercel
 .env*
+
+# Exports de données de membres (demandes d’accès) : jamais dans git
+exports-membres/

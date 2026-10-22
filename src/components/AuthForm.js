@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Inscription from './Inscription';
+import { POLITIQUE_CONFIDENTIALITE, CONDITIONS_UTILISATION } from '@/lib/pagesLegales';
 
 // Connexion, mot de passe oublié, et inscription (formulaire en 2 étapes)
 export default function AuthForm() {
@@ -75,6 +76,11 @@ export default function AuthForm() {
         style={{ display: 'block', marginTop: 'var(--espace-3)', minHeight: '44px', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', color: 'inherit', textDecoration: 'underline', font: 'inherit' }}>
         Mot de passe oublié ?
       </button>
+      {/* Pages légales du site kromadex.com, accessibles sans compte */}
+      <small style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginTop: 'var(--espace-2)', color: 'var(--texte-secondaire)' }}>
+        <a href={POLITIQUE_CONFIDENTIALITE} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Confidentialité</a>
+        <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>Conditions d’utilisation</a>
+      </small>
     </form>
   );
 }

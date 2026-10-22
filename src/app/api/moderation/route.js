@@ -18,18 +18,17 @@ export async function GET(req) {
     return NextResponse.json({ avertissements });
   }
 
-  const { profil, erreur } = await exigerPoste('admin', 'modo');
+  const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
   const [membres, avertissements] = await Promise.all([
-    sql`SELECT id, email, pseudo, name, role, suspendu_jusqu,
+    sql`SELECT id, pseudo, name, role, suspendu_jusqu,
           (SELECT count(*)::int FROM avertissements a WHERE a.user_id = users.id) AS nb_avertissements
-        FROM users ORDER BY email`,
-    sql`SELECT a.id, a.motif, a.suspension_jours, a.cree_le, u.pseudo, u.email, u.role, p.pseudo AS par, p.role AS role_par
+        FROM users ORDER BY lower(COALESCE(pseudo, name, ''))`,
+    sql`SELECT a.id, a.motif, a.suspension_jours, a.cree_le, u.pseudo, u.name, u.role, p.pseudo AS par, p.role AS role_par
         FROM avertissements a JOIN users u ON u.id = a.user_id LEFT JOIN users p ON p.id = a.par
         ORDER BY a.cree_le DESC LIMIT 100`,
   ]);
-  // Les courriels restent réservés à l'Invocatrice : les Sentinelles reçoivent les listes sans eux
-  if (profil.role !== 'admin') for (const x of [...membres, ...avertissements]) delete x.email;
+  // Les courriels ne sont jamais envoyés à l'espace admin
   return NextResponse.json({ membres, avertissements });
 }
 

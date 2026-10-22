@@ -5,6 +5,7 @@ import { Pin, Mail, MessageCircle, Send, Trash2 } from 'lucide-react';
 import { Avatar, BoutonJaime, nomAuteur, poster } from './outils';
 import Pseudo from '@/components/Pseudo';
 import Sondage from '@/components/Sondage';
+import BoutonSignaler from '@/components/BoutonSignaler';
 
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
@@ -139,12 +140,12 @@ function Commentaires({ missive, monId, onNombre }) {
             <Link href={`/membre/${c.user_id}`} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'inherit' }}><Pseudo x={c} /></Link>
             <p style={{ margin: 0, fontSize: '0.9rem', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.texte}</p>
           </div>
-          {String(c.user_id) === monId && (
+          {String(c.user_id) === monId ? (
             <button type="button" aria-label="Retirer mon commentaire" onClick={() => retirer(c)}
               style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', minHeight: '44px' }}>
               <Trash2 size={16} />
             </button>
-          )}
+          ) : <BoutonSignaler genre="commentaire_missive" cible={c.id} petit />}
         </div>
       ))}
       {missive.commentaires ? (

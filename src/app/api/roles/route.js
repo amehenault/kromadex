@@ -9,13 +9,12 @@ export async function GET() {
   if (erreur) return erreur;
 
   const users = await sql`
-    SELECT id, email, pseudo, name, role, title, xp, level, cheffe_expires_at, unlocked_titles, pionnier, genre,
+    SELECT id, pseudo, name, role, title, xp, level, cheffe_expires_at, unlocked_titles, pionnier, genre,
            to_char(plus_offert_jusqu AT TIME ZONE 'America/Toronto' - interval '1 day', 'YYYY-MM-DD') AS plus_offert_jusqu, plus_statut, plus_jusqu
     FROM users
-    ORDER BY (role = 'admin') DESC, email ASC
+    ORDER BY (role = 'admin') DESC, lower(COALESCE(pseudo, name, '')) ASC
   `;
-  // Les courriels restent réservés à l'Invocatrice : les Sentinelles reçoivent la liste sans eux
-  if (profil.role !== 'admin') for (const u of users) delete u.email;
+  // Les courriels ne sont jamais envoyés à l'espace admin (ni à l'Invocatrice, ni aux Sentinelles)
   const titles = await sql`SELECT * FROM system_titles ORDER BY name ASC`;
 
   return NextResponse.json({ users, titles, userRole: profil.role });

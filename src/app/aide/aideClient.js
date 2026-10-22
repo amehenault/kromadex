@@ -1,13 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send, PlayCircle, Info } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Bug, BookOpen, Palette, Lightbulb, Send, PlayCircle, Info, BookX } from 'lucide-react';
 import { TYPES_DEMANDE, nomType, nomStatut, JOURS_ARCHIVES } from '@/lib/demandes';
 
-const ICONES = { question: HelpCircle, bug: Bug, tome: BookOpen, crayons: Palette, fonctionnalite: Lightbulb };
+const ICONES = { question: HelpCircle, bug: Bug, erreur_tome: BookX, erreur_crayons: Palette, tome: BookOpen, crayons: Palette, fonctionnalite: Lightbulb };
 const AIDE_TEXTE = {
   question: 'Pose ta question, on te répond ici.',
   bug: "Explique ce qui s'est passé, sur quelle page, et ce que tu essayais de faire.",
+  erreur_tome: 'Donne le nom du tome ou du livre et l’erreur (ex. le vrai nombre de coloriages, une page en trop ou manquante).',
+  erreur_crayons: 'Donne la marque et le nom du coffret, puis l’erreur (ex. une couleur manquante, un mauvais code ou une mauvaise teinte).',
   tome: "Donne le titre, l'éditeur et si possible un lien ou le code EAN (au dos du livre).",
   crayons: 'Donne la marque, le nom du kit, le nombre de couleurs et si possible un lien.',
   fonctionnalite: "Décris l'idée et ce qu'elle t'aiderait à faire.",
@@ -33,7 +35,13 @@ export default function AideClient() {
         .then(() => window.dispatchEvent(new Event('kromadex-lu')));
     }
   }
-  useEffect(() => { charger(); }, []);
+  // Arrivée avec un type déjà choisi (ex. /aide?type=erreur_tome&tome=Nom, depuis un livre Cozy colo)
+  useEffect(() => {
+    charger();
+    const p = new URLSearchParams(window.location.search);
+    if (TYPES_DEMANDE.some((t) => t.valeur === p.get('type'))) setType(p.get('type'));
+    if (p.get('tome')) setMessage(`Livre : ${p.get('tome').slice(0, 120)}\nNombre de coloriages réel : `);
+  }, []);
 
   async function envoyer(e) {
     e.preventDefault();

@@ -6,6 +6,7 @@ import { Glyph } from '@/components/SymbolPicker';
 import { Avatar, BoutonJaime, nomAuteur, nomType, imagePage, poster } from './outils';
 import CommentairesFiche from './commentairesFiche';
 import Pseudo from '@/components/Pseudo';
+import BoutonSignaler from '@/components/BoutonSignaler';
 
 // Codes couleurs en lecture seule : sous-catégories, puis symbole + code de chaque couleur
 export function CodesLecture({ codes }) {
@@ -99,8 +100,11 @@ export default function FicheDetail({ id, onFermer, onLike }) {
               </div>
               <BoutonJaime aime={fiche.aime} likes={fiche.likes} onClick={aimer} />
             </div>
-            {(fiche.tome || fiche.page_no) && (
-              <small style={{ fontWeight: 700 }}>{fiche.tome}{fiche.page_no ? ` · page ${fiche.page_no}` : ''}</small>
+            {(fiche.tome || fiche.page_no || !fiche.mienne) && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <small style={{ fontWeight: 700 }}>{fiche.tome}{fiche.page_no ? ` · page ${fiche.page_no}` : ''}</small>
+                {!fiche.mienne && <BoutonSignaler genre="coloriage" cible={fiche.id} />}
+              </div>
             )}
             {fiche.palette && <PaletteInspiration palette={fiche.palette} />}
             <div className="carte"><b style={{ display: 'block', marginBottom: '8px' }}>Codes couleurs</b><CodesLecture codes={fiche.codes} /></div>

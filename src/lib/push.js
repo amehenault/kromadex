@@ -8,7 +8,7 @@ export const pushActif = () => !!(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && pr
 
 function configurer() {
   webpush.setVapidDetails(
-    process.env.VAPID_SUJET || 'mailto:admin@kromadex.app',
+    process.env.VAPID_SUJET || 'mailto:info@kromadex.com',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY,
   );

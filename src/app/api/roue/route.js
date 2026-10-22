@@ -27,3 +27,14 @@ export async function POST(req) {
     SELECT id FROM roue_tirages WHERE user_id = ${user.id} ORDER BY tire_le DESC LIMIT 20)`;
   return NextResponse.json({ ok: true, id: t.id });
 }
+
+// Abandonner une quête du Destin en cours ({ quete: id }) : elle disparaît, sans XP
+export async function DELETE(req) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  const { quete } = await req.json().catch(() => ({}));
+  const retire = await sql`DELETE FROM roue_tirages
+    WHERE id = ${Number(quete) || 0} AND user_id = ${user.id} AND quete_le IS NOT NULL AND termine_le IS NULL RETURNING id`;
+  if (!retire.length) return NextResponse.json({ error: 'Quête introuvable' }, { status: 404 });
+  return NextResponse.json({ ok: true });
+}

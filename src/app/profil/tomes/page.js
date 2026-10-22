@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, BookOpen, Search, Plus, Check } from 'lucide-react';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import OngletsCollections from '@/components/OngletsCollections';
+import AvisPagesCozy from '@/components/AvisPagesCozy';
 
 const TYPES = [
   { valeur: 'mystere', label: 'Tomes (coloriages mystères)' },
@@ -50,12 +51,16 @@ export default function CatalogueTomesPage() {
     charger();
   }, []);
 
+  const [ajoutCozy, setAjoutCozy] = useState('');
+
   async function basculer(tome) {
     const id = Number(tome.id);
     const possede = possedes.has(id);
     // Mise à jour immédiate, annulée si la requête échoue
     const maj = new Set(possedes);
     if (possede) maj.delete(id); else maj.add(id);
+    // Livre Cozy colo ajouté : rappel que son nombre de pages peut être faux, avec un lien vers Aide déjà rempli
+    if (!possede && tome.type === 'cozy') setAjoutCozy(tome.nom);
     setPossedes(maj);
     setEnCours(id);
     try {
@@ -164,7 +169,12 @@ export default function CatalogueTomesPage() {
             <button key={c} type="button" style={puce(collection === c)} onClick={() => setCollection(c)}>{c}</button>
           ))}
         </div>
+        {/* Livre Cozy colo qu'on vient d'ajouter : rappel visible même plus bas dans la liste */}
+        {ajoutCozy && <AvisPagesCozy tome={ajoutCozy} onFermer={() => setAjoutCozy('')} />}
       </div>
+
+      {/* Livres Cozy colo : le nombre de pages peut être différent du nombre de coloriages */}
+      {type === 'cozy' && !ajoutCozy && <AvisPagesCozy />}
 
       {tomesAffiches.length === 0 && (
         <p style={{ color: 'var(--texte-secondaire)' }}>

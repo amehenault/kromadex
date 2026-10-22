@@ -12,7 +12,7 @@ export async function GET() {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const membres = await sql`
-    SELECT id, pseudo, name, email, role, plus_offert_raison AS raison, plus_offert_le AS depuis,
+    SELECT id, pseudo, name, role, plus_offert_raison AS raison, plus_offert_le AS depuis,
            to_char(plus_offert_jusqu AT TIME ZONE 'America/Toronto' - interval '1 day', 'YYYY-MM-DD') AS jusqu,
            (plus_offert_jusqu IS NOT NULL AND plus_offert_jusqu <= now()) AS expire
     FROM users WHERE plus_offert ORDER BY plus_offert_le DESC NULLS LAST`;

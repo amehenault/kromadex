@@ -10,7 +10,7 @@ export const TYPES_NOTIFS = [
   { cle: 'missivesAttente', label: 'Missives de Sentinelles à approuver', postes: ['admin'] },
   { cle: 'rappels', label: 'Activités à planifier (chaque jour si en retard, sinon aux 2 jours)', postes: ['admin'] },
   { cle: 'validation', label: 'Cases de bingo à valider', postes: ['admin', 'modo'] },
-  { cle: 'signalements', label: 'Coloriages et mots-clefs signalés', postes: ['admin', 'modo'] },
+  { cle: 'signalements', label: 'Contenu signalé (coloriages, commentaires, profils, mots-clefs)', postes: ['admin', 'modo'] },
 ];
 
 export const typesPour = (role) => TYPES_NOTIFS.filter((t) => !t.postes || t.postes.includes(role));

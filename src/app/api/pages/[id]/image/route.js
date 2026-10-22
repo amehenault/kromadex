@@ -25,11 +25,11 @@ export async function GET(req, { params }) {
   if (!r.length) return new Response(null, { status: 404 });
 
   // L'adresse contient la taille de l'image (?s=) : elle change quand l'image change.
-  // L'appareil peut donc garder l'image en mémoire, ce qui l'affiche tout de suite les fois suivantes.
+  // L'appareil peut donc garder l'image en mémoire (1 jour au plus), ce qui l'affiche tout de suite les fois suivantes.
   const versionnee = new URL(req.url).searchParams.has('s');
   const contenu = Buffer.from(r[0].image_b64, 'base64');
   // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
-  const entetes = enTetesImage(contenu, versionnee ? 'private, max-age=31536000, immutable' : 'private, no-cache');
+  const entetes = enTetesImage(contenu, versionnee ? 'private, max-age=86400' : 'private, no-cache');
   if (!entetes) return new Response(null, { status: 404 });
   return new Response(contenu, { headers: entetes });
 }

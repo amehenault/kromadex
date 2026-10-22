@@ -87,4 +87,5 @@ export const NOMS_AVENTURES = {
 
 // Message affiché chaque fois qu'on soumet un coloriage à une activité
 export const AVERTISSEMENT_SOUMISSION =
-  'En soumettant ce coloriage, tu t’assures qu’il correspond à tous les critères, sans quoi tu risques de perdre le double des points et de voir ton coloriage supprimé, en plus de risquer une suspension.';
+  'En soumettant ce coloriage, tu t’assures qu’il correspond à tous les critères, sans quoi tu risques de perdre le double des points et de voir ton coloriage supprimé, en plus de risquer une suspension. '
+  + 'Une fois soumis, ce coloriage (photo, titre et ton pseudo) peut être vu par les membres connectés de Kromadex, même s’il n’est pas publié dans la communauté.';

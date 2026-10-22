@@ -1,7 +1,8 @@
 import { sql } from '@/lib/db';
 
 // Contenu à lire : missives publiées non lues, réponses de l'Invocatrice pas encore vues,
-// et pour l'Invocatrice, les nouvelles demandes d'aide (elle n'a pas de missives à lire : elle les écrit)
+// et pour l'Invocatrice, les nouvelles demandes d'aide (elle n'a pas de missives à lire : elle les écrit).
+// Sondages : ceux qui sont terminés et dont on n'a pas encore vu le résultat final (si on a voté ou si on l'a écrit)
 export async function aLire(userId) {
   const [r] = await sql`
     SELECT
@@ -9,8 +10,12 @@ export async function aLire(userId) {
         (SELECT count(*)::int FROM missives m
           WHERE m.statut = 'publiee'
             AND NOT EXISTS (SELECT 1 FROM missives_lues l WHERE l.missive_id = m.id AND l.user_id = u.id)) END AS missives,
+      (SELECT count(*)::int FROM missives m
+        WHERE m.statut = 'publiee' AND m.sondage_fin <= now()
+          AND (m.auteur = u.id OR EXISTS (SELECT 1 FROM missive_votes v WHERE v.missive_id = m.id AND v.user_id = u.id))
+          AND NOT EXISTS (SELECT 1 FROM sondages_vus s WHERE s.missive_id = m.id AND s.user_id = u.id)) AS sondages,
       (SELECT count(*)::int FROM demandes WHERE user_id = u.id AND NOT reponse_vue) AS reponses,
       CASE WHEN u.role = 'admin' THEN (SELECT count(*)::int FROM demandes WHERE statut = 'nouvelle') ELSE 0 END AS demandes
     FROM users u WHERE u.id = ${userId}`;
-  return r || { missives: 0, reponses: 0, demandes: 0 };
+  return r || { missives: 0, sondages: 0, reponses: 0, demandes: 0 };
 }

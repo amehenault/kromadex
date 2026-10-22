@@ -5,6 +5,7 @@ import { ArrowLeft, Check } from 'lucide-react';
 import { GENRES } from '@/lib/titres';
 import { PAYS } from '@/lib/pays';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
+import { AGE_MINIMUM, CONDITIONS_UTILISATION, POLITIQUE_CONFIDENTIALITE } from '@/lib/pagesLegales';
 
 // Inscription en 2 étapes : le compte (courriel, mot de passe confirmé), puis le profil
 // (pseudo, nom, genre, pays, types de coloriage). Photo et biographie s'ajoutent ensuite dans Paramètres.
@@ -84,6 +85,13 @@ export default function Inscription({ onConnexion }) {
             {differents && <small style={{ color: 'var(--danger)' }}>Les deux mots de passe ne sont pas identiques.</small>}
             {etape1Ok && <small style={{ color: 'var(--accent-primaire)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Check size={14} aria-hidden="true" /> Les mots de passe sont identiques.</small>}
           </label>
+          {/* Âge minimum et pages légales, avant de créer le compte */}
+          <small style={aide}>
+            Kromadex est réservé aux personnes de {AGE_MINIMUM} ans et plus. En créant ton compte, tu acceptes les{' '}
+            <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>conditions d’utilisation</a>
+            {' '}et la{' '}
+            <a href={POLITIQUE_CONFIDENTIALITE} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>politique de confidentialité</a>.
+          </small>
           {message && <p className="erreur" role="alert" style={{ margin: 0 }}>{message}</p>}
           <button className="btn" type="submit" style={{ minHeight: '48px', fontWeight: 700 }}>Continuer</button>
           <button type="button" className="btn alt" onClick={onConnexion} style={{ minHeight: '44px' }}>J’ai déjà un compte</button>
@@ -140,7 +148,10 @@ export default function Inscription({ onConnexion }) {
             </div>
             <small style={aide}>Les autres types sont cachés pour toi. Rien de coché : tu vois ce que tu fais.</small>
           </div>
-          <small style={aide}>Tu pourras ajouter ta photo et ta biographie dans Paramètres.</small>
+          <small style={aide}>
+            Tu pourras ajouter ta photo et ta biographie dans Paramètres. Ton pseudo, ton nom, ta photo et ta biographie sont visibles
+            par les autres membres connectés de Kromadex (jamais ton courriel).
+          </small>
           {message && <p className="erreur" role="alert" style={{ margin: 0 }}>{message}</p>}
           <button className="btn" type="submit" disabled={occupe} style={{ minHeight: '48px', fontWeight: 700 }}>
             {occupe ? 'Création…' : 'Créer mon compte'}

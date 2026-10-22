@@ -21,7 +21,8 @@ const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 // Choisir un code couleur dans ses coffrets : d'abord le coffret (avec recherche), puis le crayon,
 // comme dans Collection de crayons (cercle de couleur, numéro et marque dessous), avec recherche par numéro.
 // onChoisir({ code, marque, hex })
-export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
+// rappel : ce qu'on est en train de remplir (symbole, lettre ou numéro de la ligne), toujours visible en haut
+export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
   const [donnees, setDonnees] = useState(null);
   const [pack, setPack] = useState(null);
   const [recherche, setRecherche] = useState('');
@@ -48,7 +49,12 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel }) {
 
   return (
     <Feuille haute titre={pack ? nomPack(pack) : 'Mes packs de couleurs'} onFermer={onFermer}>
-      {!donnees && <small style={{ color: 'var(--texte-secondaire)' }}>Chargement…</small>}
+      {rappel && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: 'var(--rayon-m)', background: 'var(--accent-doux)', fontWeight: 700 }}>
+          {rappel}
+        </div>
+      )}
+      {!donnees &&<small style={{ color: 'var(--texte-secondaire)' }}>Chargement…</small>}
 
       {donnees && !donnees.packs.length && (
         <>

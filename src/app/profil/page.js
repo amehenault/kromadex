@@ -42,6 +42,7 @@ import { rappelsDuJour } from '@/lib/planification';
 import MesRecompenses from '@/components/MesRecompenses';
 import Inventaire from '@/components/Inventaire';
 import BoutonDeconnexion from './boutonDeconnexion';
+import PhotoEtCadre from './photoEtCadre';
 import { verifierQuetes } from '@/lib/quetes';
 import { accord } from '@/lib/genre';
 import { quetesDestin } from '@/lib/quetesDestin';
@@ -58,10 +59,10 @@ export default async function ProfilPage() {
   // puis on garde les 2 quêtes non terminées les plus avancées (en pourcentage, puis le moins de reste)
   const { liste: quetes } = await verifierQuetes(authUser.id);
   // Quêtes du Destin (Roue du Destin) en cours
-  const destin = (await quetesDestin(authUser.id)).filter((q) => !q.termine_le);
+  const destin = await quetesDestin(authUser.id);
 
   const profile = await getUserProfile(authUser.id);
-  // Pastilles : missives non lues et réponses de l'Invocatrice pas encore vues
+  // Pastilles : missives non lues, sondages terminés pas encore vus et réponses de l'Invocatrice pas encore vues
   const nonLus = await aLire(authUser.id);
 
   // Admin : nombre de demandes d'aide à traiter (nouvelles ou en cours)
@@ -73,7 +74,8 @@ export default async function ProfilPage() {
   await parcheminDuMois(authUser.id);
   const recompenses = await recompensesDe(authUser.id);
   // Cadre de profil : celui choisi dans Paramètres parmi ceux débloqués (relique complétée, Pionnière ou Pionnier)
-  const cadre = cadreAffiche(profile?.cadre, cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: profile?.pionnier, role: profile?.role }));
+  const debloques = cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: profile?.pionnier, role: profile?.role });
+  const cadre = cadreAffiche(profile?.cadre, debloques);
   // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
   const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
@@ -179,7 +181,8 @@ export default async function ProfilPage() {
             flex: '0 0 auto',
           }}
         >
-          {/* Photo dans son cadre (anneau ou cadre illustré de Pionnière et Pionnier) */}
+          {/* Photo dans son cadre (anneau ou cadre illustré de Pionnière et Pionnier) ; la toucher permet de changer la photo et le cadre */}
+          <PhotoEtCadre cadres={debloques} cadre={profile?.cadre} genre={profile?.genre}>
           <PhotoCadre cadre={cadre} taille={72}>
             {(t) => (
               <div
@@ -213,6 +216,7 @@ export default async function ProfilPage() {
               </div>
             )}
           </PhotoCadre>
+          </PhotoEtCadre>
 
           <span
             style={{
@@ -460,7 +464,7 @@ export default async function ProfilPage() {
               {role === 'admin' ? 'Espace de l’Invocatrice' : role === 'modo' ? 'Espace sentinelle' : `Espace ${accord(profile?.genre, 'ménestrelle', 'ménestrel')}`}
               {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
             </span>
-            {role === 'admin' && nonLus.demandes > 0 && <span className="pastille" aria-hidden="true" />}
+            {role === 'admin' && nonLus.demandes + nonLus.sondages > 0 && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 
@@ -532,7 +536,7 @@ export default async function ProfilPage() {
         >
           <Mail size={22} aria-hidden="true" />
           <span>Missives</span>
-          {nonLus.missives > 0 && <span className="pastille" aria-hidden="true" />}
+          {nonLus.missives + nonLus.sondages > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>}
 
         {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}

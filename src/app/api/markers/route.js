@@ -30,6 +30,6 @@ export async function GET() {
     });
   } catch (err) {
     console.error('Erreur GET /api/markers :', err);
-    return NextResponse.json({ error: err.message, allBrands: [], userSets: [] }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.', allBrands: [], userSets: [] }, { status: 500 });
   }
 }

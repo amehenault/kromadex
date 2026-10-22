@@ -33,7 +33,7 @@ export default function Membres({ role }) {
   const visibles = useMemo(() => {
     const q = recherche.toLowerCase();
     return membres.filter((u) =>
-      ((u.email || '').toLowerCase().includes(q) || (u.pseudo || '').toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q))
+      ((u.pseudo || '').toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q))
       && (filtre === 'tous' || u.role === filtre));
   }, [membres, recherche, filtre]);
 
@@ -70,7 +70,7 @@ export default function Membres({ role }) {
         <div key={u.id} style={ligneCarte}>
           <Pseudo x={u} />
           <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>
-            {u.email ? `${u.email} · ` : ''}niv. {u.level || 1} · {u.xp || 0} XP
+            niv. {u.level || 1} · {u.xp || 0} XP
           </small>
           {u.role === 'admin' || !estAdmin ? (
             <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: couleurPoste(u.role) }}>

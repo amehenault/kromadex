@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { prevenir } from '@/lib/push';
-import { memeSecret, champ, modeAccepte, modeAttendu, cleEvenement, formuleDe } from '@/lib/thrivecart';
+import { memeSecret, champ, modeAccepte, modeAttendu, cleEvenement, formuleDe, resumeAvis } from '@/lib/thrivecart';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,18 +35,23 @@ export async function POST(req) {
   const courriel = champ(d, 'customer.email', 'customer[email]', 'email').toLowerCase().trim();
   const idPassthrough = champ(d, 'passthrough.user_id', 'passthrough[user_id]');
 
-  // Le secret n'est jamais conservé dans le journal
-  const { thrivecart_secret: secretRecu, ...aConserver } = d;
-  const noter = (resultat, userId = null) => sql`
-    INSERT INTO paiements_evenements (evenement, mode, user_id, courriel, resultat, donnees)
-    VALUES (${evenement}, ${mode}, ${userId}, ${courriel}, ${resultat}, ${JSON.stringify(aConserver)})`;
+  // Journal : seulement les champs listés dans resumeAvis (jamais le secret, le nom, l'adresse ou la carte).
+  // Un avis refusé (pas authentifié) ne garde ni courriel ni contenu. Le journal est vidé 30 jours après réception (lib/nettoyage.js).
+  const secretRecu = d.thrivecart_secret;
+  const noter = (resultat, userId = null, { refuse = false, sansLien = false } = {}) => {
+    const resume = refuse ? {} : resumeAvis(d);
+    if (sansLien) delete resume.passthrough_user_id;
+    return sql`
+      INSERT INTO paiements_evenements (evenement, mode, user_id, courriel, resultat, donnees)
+      VALUES (${evenement}, ${mode}, ${userId}, ${refuse ? '' : courriel}, ${resultat}, ${JSON.stringify(resume)})`;
+  };
 
   if (!process.env.THRIVECART_SECRET) {
-    await noter('refusé : THRIVECART_SECRET manquant');
+    await noter('refusé : THRIVECART_SECRET manquant', null, { refuse: true });
     return NextResponse.json({ error: 'Non configuré' }, { status: 503 });
   }
   if (!memeSecret(secretRecu, process.env.THRIVECART_SECRET)) {
-    await noter('refusé : mot secret invalide');
+    await noter('refusé : mot secret invalide', null, { refuse: true });
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
   // Test et production séparés : un avis d'un autre mode n'a aucun effet (200 pour que ThriveCart ne le renvoie pas)
@@ -60,7 +65,8 @@ export async function POST(req) {
     ? await sql`SELECT id FROM users WHERE id = ${idPassthrough}`
     : courriel ? await sql`SELECT id FROM users WHERE lower(email) = ${courriel}` : [];
   if (!u) {
-    await noter('membre introuvable');
+    // Ex. compte supprimé : on ne garde pas l'identifiant de l'ancien compte (seulement le courriel, effacé après 30 jours)
+    await noter('membre introuvable', null, { sansLien: true });
     // 200 pour que ThriveCart ne renvoie pas l'avis en boucle ; l'Invocatrice peut offrir Kromadex+ à la main
     return NextResponse.json({ ok: true, membre: false });
   }

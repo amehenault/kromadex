@@ -39,7 +39,7 @@ export default function Moderation({ role, monId }) {
   const trouves = useMemo(() => {
     const q = recherche.toLowerCase().trim();
     if (!q) return [];
-    return possibles.filter((u) => [u.email, u.pseudo, u.name].some((x) => (x || '').toLowerCase().includes(q))).slice(0, 8);
+    return possibles.filter((u) => [u.pseudo, u.name].some((x) => (x || '').toLowerCase().includes(q))).slice(0, 8);
   }, [possibles, recherche]);
   const suspendus = possibles.filter((u) => u.suspendu_jusqu && new Date(u.suspendu_jusqu) > new Date());
 
@@ -59,7 +59,7 @@ export default function Moderation({ role, monId }) {
     charger();
   }
 
-  const nom = (u) => (u.pseudo ? `@${u.pseudo}` : u.name || u.email);
+  const nom = (u) => (u.pseudo ? `@${u.pseudo}` : u.name || 'ce membre');
 
   return (
     <div style={colonne}>

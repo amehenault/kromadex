@@ -21,7 +21,7 @@ export default async function RouePage() {
     if (n > 0) (faites[p.t] ||= new Set()).add(n);
   }
   const liste = tomes.map((t) => ({
-    nom: t.nom, total: t.total || null, couverture: t.couverture,
+    nom: t.nom, type: t.type, total: t.total || null, couverture: t.couverture,
     faites: [...(faites[t.nom.toLowerCase()] || [])].filter((n) => !t.total || n <= t.total),
   }));
   return <Roue tomes={liste} />;

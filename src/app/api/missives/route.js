@@ -13,9 +13,47 @@ const dateEpingle = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
+  const params = new URL(req.url).searchParams;
+
+  // ?sondage=12 : résultats à jour d'un sondage (rafraîchis en direct pendant qu'il est ouvert)
+  if (params.get('sondage')) {
+    const [m] = await sql`
+      SELECT json_build_object(
+               'options', m.sondage_options, 'multiple', m.sondage_multiple, 'heures', m.sondage_heures, 'fin', m.sondage_fin,
+               'ouvert', m.sondage_fin IS NULL OR m.sondage_fin > now(),
+               'votes', (SELECT COALESCE(json_agg(json_build_object('option', x.option_no, 'n', x.n)), '[]')
+                         FROM (SELECT option_no, count(*)::int AS n FROM missive_votes v WHERE v.missive_id = m.id GROUP BY option_no) x),
+               'votants', (SELECT count(DISTINCT v.user_id)::int FROM missive_votes v WHERE v.missive_id = m.id),
+               'mes_votes', (SELECT COALESCE(json_agg(v.option_no), '[]') FROM missive_votes v WHERE v.missive_id = m.id AND v.user_id = ${profil.id})
+             ) AS sondage
+      FROM missives m
+      WHERE m.id = ${Number(params.get('sondage'))} AND cardinality(m.sondage_options) > 0
+        AND (m.statut = 'publiee' OR ${['admin', 'modo'].includes(profil.role)})`;
+    if (!m) return NextResponse.json({ error: 'Sondage introuvable' }, { status: 404 });
+    return NextResponse.json(m);
+  }
+
+  // ?termines=1 : sondages terminés dont je n'ai pas encore vu le résultat final (j'ai voté ou je l'ai écrit)
+  if (params.get('termines')) {
+    const sondages = await sql`
+      SELECT m.id, m.titre,
+             json_build_object(
+               'options', m.sondage_options, 'multiple', m.sondage_multiple, 'fin', m.sondage_fin, 'ouvert', false,
+               'votes', (SELECT COALESCE(json_agg(json_build_object('option', x.option_no, 'n', x.n)), '[]')
+                         FROM (SELECT option_no, count(*)::int AS n FROM missive_votes v WHERE v.missive_id = m.id GROUP BY option_no) x),
+               'votants', (SELECT count(DISTINCT v.user_id)::int FROM missive_votes v WHERE v.missive_id = m.id),
+               'mes_votes', (SELECT COALESCE(json_agg(v.option_no), '[]') FROM missive_votes v WHERE v.missive_id = m.id AND v.user_id = ${profil.id})
+             ) AS sondage
+      FROM missives m
+      WHERE m.statut = 'publiee' AND m.sondage_fin <= now()
+        AND (m.auteur = ${profil.id} OR EXISTS (SELECT 1 FROM missive_votes v WHERE v.missive_id = m.id AND v.user_id = ${profil.id}))
+        AND NOT EXISTS (SELECT 1 FROM sondages_vus s WHERE s.missive_id = m.id AND s.user_id = ${profil.id})
+      ORDER BY m.sondage_fin LIMIT 10`;
+    return NextResponse.json({ sondages });
+  }
 
   // ?gestion=1 : l'admin voit tout, la modo voit les siennes et celles publiées
-  if (new URL(req.url).searchParams.get('gestion') && ['admin', 'modo'].includes(profil.role)) {
+  if (params.get('gestion') &&['admin', 'modo'].includes(profil.role)) {
     const missives = await sql`
       SELECT m.id, m.titre, m.contenu, m.cree_le, m.statut, to_char(m.epinglee_jusqu, 'YYYY-MM-DD') AS epinglee_jusqu, u.pseudo AS auteur, u.role AS role_auteur,
              -- Sondage : réponses, résultats, mes votes, encore ouvert ou non
@@ -86,6 +124,14 @@ export async function POST(req) {
     for (const n of choix) await sql`INSERT INTO missive_votes (missive_id, user_id, option_no) VALUES (${id}, ${profil.id}, ${n}) ON CONFLICT DO NOTHING`;
     // Voter compte comme avoir lu la missive
     await sql`INSERT INTO missives_lues (user_id, missive_id) VALUES (${profil.id}, ${id}) ON CONFLICT DO NOTHING`;
+    return NextResponse.json({ ok: true });
+  }
+  // Résultat final d'un sondage terminé vu ({ sondageVu: id }) : retire le pop-up et la pastille
+  if (corps.sondageVu) {
+    const { profil, erreur } = await exigerPoste();
+    if (erreur) return erreur;
+    await sql`INSERT INTO sondages_vus (user_id, missive_id) SELECT ${profil.id}, id FROM missives WHERE id = ${Number(corps.sondageVu)}
+      ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true });
   }
   if (corps.lue) {

@@ -32,6 +32,6 @@ export async function POST(req) {
     return NextResponse.json({ success: true, nom: nouveau });
   } catch (err) {
     console.error('Erreur POST /api/tomes/rename :', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.' }, { status: 500 });
   }
 }

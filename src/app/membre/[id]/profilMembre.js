@@ -10,6 +10,7 @@ import { titreNiveau } from '@/lib/titres';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import MesRecompenses from '@/components/MesRecompenses';
 import Pseudo from '@/components/Pseudo';
+import BoutonSignaler from '@/components/BoutonSignaler';
 import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
@@ -96,6 +97,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             </Link>
           </div>
         )}
+        {/* Profil qui contrevient aux règles (pseudo, photo, présentation) */}
+        {!moi && <div style={{ display: 'flex', justifyContent: 'flex-end' }}><BoutonSignaler genre="membre" cible={m.id} petit /></div>}
       </div>
 
       <MesRecompenses recompenses={[...badgePionnier(m), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]} titre={moi ? 'Mes récompenses' : 'Récompenses'}

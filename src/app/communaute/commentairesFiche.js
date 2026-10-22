@@ -4,26 +4,31 @@ import Link from 'next/link';
 import { Send, Trash2, CornerDownRight, X } from 'lucide-react';
 import { Avatar, nomAuteur, poster } from './outils';
 import Pseudo from '@/components/Pseudo';
+import BoutonSignaler from '@/components/BoutonSignaler';
 
-// Commentaires d'un coloriage publié, avec un niveau de réponses
-export default function CommentairesFiche({ pageId }) {
+// Commentaires d'un coloriage publié (pageId) ou d'une publication de la communauté (publicationId), avec un niveau de réponses
+export default function CommentairesFiche({ pageId, publicationId }) {
+  const api = publicationId ? '/api/publications/commentaires' : '/api/communaute/commentaires';
+  const lecture = publicationId ? `${api}?publication=${publicationId}` : `${api}?page=${pageId}`;
+  const cible = publicationId ? { publicationId } : { pageId };
+  const genreSignalement = publicationId ? 'commentaire_publication' : 'commentaire';
   const [liste, setListe] = useState(null);
   const [texte, setTexte] = useState('');
   const [reponseA, setReponseA] = useState(null); // commentaire auquel on répond
   const [erreur, setErreur] = useState('');
 
   async function charger() {
-    const r = await fetch(`/api/communaute/commentaires?page=${pageId}`);
+    const r = await fetch(lecture);
     if (r.ok) setListe((await r.json()).commentaires || []);
   }
-  useEffect(() => { charger(); }, [pageId]);
+  useEffect(() => { charger(); }, [lecture]);
 
   async function envoyer(e) {
     e.preventDefault();
     setErreur('');
-    const res = await fetch('/api/communaute/commentaires', {
+    const res = await fetch(api, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageId, texte, parentId: reponseA?.id }),
+      body: JSON.stringify({ ...cible, texte, parentId: reponseA?.id }),
     });
     if (res.ok) { setTexte(''); setReponseA(null); charger(); }
     else setErreur((await res.json().catch(() => ({}))).error || 'Erreur');
@@ -31,7 +36,7 @@ export default function CommentairesFiche({ pageId }) {
 
   async function retirer(c) {
     if (!confirm('Retirer ce commentaire ?')) return;
-    await poster('/api/communaute/commentaires', { id: c.id }, 'DELETE');
+    await poster(api, { id: c.id }, 'DELETE');
     charger();
   }
 
@@ -57,6 +62,7 @@ export default function CommentairesFiche({ pageId }) {
               <Trash2 size={14} aria-hidden="true" />
             </button>
           )}
+          {!c.mien && <BoutonSignaler genre={genreSignalement} cible={c.id} petit />}
         </div>
       </div>
     </div>

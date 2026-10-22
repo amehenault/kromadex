@@ -2,6 +2,8 @@
 export const TYPES_DEMANDE = [
   { valeur: 'question', label: 'Poser une question', court: 'Question' },
   { valeur: 'bug', label: 'Signaler un bug', court: 'Bug' },
+  { valeur: 'erreur_tome', label: 'Erreurs dans un tome ou un livre', court: 'Erreur de tome' },
+  { valeur: 'erreur_crayons', label: 'Erreurs dans les coffrets de crayons', court: 'Erreur de crayons' },
   { valeur: 'tome', label: "Demander l'ajout d'un tome ou d'un livre", court: 'Ajout de tome' },
   { valeur: 'crayons', label: "Demander l'ajout de crayons", court: 'Ajout de crayons' },
   { valeur: 'fonctionnalite', label: 'Proposer une fonctionnalité', court: 'Fonctionnalité' },
@@ -14,7 +16,7 @@ export const nomType = (v) => TYPES_DEMANDE.find((t) => t.valeur === v)?.court |
 
 // Les 3 catégories de l'onglet Demandes, avec les statuts possibles de chacune
 export const GROUPES_DEMANDE = [
-  { cle: 'questions', label: 'Questions et bugs', types: ['question', 'bug', 'motdepasse'], statuts: ['nouvelle', 'en_cours', 'resolue'] },
+  { cle: 'questions', label: 'Questions, bugs et erreurs', types: ['question', 'bug', 'erreur_tome', 'erreur_crayons', 'motdepasse'], statuts: ['nouvelle', 'en_cours', 'resolue'] },
   { cle: 'ajouts', label: 'Ajouts de tomes et crayons', types: ['tome', 'crayons'], statuts: ['nouvelle', 'en_cours', 'ajoutee', 'refusee'] },
   { cle: 'fonctionnalites', label: 'Fonctionnalités', types: ['fonctionnalite'], statuts: ['nouvelle', 'en_cours', 'ajoutee', 'refusee'] },
 ];

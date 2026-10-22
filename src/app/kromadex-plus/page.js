@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, Check, ExternalLink, Settings } from 'lucide-react';
 import { getUser } from '@/lib/auth';
 import { abonnementDe, lienPaiement, GESTION_PLUS, PRIX_PLUS, AVANTAGES } from '@/lib/abonnement';
+import { CONDITIONS_UTILISATION } from '@/lib/pagesLegales';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,7 @@ export default async function KromadexPlus() {
               Prix en dollars canadiens, taxes en sus pour le Canada. Hors Canada, ta banque convertit le montant dans ta devise.
               Tu choisis la formule sur la page de paiement. Sans engagement : annule à tout moment depuis « Gérer l’abonnement ».
               Utilise de préférence le même courriel que ton compte Kromadex.
+              {' '}Avant de t’abonner, lis les <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>conditions d’utilisation</a>.
             </small>
           </div>
           <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-2)', marginBottom: 'var(--espace-3)' }}>

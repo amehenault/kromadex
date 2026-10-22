@@ -32,7 +32,7 @@ export default function Lancement() {
   const liste = useMemo(() => {
     const q = recherche.trim().toLowerCase();
     const tous = donnees?.inscrits || [];
-    return q ? tous.filter((u) => [u.pseudo, u.name, u.email].some((x) => (x || '').toLowerCase().includes(q))) : tous;
+    return q ? tous.filter((u) => [u.pseudo, u.name].some((x) => (x || '').toLowerCase().includes(q))) : tous;
   }, [donnees, recherche]);
 
   if (!donnees) return <p>Chargement…</p>;
@@ -70,7 +70,6 @@ export default function Lancement() {
           <div key={u.id} style={ligneCarte}>
             <Pseudo x={u} />
             {u.name && <small style={{ overflowWrap: 'anywhere' }}>{u.name}</small>}
-            <small style={{ ...aide, overflowWrap: 'anywhere' }}>{u.email}</small>
             <small style={{ fontWeight: 600 }}>Inscription le {quand(u.created_at)}</small>
             {(nomPays(u.pays) || nomTypes(u.types_pratiques)) && (
               <small style={{ ...aide, overflowWrap: 'anywhere' }}>{[nomPays(u.pays), nomTypes(u.types_pratiques)].filter(Boolean).join(' · ')}</small>

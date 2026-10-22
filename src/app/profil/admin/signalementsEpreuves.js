@@ -28,7 +28,7 @@ export default function SignalementsEpreuves() {
   }
   async function sanctionner(s, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();
-    if (!confirm(`Confirmer : ${libelle} ${s.pseudo ? `@${s.pseudo}` : s.email} ?`)) return;
+    if (!confirm(`Confirmer : ${libelle} ${s.pseudo ? `@${s.pseudo}` : s.name || 'ce membre'} ?`)) return;
     const r = await envoyer('/api/moderation', 'POST', { userId: s.auteur_id, motif: `Coloriage qui ne correspond pas à l’épreuve « ${s.epreuve} »`, jours });
     setMessage(r.ok ? 'Sanction envoyée' : r.error);
   }

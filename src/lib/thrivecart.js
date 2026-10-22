@@ -40,6 +40,21 @@ function stable(v) {
   return JSON.stringify(v ?? null);
 }
 
+// Ce qui est gardé d'un avis dans le journal (paiements_evenements) : une liste explicite de champs, jamais l'avis complet.
+// Seuls les champs que le code utilise sont confirmés ; le reste de l'avis (nom, adresse, carte…) n'est jamais conservé.
+// Le courriel est gardé à part (colonne courriel) pour retrouver un paiement fait avec un autre courriel.
+export function resumeAvis(d) {
+  return {
+    event: champ(d, 'event'),
+    event_id: champ(d, 'event_id'),
+    mode: champ(d, 'mode'),
+    passthrough_user_id: champ(d, 'passthrough.user_id', 'passthrough[user_id]'),
+    order_total: champ(d, 'order.total', 'order_total'),
+    order_total_str: champ(d, 'order.total_str', 'order.total_gross_str'),
+    formule: formuleDe(d),
+  };
+}
+
 // Mensuel ou annuel : d'après le nom ou la fréquence du paiement, sinon d'après le montant (40,99 contre 3,79)
 export function formuleDe(d) {
   const texte = JSON.stringify(d).toLowerCase();

@@ -29,7 +29,7 @@ export async function GET() {
     return NextResponse.json({ tomes, possedes: possedes.map((p) => Number(p.tome_id)), progression });
   } catch (err) {
     console.error('Erreur GET /api/tomes/catalog :', err);
-    return NextResponse.json({ error: err.message, tomes: [], possedes: [], progression: {} }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.', tomes: [], possedes: [], progression: {} }, { status: 500 });
   }
 }
 
@@ -62,6 +62,6 @@ export async function POST(req) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erreur POST /api/tomes/catalog :', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.' }, { status: 500 });
   }
 }

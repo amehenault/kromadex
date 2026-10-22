@@ -632,7 +632,77 @@ create table if not exists missive_votes (
   cree_le timestamptz not null default now(),
   primary key (missive_id, user_id, option_no)
 );
+-- Sondages terminés dont la personne a vu le résultat final (pop-up et pastille des missives)
+create table if not exists sondages_vus (
+  missive_id int not null references missives(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  primary key (missive_id, user_id)
+);
+-- Contenu signalé par un membre (règles d'utilisation) : coloriage publié, commentaire, commentaire de missive ou profil
+create table if not exists signalements (
+  id serial primary key,
+  genre text not null check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre')),
+  cible text not null,
+  user_id uuid references users(id) on delete cascade,
+  raison text not null,
+  details text not null default '',
+  cree_le timestamptz not null default now(),
+  traite boolean not null default false,
+  unique (genre, cible, user_id)
+);
+create index if not exists signalements_a_traiter on signalements (genre, cible) where not traite;
+-- Demandes d'aide : date de fermeture (résolue, ajoutée, refusée), remise à vide si la demande est rouverte.
+-- Le nettoyage automatique supprime la demande 30 jours après cette date.
+alter table demandes add column if not exists ferme_le timestamptz;
+update demandes set ferme_le = maj_le where ferme_le is null and statut in ('resolue', 'ajoutee', 'refusee');
+create index if not exists demandes_ferme_le on demandes (ferme_le) where ferme_le is not null;
+create index if not exists paiements_evenements_recu on paiements_evenements (recu_le);
 -- Ménestrelle : une épreuve par mois et par ménestrelle
 create unique index if not exists defis_menestrel_mois on defis (mois, choisi_par) where genre = 'menestrel';
 -- Bingos : qui l'a créé (une ménestrelle peut en créer un par mois)
 alter table bingos add column if not exists createur uuid references users(id) on delete set null;
+-- Nombre de pages d'un tome changé par l'Invocatrice dans son Espace : npm run db:tomes ne l'écrase plus
+alter table tome_catalog add column if not exists nb_pages_manuel boolean not null default false;
+-- Communauté : publications « Question » (texte et images) et « Coloriage en cours » (photo du téléphone ou coloriage existant)
+create table if not exists publications (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  genre text not null check (genre in ('question', 'en_cours')),
+  texte text not null default '',
+  page_id uuid references pages(id) on delete cascade,
+  cree_le timestamptz not null default now()
+);
+create index if not exists publications_genre_date on publications (genre, cree_le desc);
+-- Images d'une publication (jusqu'à 4), vérifiées et réencodées
+create table if not exists publication_images (
+  publication_id int not null references publications(id) on delete cascade,
+  no int not null,
+  image_b64 text not null,
+  type text not null default 'image/webp',
+  primary key (publication_id, no)
+);
+create table if not exists publication_likes (
+  user_id uuid not null references users(id) on delete cascade,
+  publication_id int not null references publications(id) on delete cascade,
+  primary key (user_id, publication_id)
+);
+create table if not exists publication_commentaires (
+  id serial primary key,
+  publication_id int not null references publications(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  parent_id int references publication_commentaires(id) on delete cascade,
+  texte text not null,
+  cree_le timestamptz not null default now()
+);
+create index if not exists publication_commentaires_pub on publication_commentaires (publication_id);
+-- Signalements : publications et leurs commentaires aussi
+alter table signalements drop constraint if exists signalements_genre_check;
+alter table signalements add constraint signalements_genre_check
+  check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre', 'publication', 'commentaire_publication'))
+;
+-- Pop-up « Bravo, tu as gagné … XP » : les gains pas encore montrés (les gains passés comptent comme vus)
+alter table xp_journal add column if not exists vu boolean not null default true;
+alter table xp_journal alter column vu set default false;
+-- Mots-clefs : clé de comparaison (minuscules, sans accents, au singulier, lib/cleMot.js) ; une seule fois le même mot par page
+alter table mots_cles add column if not exists cle text;
+create unique index if not exists mots_cles_cle_unique on mots_cles (tome_id, page_no, cle);

@@ -404,7 +404,7 @@
 .onglets .actif, .choix .actif { background: var(--accent-doux); color: var(--noir); border-color: var(--btn-secondaire-bordure); }
 
 .mode-export {
-  width: 390px !important;
+  width: var(--largeur-export, 390px) !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   padding: 16px !important;
@@ -707,6 +707,14 @@ div.vide {
 
 /* Image exportée : codes couleurs toujours sur 2 colonnes (même depuis un téléphone), logo et adresse en bas */
 .mode-export .grille-codes-deux-colonnes { flex-direction: row !important; }
+/* Image exportée : une ligne compacte par code (symbole à gauche, nom et code à droite) pour que l'image reste courte */
+.mode-export .colonne-codes { gap: 4px; }
+.mode-export .groupe { padding: 6px 8px; }
+.mode-export .groupe-tete { margin-bottom: 4px; }
+.code-export { display: grid; grid-template-columns: 28px 1fr; gap: 6px; align-items: center; min-width: 0; }
+.code-export .symbole-btn { width: 28px; height: 28px; flex-basis: 28px; font-size: 0.95rem; }
+.code-export-nom { font-weight: 700; font-size: 0.75rem; line-height: 1.15; overflow-wrap: anywhere; }
+.code-export .valeur-export-code { justify-content: flex-start !important; padding: 0; font-size: 0.78rem; line-height: 1.2; text-align: left; }
 /* Logo, puis l'adresse juste dessous, les deux centrés */
 .pied-export {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;

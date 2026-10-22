@@ -14,7 +14,7 @@ export default function MenuBas({ avatar }) {
 
   useEffect(() => {
     const verifier = () => fetch('/api/notifications').then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setALire(d.missives + d.reponses + (d.demandes || 0) > 0)).catch(() => {});
+      .then((d) => d && setALire(d.missives + (d.sondages || 0) + d.reponses + (d.demandes || 0) > 0)).catch(() => {});
     verifier();
     window.addEventListener('kromadex-lu', verifier);
     return () => window.removeEventListener('kromadex-lu', verifier);

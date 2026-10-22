@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Dices, Compass, BookOpen, Pencil, Map, Check } from 'lucide-react';
+import AvisPagesCozy from '@/components/AvisPagesCozy';
 
 const auHasard = (liste) => liste[Math.floor(Math.random() * liste.length)];
 // Pages encore à faire d'un tome (le nombre total doit être connu)
@@ -105,6 +106,7 @@ export default function Roue({ tomes }) {
           </select>
         </label>
       )}
+      {mode === 'guide' && !resultat && tomes.find((t) => t.nom === tomeChoisi)?.type === 'cozy' && <AvisPagesCozy tome={tomeChoisi} />}
 
       {/* La roue */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', margin: '10px 0 20px' }}>
@@ -159,6 +161,9 @@ export default function Roue({ tomes }) {
           </div>
         </div>
       )}
+
+      {/* Livre Cozy colo tiré : le nombre de pages connu peut être différent du nombre de coloriages */}
+      {resultat?.tome.type === 'cozy' && <div style={{ marginTop: 'var(--espace-3)' }}><AvisPagesCozy tome={resultat.tome.nom} /></div>}
     </div>
   );
 }

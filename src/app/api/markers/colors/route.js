@@ -28,6 +28,6 @@ export async function GET(req) {
     return NextResponse.json({ colors: colors || [] });
   } catch (err) {
     console.error('Erreur API Colors :', err);
-    return NextResponse.json({ error: err.message, colors: [] }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur du serveur, réessaie.', colors: [] }, { status: 500 });
   }
 }

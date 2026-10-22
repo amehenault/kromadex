@@ -3,6 +3,8 @@ import '@/styles/base.css';
 import '@/styles/components.css';
 import Header from '@/components/Header';
 import MenuBas from '@/components/MenuBas';
+import SondagesTermines from '@/components/SondagesTermines';
+import XPGagnes from '@/components/XPGagnes';
 import SansZoom from '@/components/SansZoom';
 import { FuseauProvider } from '@/components/Fuseau';
 import { GenreProvider } from '@/components/Genre';
@@ -47,6 +49,8 @@ export default async function Layout({ children }) {
             <Header />
             <main className={user ? 'contenu avec-menu-bas' : 'contenu'}>{children}</main>
             {user && <MenuBas avatar={avatar} />}
+            {user && <SondagesTermines />}
+            {user && <XPGagnes />}
           </GenreProvider>
         </FuseauProvider>
       </body>

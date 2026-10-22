@@ -16,7 +16,8 @@ const FAUSSE_EMPREINTE = hashPassword('kromadex-empreinte-factice');
 
 export async function POST(req, { params }) {
   const { action } = await params;
-  if (action === 'logout') { await destroySession(); return NextResponse.json({ ok: true }); }
+  // Déconnexion : le navigateur vide aussi son cache (photos et coloriages gardés en mémoire), là où il le permet
+  if (action === 'logout') { await destroySession(); return NextResponse.json({ ok: true }, { headers: { 'Clear-Site-Data': '"cache"' } }); }
   const b = await req.json().catch(() => ({}));
   const email = String(b.email || '').trim().toLowerCase();
   const pw = String(b.password || '');

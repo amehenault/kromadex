@@ -9,10 +9,11 @@ export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   if (new URL(req.url).searchParams.get('tout') && profil.role === 'admin') {
-    // Les demandes archivées (résolues, ajoutées, refusées) sont supprimées 30 jours après leur archivage
-    await sql`DELETE FROM demandes WHERE statut = ANY(${STATUTS_ARCHIVES}) AND maj_le < now() - make_interval(days => ${JOURS_ARCHIVES})`;
+    // Les demandes archivées (résolues, ajoutées, refusées) sont supprimées 30 jours après leur fermeture
+    // (aussi chaque jour par le nettoyage automatique, lib/nettoyage.js)
+    await sql`DELETE FROM demandes WHERE ferme_le < now() - make_interval(days => ${JOURS_ARCHIVES})`;
     const demandes = await sql`
-      SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.email, u.role
+      SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.name, u.role
       FROM demandes d JOIN users u ON u.id = d.user_id
       ORDER BY array_position(ARRAY['nouvelle', 'en_cours'], d.statut) NULLS LAST, d.cree_le ASC LIMIT 500`;
     return NextResponse.json({ demandes });
@@ -58,6 +59,8 @@ export async function PUT(req) {
   await sql`
     UPDATE demandes
     SET statut = ${statut}, reponse = ${texte}, maj_le = now(),
+        -- Fermée : on garde la première date de fermeture ; rouverte : la date est effacée (plus de suppression prévue)
+        ferme_le = CASE WHEN ${STATUTS_ARCHIVES.includes(statut)} THEN COALESCE(ferme_le, now()) ELSE NULL END,
         reponse_vue = CASE WHEN reponse IS DISTINCT FROM ${texte} AND ${texte} <> '' THEN false ELSE reponse_vue END
     WHERE id = ${Number(id)}`;
   if (texte && texte !== d.reponse) {

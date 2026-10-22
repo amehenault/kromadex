@@ -489,7 +489,7 @@ export default async function ProfilPage() {
         {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
         {role !== 'admin' && <Link
           href="/kromadex-plus"
-          className="btn profil-acces-lien"
+          className="btn profil-acces-lien profil-acces-plus"
           aria-label="Kromadex+ : gérer l’abonnement"
         >
           <img src="/kromadex-plus.svg" alt="" style={{ height: '22px', width: 'auto', maxWidth: '100%' }} />

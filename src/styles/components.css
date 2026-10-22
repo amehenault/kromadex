@@ -531,9 +531,14 @@
 .profil-acces > .profil-acces-long {
   grid-column: 1 / -1;
   flex-direction: row !important;
-  justify-content: flex-start;
-  text-align: left !important;
+  justify-content: center;
+  text-align: center !important;
   min-height: 64px !important;
+}
+
+/* Kromadex+ : logo en haut, texte en bas, pour que « abonnement » ne soit jamais coupé */
+.profil-acces > .profil-acces-plus {
+  flex-direction: column;
 }
 .profil-acces-icones { display: inline-flex; gap: 6px; flex: 0 0 auto; }
 

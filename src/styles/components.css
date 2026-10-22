@@ -483,6 +483,13 @@
   margin-bottom: var(--espace-3);
 }
 
+/* Ordinateur : 4 colonnes (Kromadex+, Aide, Statistiques, Missives puis Coloriages, Quêtes, Aventures, Combats) */
+@media (min-width: 900px) {
+  .profil-acces {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .profil-acces > .btn {
   width: 100%;
   min-width: 0;

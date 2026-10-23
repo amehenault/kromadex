@@ -26,11 +26,27 @@ export function IconeRecompense({ r, taille = 40, carre = false }) {
   );
 }
 
+// Icône d'une récompense avec la quantité gagnée dans un rond corail (même 1) ; jamais pour le badge de Pionnière
+export function IconeQuantite({ r, nombre = 1, taille = 40 }) {
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
+      <IconeRecompense r={r} taille={taille} />
+      {r.genre !== 'pionnier' && (
+        <b aria-hidden="true" style={{
+          position: 'absolute', right: '-4px', bottom: '-2px', minWidth: '20px', height: '20px', padding: '0 5px', boxSizing: 'border-box',
+          borderRadius: '999px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--couleur-principale)', color: 'var(--noir)', fontSize: '0.72rem', lineHeight: 1,
+        }}>{nombre}</b>
+      )}
+    </span>
+  );
+}
+
 // Une récompense avec son nom (« 2 sceaux de @marie »)
 export function LigneRecompense({ r, nombre = 1, taille = 40 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-      <IconeRecompense r={r} taille={taille} />
+      <IconeQuantite r={r} nombre={nombre} taille={taille} />
       <span style={{ minWidth: 0, overflowWrap: 'anywhere', fontWeight: 600, fontSize: '0.9rem' }}>{nomRecompense(r, nombre)}</span>
     </div>
   );

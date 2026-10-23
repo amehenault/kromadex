@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Award, ChevronRight, Pin, PinOff } from 'lucide-react';
 import Feuille from './Feuille';
-import { IconeRecompense, LigneRecompense } from './Recompense';
+import { IconeQuantite, LigneRecompense } from './Recompense';
 import { regrouperRecompenses, nomRecompense, MAX_EPINGLES } from '@/lib/recompenses';
 
 const cle = (g) => `${g.genre}|${g.detail}`;
@@ -61,7 +61,7 @@ export default function MesRecompenses({ recompenses, titre = 'Mes récompenses'
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px 8px' }}>
         {affiches.map((g) => (
           <div key={cle(g)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textAlign: 'center', minWidth: 0 }}>
-            <IconeRecompense r={g} taille={56} />
+            <IconeQuantite r={g} nombre={g.nombre} taille={56} />
             <small style={{ fontWeight: 600, overflowWrap: 'anywhere', fontSize: '0.75rem' }}>{nomRecompense(g, g.nombre)}</small>
           </div>
         ))}

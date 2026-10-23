@@ -5,10 +5,9 @@ import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau, titreAffiche } from '@/lib/titres';
 import { typesVisibles, faitCozy, nomCollections } from '@/lib/typesColoriage';
-import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
-import { CADRES, cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
+import { CADRES, cadresDebloques, cadreAffiche } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
 import ModifierPseudo from './modifierPseudo';
@@ -167,16 +166,24 @@ export default async function ProfilPage() {
         </Link>
       )}
 
-      {/* En-tête : avatar, nom, poste, niveau */}
+      {/* En-tête : nom et pseudo en entier au-dessus, puis la photo avec le titre et le lien du profil à sa droite */}
       <div
         className="carte profil-identite"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-          marginBottom: 'var(--espace-3)',
-        }}
+        style={{ marginBottom: 'var(--espace-3)' }}
       >
+        <div style={{ minWidth: 0, marginBottom: '6px' }}>
+          {/* Nom au-dessus du pseudo, sur une seule ligne ; caché s'il est identique au pseudo (pas de doublon) */}
+          {nomAffiche && !memeQuePseudo(nomAffiche, pseudoAffiche) && (
+            <b style={{ display: 'block' }}>
+              <TexteAjuste taille={1.15}>{nomAffiche}</TexteAjuste>
+            </b>
+          )}
+
+          {/* Pseudo dans la couleur du poste, modifiable à tout moment */}
+          <ModifierPseudo pseudo={pseudoAffiche || ''} role={role} />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div
           style={{
             position: 'relative',
@@ -241,28 +248,6 @@ export default async function ProfilPage() {
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
-          {/* Nom au-dessus du pseudo, sur une seule ligne ; caché s'il est identique au pseudo (pas de doublon) */}
-          {nomAffiche && !memeQuePseudo(nomAffiche, pseudoAffiche) && (
-            <b style={{ display: 'block' }}>
-              <TexteAjuste taille={1.15}>{nomAffiche}</TexteAjuste>
-            </b>
-          )}
-
-          {/* Pseudo dans la couleur du poste, modifiable à tout moment */}
-          <ModifierPseudo pseudo={pseudoAffiche || ''} role={role} />
-
-          <small
-            style={{
-              display: 'block',
-              color: couleurPoste(role),
-              fontWeight: 'bold',
-            }}
-          >
-            {/* Pionnière ou Pionnier s'ajoute au poste (l'Invocatrice garde seulement son titre) */}
-            {profile?.pionnier && role !== 'admin' && <>{nomPionnier(profile?.genre)} · </>}
-            {nomPoste(role, profile?.genre)}
-          </small>
-
           {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
           <Link
             href="/titres"
@@ -302,6 +287,7 @@ export default async function ProfilPage() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', marginTop: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
             <Eye size={16} aria-hidden="true" /> Voir mon profil
           </Link>
+        </div>
         </div>
       </div>
 

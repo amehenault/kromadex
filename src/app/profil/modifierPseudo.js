@@ -51,7 +51,7 @@ export default function ModifierPseudo({ pseudo, role }) {
         }}>
         {pseudo
           // Toujours sur une seule ligne : un pseudo long devient plus petit au lieu de passer à la ligne
-          ? <span style={{ flex: '0 1 auto', minWidth: 0 }}><TexteAjuste taille={0.95}><Pseudo x={{ pseudo }} role={role} /></TexteAjuste></span>
+          ? <span style={{ flex: '0 1 auto', minWidth: 0 }}><TexteAjuste taille={0.95} min={0.5}><Pseudo x={{ pseudo }} role={role} /></TexteAjuste></span>
           : <small style={{ color: 'var(--texte-secondaire)', fontWeight: 700 }}>Choisir un pseudo</small>}
         <Pencil size={15} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--texte-secondaire)' }} />
       </button>

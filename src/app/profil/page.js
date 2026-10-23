@@ -5,15 +5,17 @@ import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau, titreAffiche } from '@/lib/titres';
 import { typesVisibles, faitCozy, nomCollections } from '@/lib/typesColoriage';
+import { couleurPoste, nomPoste } from '@/lib/postes';
 import { aLire } from '@/lib/notifications';
 import { parcheminDuMois, offertActif } from '@/lib/abonnement';
-import { CADRES, cadresDebloques, cadreAffiche } from '@/lib/cadres';
+import { CADRES, cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
 import ModifierPseudo from './modifierPseudo';
 import Link from 'next/link';
 import { listerMesTomes } from '@/lib/mesTomes';
 import {
+  BadgeCheck,
   Settings,
   User,
   BookOpen,
@@ -248,6 +250,24 @@ export default async function ProfilPage() {
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
+          {/* Rôle dans la couleur du poste, affiché pour tout le monde (coloristes compris) */}
+          <small
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              color: couleurPoste(role),
+              fontWeight: 'bold',
+            }}
+          >
+            <BadgeCheck size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <span style={{ minWidth: 0 }}>
+              Rôle : {/* Pionnière ou Pionnier s'ajoute au poste (l'Invocatrice garde seulement son titre) */}
+              {profile?.pionnier && role !== 'admin' && <>{nomPionnier(profile?.genre)} · </>}
+              {nomPoste(role, profile?.genre)}
+            </span>
+          </small>
+
           {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
           <Link
             href="/titres"

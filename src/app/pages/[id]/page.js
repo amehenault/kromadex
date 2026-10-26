@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { listerMesTomes } from '@/lib/mesTomes';
+import { pagesDuNumero } from '@/lib/doublePage';
 import Editor from '@/components/Editor';
 
 export default async function Fiche({ params, searchParams }) {
@@ -20,8 +21,9 @@ export default async function Fiche({ params, searchParams }) {
   ]);
   const bibliotheque = mesTomes.map((t) => ({
     nom: t.nom, type: t.type, total: t.total || null,
-    // Pages déjà faites (sans compter le coloriage qu'on modifie)
-    faites: [...new Set(faites.filter((x) => x.t === t.nom.toLowerCase() && String(x.id) !== String(id)).map((x) => String(x.page_no).trim()))],
+    // Pages déjà faites (sans compter le coloriage qu'on modifie ; une double page « 28-29 » donne 28 et 29)
+    faites: [...new Set(faites.filter((x) => x.t === t.nom.toLowerCase() && String(x.id) !== String(id))
+      .flatMap((x) => { const n = pagesDuNumero(x.page_no); return n.length ? n.map(String) : [String(x.page_no).trim()]; }))],
   }));
 
   let page = null;

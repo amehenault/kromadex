@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Tags, Plus, X, Trash2 } from 'lucide-react';
 import { cleMot } from '@/lib/cleMot';
+import { debutDoublePage } from '@/lib/doublePage';
 
 // Mots-clefs d'un de mes coloriages, affichés directement sur le coloriage (pas besoin d'ouvrir la fenêtre).
 // L'image reste visible en haut pendant l'ajout.
@@ -19,7 +20,11 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
   const [tomeTrouve, setTomeTrouve] = useState(null); // nouveau coloriage : tome du catalogue retrouvé par son nom
   const [mot, setMot] = useState('');
   const [message, setMessage] = useState('');
-  const page = String(pageNo || '').trim();
+  // Double page « 28-29 » : on montre les mots-clefs des deux pages, et on ajoute ceux de la première
+  const debutDouble = debutDoublePage(pageNo);
+  const page = debutDouble ? String(debutDouble) : String(pageNo || '').trim();
+  const pagesVues = debutDouble ? [page, String(debutDouble + 1)] : [page];
+  const dePage = (m) => pagesVues.includes(String(m.page_no || ''));
   const tome = tomeCatalogue || tomeTrouve;
   const partage = Boolean(tome) && /^\d*$/.test(page);
 
@@ -30,13 +35,13 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
       const r = await fetch(`/api/mots-cles?nom=${encodeURIComponent(tomeNom)}`);
       const d = r.ok ? await r.json() : {};
       setTomeTrouve(d.tome ? { id: d.tome, nom: tomeNom } : null);
-      setPartages((d.mots || []).filter((m) => String(m.page_no || '') === page));
+      setPartages((d.mots || []).filter(dePage));
       return;
     }
     if (partage) {
       const r = await fetch(`/api/mots-cles?tome=${tome.id}`);
       // Mots-clefs de cette page (ou de tout le livre si le coloriage n'a pas de numéro de page), de tous les membres
-      if (r.ok) setPartages(((await r.json()).mots || []).filter((m) => String(m.page_no || '') === page));
+      if (r.ok) setPartages(((await r.json()).mots || []).filter(dePage));
     } else if (pageId) {
       const r = await fetch(`/api/pages/${pageId}/mots-cles`);
       if (r.ok) setPerso((await r.json()).mots || []);

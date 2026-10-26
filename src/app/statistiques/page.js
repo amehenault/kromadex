@@ -87,7 +87,8 @@ export default async function StatistiquesPage() {
     sql`SELECT t.id, t.titre, t.statut, t.ronde FROM tournois t JOIN tournoi_inscrits i ON i.tournoi_id = t.id
         WHERE i.user_id = ${uid} AND t.statut IN ('inscriptions', 'en_cours') ORDER BY t.cree_le DESC`,
     sql`SELECT r.id, r.tome, r.page_no,
-          EXISTS (SELECT 1 FROM pages p WHERE p.user_id = ${uid} AND lower(p.tome) = lower(r.tome) AND p.page_no = r.page_no) AS fait
+          EXISTS (SELECT 1 FROM pages p WHERE p.user_id = ${uid} AND lower(p.tome) = lower(r.tome)
+            AND r.page_no = ANY(string_to_array(p.page_no, '-'))) AS fait
         FROM roue_tirages r WHERE r.user_id = ${uid} ORDER BY r.tire_le DESC LIMIT 5`,
   ]);
   const etatCombat = (c) => c.invitation_recue ? 'Invitation à accepter'

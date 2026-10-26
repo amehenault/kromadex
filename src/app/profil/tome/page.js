@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen } from 'lucide-react';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { pagesFaites } from '@/lib/mesTomes';
+import { pagesDuNumero, debutDoublePage } from '@/lib/doublePage';
 import NbPagesCozy from './nbPagesCozy';
 import MotsCles from './motsCles';
 
@@ -32,11 +33,10 @@ export default async function TomePage({ searchParams }) {
     ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(couv.updated_at).getTime()}`
     : cat?.couverture || null;
 
-  // Fiche la plus récente pour chaque numéro de page
+  // Fiche la plus récente pour chaque numéro de page (une double page « 28-29 » occupe les deux cases)
   const parPage = new Map();
   for (const p of pages) {
-    const n = parseInt(p.page_no, 10);
-    if (n > 0 && !parPage.has(n)) parPage.set(n, p);
+    for (const n of pagesDuNumero(p.page_no)) if (!parPage.has(n)) parPage.set(n, p);
   }
   const faites = pagesFaites(pages).size;
   const total = cat ? cat.nb_pages : perso?.nb_pages ?? null;
@@ -44,7 +44,7 @@ export default async function TomePage({ searchParams }) {
   const maxFaite = Math.max(0, ...parPage.keys());
   const nbCases = total || Math.max(20, Math.ceil((maxFaite + 4) / 4) * 4);
   const pct = total ? Math.min(100, Math.round((faites / total) * 100)) : 0;
-  const sansNumero = pages.filter((p) => !(parseInt(p.page_no, 10) > 0));
+  const sansNumero = pages.filter((p) => !pagesDuNumero(p.page_no).length);
 
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
@@ -82,23 +82,27 @@ export default async function TomePage({ searchParams }) {
         {Array.from({ length: nbCases }, (_, i) => i + 1).map((n) => {
           const p = parPage.get(n);
           const fond = p?.has_image ? `url(/api/pages/${p.id}/image?s=${p.img_size || 0})` : null;
+          // Double page : « 28-29 » écrit sur les deux cases, la photo partagée entre elles (moitié gauche, moitié droite)
+          const debut = p ? debutDoublePage(p.page_no) : null;
+          const etiquette = debut ? p.page_no.trim() : n;
+          const posFond = debut ? `${n === debut ? 'left' : 'right'} center / 200% auto` : 'center / cover';
           return (
             <Link
               key={n}
               href={p ? `/pages/${p.id}` : `/pages/new?tome=${encodeURIComponent(titre)}&page=${n}`}
-              aria-label={p ? `Page ${n} : ${p.title || 'coloriée'}` : `Page ${n} : ajouter un coloriage`}
+              aria-label={p ? `Page ${etiquette} : ${p.title || 'coloriée'}` : `Page ${n} : ajouter un coloriage`}
               style={{
                 aspectRatio: '1 / 1', borderRadius: 'var(--rayon-m)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                textDecoration: 'none', fontWeight: 800, fontSize: '1.15rem', position: 'relative', overflow: 'hidden',
+                textDecoration: 'none', fontWeight: 800, fontSize: debut ? '0.95rem' : '1.15rem', position: 'relative', overflow: 'hidden',
                 border: '2px solid var(--couleur-secondaire)',
                 background: fond
-                  ? `${fond} center / cover no-repeat`
+                  ? `${fond} ${posFond} no-repeat`
                   : 'var(--couleur-secondaire)',
                 color: fond ? 'var(--blanc)' : 'var(--noir)',
                 textShadow: fond ? '0 1px 3px rgba(0,0,0,0.85)' : 'none',
               }}
             >
-              {n}
+              {etiquette}
             </Link>
           );
         })}

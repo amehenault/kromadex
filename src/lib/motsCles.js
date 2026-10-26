@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db';
 import { cleMot } from '@/lib/cleMot';
+import { debutDoublePage } from '@/lib/doublePage';
 
 // Mot-clef nettoyé (espaces, 40 caractères au maximum)
 export const propreMot = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
@@ -13,7 +14,8 @@ export async function enregistrerMotsEnAttente(userId, page, liste) {
   const mots = (Array.isArray(liste) ? liste : []).map(propreMot)
     .filter((m) => m.length >= 2 && !vus.has(cleMot(m)) && vus.add(cleMot(m))).slice(0, 30);
   if (!mots.length) return;
-  const pageNo = String(page.page_no || '').trim().slice(0, 10);
+  // Double page « 28-29 » : les mots-clefs vont sur sa première page
+  const pageNo = String(debutDoublePage(page.page_no) ?? page.page_no ?? '').trim().slice(0, 10);
   const [tome] = page.tome && /^\d*$/.test(pageNo) ? await sql`SELECT id FROM tome_catalog WHERE lower(nom) = lower(${page.tome}) LIMIT 1` : [];
   if (!tome) {
     await sql`UPDATE pages SET mots_cles = ${mots} WHERE id = ${page.id} AND user_id = ${userId}`;

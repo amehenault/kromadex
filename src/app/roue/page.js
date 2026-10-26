@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { listerMesTomes } from '@/lib/mesTomes';
+import { pagesDuNumero } from '@/lib/doublePage';
 import Roue from './roue';
 
 export const dynamic = 'force-dynamic';
@@ -14,11 +15,10 @@ export default async function RouePage() {
     listerMesTomes(user.id),
     sql`SELECT lower(tome) AS t, page_no FROM pages WHERE user_id = ${user.id} AND tome <> ''`,
   ]);
-  // Numéros de pages déjà faites, par tome
+  // Numéros de pages déjà faites, par tome (une double page « 28-29 » compte pour 28 et 29)
   const faites = {};
   for (const p of pages) {
-    const n = parseInt(p.page_no, 10);
-    if (n > 0) (faites[p.t] ||= new Set()).add(n);
+    for (const n of pagesDuNumero(p.page_no)) (faites[p.t] ||= new Set()).add(n);
   }
   const liste = tomes.map((t) => ({
     nom: t.nom, type: t.type, total: t.total || null, couverture: t.couverture,

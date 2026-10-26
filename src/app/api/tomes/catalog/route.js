@@ -16,10 +16,15 @@ export async function GET() {
       ORDER BY nom ASC
     `;
     // Progression automatique : numéros de page distincts enregistrés dans les fiches de ce tome
+    // (une double page « 28-29 » compte pour 28 et 29)
     const possedes = await sql`
       SELECT u.tome_id,
-        (SELECT COUNT(DISTINCT p.page_no)::int FROM pages p
-          WHERE p.user_id = ${user.id} AND lower(p.tome) = lower(c.nom) AND p.page_no ~ '^[0-9]+$' AND p.page_no::int > 0) AS faites
+        (SELECT COUNT(DISTINCT n)::int FROM pages p,
+          LATERAL unnest(CASE
+            WHEN p.page_no ~ '^[0-9]+-[0-9]+$' THEN ARRAY[split_part(p.page_no, '-', 1)::int, split_part(p.page_no, '-', 2)::int]
+            WHEN p.page_no ~ '^[0-9]+$' THEN ARRAY[p.page_no::int]
+            ELSE '{}'::int[] END) AS n
+          WHERE p.user_id = ${user.id} AND lower(p.tome) = lower(c.nom) AND n > 0) AS faites
       FROM user_tomes u
       JOIN tome_catalog c ON c.id = u.tome_id
       WHERE u.user_id = ${String(user.id)}

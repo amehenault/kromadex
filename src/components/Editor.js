@@ -11,6 +11,7 @@ import { LETTRES, SYMBOLES } from '@/lib/symboles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
 import { appliquerCode, codeDuSymbole } from '@/lib/codesCouleurs';
+import { debutDoublePage, estDoublePage, numeroDoublePage } from '@/lib/doublePage';
 import { X, Camera, AlertTriangle, Check } from 'lucide-react';
 
 const uid = () => crypto.randomUUID();
@@ -295,7 +296,10 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const pageRef = useRef(null);
 
   // initial : pré-remplissage d'une nouvelle fiche (ex. depuis la grille d'un tome)
-  const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: page?.page_no ?? initial?.page_no ?? '', memo: page?.memo ?? '' });
+  // Double page (coloriage mystère) : f.page_no garde la première page, « 28-29 » est envoyé à l'enregistrement
+  const pageDepart = page?.page_no ?? initial?.page_no ?? '';
+  const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: String(debutDoublePage(pageDepart) ?? pageDepart), memo: page?.memo ?? '' });
+  const [double, setDouble] = useState(estDoublePage(pageDepart));
   // Tome choisi dans la bibliothèque (type et nombre de pages connus, ou tome perso)
   const tomeChoisi = bibliotheque.find((t) => t.nom.toLowerCase() === (f.tome || '').toLowerCase());
   // Publication dans la communauté : le type vient du tome ; le choix ne s'affiche qu'aux personnes qui font plusieurs types
@@ -304,6 +308,11 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [typeColo, setTypeColo] = useState(page?.type_coloriage || '');
   const typeDuTome = ['mystere', 'cozy', 'autre'].includes(tomeChoisi?.type) ? tomeChoisi.type : '';
   const typeFinal = typeColo || typeDuTome || (typesProposes.length === 1 ? typesProposes[0].valeur : '');
+  // Double page possible seulement en coloriage mystère, avec une page qui a une suivante dans le tome
+  const premiere = parseInt(f.page_no, 10);
+  const doublePossible = typeFinal === 'mystere' && /^\d+$/.test(f.page_no.trim()) && premiere > 0
+    && (!tomeChoisi?.total || premiere < tomeChoisi.total);
+  const pageFinale = double && doublePossible ? numeroDoublePage(premiere) : f.page_no;
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);
   const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null);
@@ -321,7 +330,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     }
   }, []);
   // Contenu non enregistré : on demande avant de quitter la page (lien, touche Retour, fermeture de l'onglet)
-  const etatPage = JSON.stringify({ f, groupes, publiee, typeColo, palette: palette?.id || null, image: Boolean(image) });
+  const etatPage = JSON.stringify({ f, double, groupes, publiee, typeColo, palette: palette?.id || null, image: Boolean(image) });
   const etatDepart = useRef(etatPage);
   const { confirmer: confirmerQuitter, liberer: libererPage } = useGardeQuitter(etatPage !== etatDepart.current,
     `Es-tu ${acc('sûre', 'sûr')} de vouloir quitter cette page ? Tu perdras tout le contenu de cette page.`);
@@ -350,6 +359,12 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       return;
     }
     set('page_no', v);
+  }
+  // Cocher « Double page » : on prévient aussi si la page suivante est déjà faite
+  function choisirDouble(oui) {
+    if (oui && pagesFaites.has(String(premiere + 1))
+      && !confirm(`Tu as déjà fait la page ${premiere + 1}, es-tu ${acc('sûre', 'sûr')} de vouloir créer un doublon ?`)) return;
+    setDouble(oui);
   }
 
   async function choisir(e) {
@@ -395,6 +410,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     setBusy(true); setErreur('');
     const fd = new FormData();
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
+    fd.set('page_no', pageFinale);
     const groupesPropres = groupes.map((g) => ({
       ...g,
       rows: (g.rows || []).map((row) => ({ id: row.id || uid(), label: row.label || '', sym: row.sym || '', num: row.num || '', hex: /^#[0-9a-f]{6}$/i.test(row.hex || '') ? row.hex : '' })),
@@ -456,7 +472,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
               <h2 className="titre-export-page">{f.title || 'Coloriage'}</h2>
               <div className="sous-meta-export">
                 {f.tome && <span>Tome : <b>{f.tome}</b></span>}
-                {f.page_no && <span>Page : <b>{f.page_no}</b></span>}
+                {pageFinale && <span>{pageFinale.includes('-') ? 'Pages' : 'Page'} : <b>{pageFinale}</b></span>}
               </div>
             </div>
           ) : (
@@ -485,6 +501,17 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
                   )}
                 </label>
               </div>
+
+              {/* Double page de coloriage mystère : la page suivante est liée, les codes couleurs ne s'écrivent qu'une fois */}
+              {doublePossible && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={double} onChange={(e) => choisirDouble(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0, flex: '0 0 auto' }} />
+                  <span style={{ minWidth: 0 }}>
+                    <b>Double page</b>
+                    <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>Pages {premiere} et {premiere + 1} liées sur un seul coloriage</small>
+                  </span>
+                </label>
+              )}
 
               {palette && (
                 <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -567,7 +594,7 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       {/* Nouveau coloriage : les mots-clefs sont gardés et enregistrés avec lui */}
       {page
         ? <MotsClesColoriage pageId={page.id} tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null} />
-        : <MotsClesColoriage tomeNom={f.tome} pageNo={f.page_no} image={apercu} enAttente={motsAttente} onAttente={setMotsAttente} />}
+        : <MotsClesColoriage tomeNom={f.tome} pageNo={pageFinale} image={apercu} enAttente={motsAttente} onAttente={setMotsAttente} />}
 
       {enregistre && (
         <div role="status" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--accent-doux)', padding: '4px 4px 4px 16px', borderRadius: '8px', margin: '12px 0', fontWeight: 'bold' }}>

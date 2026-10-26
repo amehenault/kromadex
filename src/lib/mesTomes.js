@@ -1,7 +1,9 @@
 import { sql } from '@/lib/db';
+import { pagesDuNumero } from '@/lib/doublePage';
 
-// Pages coloriées = numéros de page distincts enregistrés pour ce tome (progression automatique)
-export const pagesFaites = (pages) => new Set(pages.map((p) => parseInt(p.page_no, 10)).filter((n) => n > 0));
+// Pages coloriées = numéros de page distincts enregistrés pour ce tome (progression automatique ;
+// une double page « 28-29 » compte pour deux)
+export const pagesFaites = (pages) => new Set(pages.flatMap((p) => pagesDuNumero(p.page_no)));
 
 // Tomes affichés dans le profil : tomes possédés du catalogue + tomes utilisés dans des fiches,
 // moins ceux masqués par la personne

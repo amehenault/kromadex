@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { estHex, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
 import { ajouterCodes } from '@/lib/palettesServeur';
+import { cleValide } from '@/lib/themesPalettes';
 
 // ?vue=crayons : mes crayons avec leur couleur et leur pack (sets possédés et crayons à l'unité), et la liste de mes packs
 // ?vue=mes : mes palettes
@@ -34,7 +35,7 @@ export async function GET(req) {
   }
 
   const palettes = await sql`
-    SELECT p.id, p.nom, p.couleurs, p.packs, p.partagee, p.cree_le, p.user_id AS auteur_id, u.pseudo, u.name, u.role,
+    SELECT p.id, p.nom, p.couleurs, p.packs, p.partagee, p.ambiance, p.fete, p.cree_le, p.user_id AS auteur_id, u.pseudo, u.name, u.role,
            (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            COALESCE((SELECT json_agg(trim(concat_ws(' ', mb.brand_name, mb.sub_type, mb.range_name))) FROM marker_brands mb WHERE mb.id = ANY(p.packs)), '[]') AS noms_packs,
            (SELECT count(*)::int FROM palette_likes l WHERE l.palette_id = p.id) AS likes,
@@ -48,14 +49,17 @@ export async function GET(req) {
   return NextResponse.json({ palettes: await ajouterCodes(palettes) });
 }
 
-// Couleurs et packs d'une palette, vérifiés
+// Couleurs, packs, ambiance et fête d'une palette, vérifiés
 function lirePalette(b) {
   const couleurs = (Array.isArray(b.couleurs) ? b.couleurs : []).filter(estHex).map((c) => c.toUpperCase());
   const packs = [...new Set((Array.isArray(b.packs) ? b.packs : []).map(Number).filter((n) => n > 0))].slice(0, 20);
-  return { couleurs, packs, titre: String(b.nom || '').trim().slice(0, 60) };
+  return {
+    couleurs, packs, titre: String(b.nom || '').trim().slice(0, 60),
+    ambiance: cleValide('ambiance', b.ambiance), fete: cleValide('fete', b.fete),
+  };
 }
 
-// Créer une palette ({ nom, couleurs, packs, partagee }) ou aimer une palette partagée ({ like: id })
+// Créer une palette ({ nom, couleurs, packs, ambiance, fete, partagee }) ou aimer une palette partagée ({ like: id })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -70,7 +74,7 @@ export async function POST(req) {
     return NextResponse.json({ aime: !retire.length, likes: n });
   }
 
-  const { couleurs, packs, titre } = lirePalette(b);
+  const { couleurs, packs, titre, ambiance, fete } = lirePalette(b);
   if (couleurs.length < MIN_COULEURS || couleurs.length > MAX_COULEURS) {
     return NextResponse.json({ error: `Une palette a de ${MIN_COULEURS} à ${MAX_COULEURS} couleurs` }, { status: 400 });
   }
@@ -79,26 +83,28 @@ export async function POST(req) {
   if (deja) return NextResponse.json({ error: 'Tu as déjà enregistré cette palette' }, { status: 409 });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM palettes WHERE user_id = ${profil.id}`;
   if (n >= 200) return NextResponse.json({ error: 'Tu as déjà 200 palettes' }, { status: 429 });
-  const [p] = await sql`INSERT INTO palettes (user_id, nom, couleurs, packs, partagee)
-    VALUES (${profil.id}, ${titre}, ${couleurs}, ${packs}, ${b.partagee === true}) RETURNING id`;
+  const [p] = await sql`INSERT INTO palettes (user_id, nom, couleurs, packs, partagee, ambiance, fete)
+    VALUES (${profil.id}, ${titre}, ${couleurs}, ${packs}, ${b.partagee === true}, ${ambiance}, ${fete}) RETURNING id`;
   return NextResponse.json({ ok: true, id: p.id });
 }
 
-// Modifier une de mes palettes : titre, couleurs, packs, partage ({ id, nom?, couleurs?, packs?, partagee? })
+// Modifier une de mes palettes : titre, couleurs, packs, ambiance, fête, partage ({ id, nom?, couleurs?, packs?, ambiance?, fete?, partagee? })
 export async function PUT(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   const b = await req.json().catch(() => ({}));
-  const [p] = await sql`SELECT nom, couleurs, packs, partagee FROM palettes WHERE id = ${Number(b.id)} AND user_id = ${profil.id}`;
+  const [p] = await sql`SELECT nom, couleurs, packs, partagee, ambiance, fete FROM palettes WHERE id = ${Number(b.id)} AND user_id = ${profil.id}`;
   if (!p) return NextResponse.json({ error: 'Palette introuvable' }, { status: 404 });
-  const lu = lirePalette({ ...b, couleurs: b.couleurs ?? p.couleurs, packs: b.packs ?? p.packs, nom: b.nom ?? p.nom });
+  const lu = lirePalette({ ...b, couleurs: b.couleurs ?? p.couleurs, packs: b.packs ?? p.packs, nom: b.nom ?? p.nom,
+    ambiance: b.ambiance ?? p.ambiance, fete: b.fete ?? p.fete });
   if (lu.couleurs.length < MIN_COULEURS || lu.couleurs.length > MAX_COULEURS) {
     return NextResponse.json({ error: `Une palette a de ${MIN_COULEURS} à ${MAX_COULEURS} couleurs` }, { status: 400 });
   }
   const [deja] = await sql`SELECT 1 FROM palettes WHERE user_id = ${profil.id} AND couleurs = ${lu.couleurs}::text[] AND id <> ${Number(b.id)}`;
   if (deja) return NextResponse.json({ error: 'Tu as déjà enregistré cette palette' }, { status: 409 });
   const partagee = b.partagee !== undefined ? b.partagee === true : p.partagee;
-  await sql`UPDATE palettes SET nom = ${lu.titre}, couleurs = ${lu.couleurs}, packs = ${lu.packs}, partagee = ${partagee} WHERE id = ${Number(b.id)}`;
+  await sql`UPDATE palettes SET nom = ${lu.titre}, couleurs = ${lu.couleurs}, packs = ${lu.packs}, partagee = ${partagee},
+    ambiance = ${lu.ambiance}, fete = ${lu.fete} WHERE id = ${Number(b.id)}`;
   return NextResponse.json({ ok: true });
 }
 

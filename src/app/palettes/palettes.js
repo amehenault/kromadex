@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X, Pencil, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X, Pencil, ImagePlus, ChevronRight, PartyPopper, Filter } from 'lucide-react';
 import { genererPalettes, crayonsPourCouleurs, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
+import { couleursDuTheme, themeDe, nomTheme } from '@/lib/themesPalettes';
+import ChoixTheme from '@/components/ChoixTheme';
 import { Avatar, BoutonJaime, imagePage } from '@/app/communaute/outils';
 import FicheDetail from '@/app/communaute/ficheDetail';
 import Pseudo from '@/components/Pseudo';
@@ -42,6 +44,9 @@ export default function Palettes() {
   const [erreurCreation, setErreurCreation] = useState('');
   const [fiche, setFiche] = useState(null);
   const [couleurOuverte, setCouleurOuverte] = useState(null); // index de la couleur de la palette en cours de modification
+  const [theme, setTheme] = useState(null); // ambiance ou fête des suggestions ({ categorie, cle }), null = au hasard
+  const [filtre, setFiltre] = useState(null); // ambiance ou fête affichée dans Mes palettes et Communauté, null = toutes
+  const [choixTheme, setChoixTheme] = useState(null); // fenêtre ouverte : 'suggestions', 'filtre', 'ambiance' ou 'fete' (palette en création)
 
   async function chargerMes() { const r = await json('/api/palettes?vue=mes'); if (r.ok) setMes(r.palettes || []); }
   async function chargerCommunaute() { const r = await json('/api/palettes?vue=communaute'); if (r.ok) setCommunaute(r.palettes || []); }
@@ -51,11 +56,18 @@ export default function Palettes() {
     chargerMes();
     chargerCommunaute();
   }, []);
-  const generer = () => setSuggestions(genererPalettes(nombre).map((p) => (packsChoisis.length ? ajusterAuxPacks(p, packsChoisis, crayons) : p)));
-  useEffect(generer, [nombre, packsChoisis, crayons]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Suggestions : au hasard, ou dans l'ambiance ou la fête choisie (lib/themesPalettes.js)
+  const generer = () => {
+    const t = theme && themeDe(theme.categorie, theme.cle);
+    const liste = t ? Array.from({ length: 6 }, () => ({ nom: t.nom, couleurs: couleursDuTheme(t, nombre) })) : genererPalettes(nombre);
+    setSuggestions(liste.map((p) => (packsChoisis.length ? ajusterAuxPacks(p, packsChoisis, crayons) : p)));
+  };
+  useEffect(generer, [nombre, packsChoisis, crayons, theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Ambiance et fête d'une suggestion : celle choisie pour générer
+  const themeSuggestion = { ambiance: theme?.categorie === 'ambiance' ? theme.cle : '', fete: theme?.categorie === 'fete' ? theme.cle : '' };
 
   async function enregistrer(p, partagee = false) {
-    const corps = { nom: p.nom, couleurs: p.couleurs, packs: p.packs || [], partagee };
+    const corps = { nom: p.nom, couleurs: p.couleurs, packs: p.packs || [], ambiance: p.ambiance || '', fete: p.fete || '', partagee };
     const r = p.id ? await json('/api/palettes', 'PUT', { id: p.id, ...corps, partagee: partagee || p.partagee }) : await json('/api/palettes', 'POST', corps);
     if (r.ok) {
       setMessage(p.id ? 'Palette modifiée.' : partagee ? 'Palette enregistrée et partagée.' : 'Palette enregistrée dans Mes palettes.');
@@ -106,6 +118,32 @@ export default function Palettes() {
     ) : null
   );
   const nomsDe = (ids) => ids.map((id) => packs.find((p) => p.id === id)).filter(Boolean).map(nomPack);
+
+  // Bouton qui ouvre le choix d'une ambiance ou d'une fête (ChoixTheme), avec le choix actuel à droite
+  const BoutonTheme = ({ libelle, valeur, icone: Icone = PartyPopper, onClick }) => (
+    <button type="button" className="btn alt" onClick={onClick}
+      style={{ minHeight: '48px', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left', padding: '6px 10px' }}>
+      <Icone size={18} aria-hidden="true" style={{ flex: '0 0 auto' }} />
+      <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{libelle}</span>
+      <span style={{ flex: '0 1 auto', minWidth: 0, overflowWrap: 'anywhere', color: 'var(--texte-secondaire)' }}>{valeur}</span>
+      <ChevronRight size={18} aria-hidden="true" style={{ flex: '0 0 auto' }} />
+    </button>
+  );
+  // Ambiance et fête d'une palette enregistrée, en petites étiquettes
+  const Etiquettes = ({ p }) => {
+    const l = [nomTheme('ambiance', p.ambiance), nomTheme('fete', p.fete)].filter(Boolean);
+    return l.length ? (
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        {l.map((n) => <span key={n} style={{ fontSize: '0.78rem', fontWeight: 700, padding: '2px 10px', borderRadius: '999px', background: 'var(--accent-doux)' }}>{n}</span>)}
+      </div>
+    ) : null;
+  };
+  // Filtre de Mes palettes et Communauté : la palette a cette ambiance ou cette fête
+  const filtrer = (l) => (filtre ? l.filter((p) => p[filtre.categorie] === filtre.cle) : l);
+  const nomFiltre = filtre ? nomTheme(filtre.categorie, filtre.cle) : 'Toutes';
+  const BoutonFiltre = () => (
+    <BoutonTheme libelle="Ambiance ou fête" valeur={nomFiltre} icone={Filter} onClick={() => setChoixTheme('filtre')} />
+  );
 
   // Choix des packs de crayons : aucun = sans coffrets de crayons
   const ChoixPacks = ({ valeur, onChange }) => (
@@ -179,6 +217,7 @@ export default function Palettes() {
       {onglet === 'suggestions' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: 0 }}>
+            <BoutonTheme libelle="Ambiance ou fête" valeur={theme ? nomTheme(theme.categorie, theme.cle) : 'Au hasard'} onClick={() => setChoixTheme('suggestions')} />
             <ChoixPacks valeur={packsChoisis} onChange={setPacksChoisis} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
               <b>Nombre de couleurs</b>
@@ -193,7 +232,7 @@ export default function Palettes() {
             </button>
           </div>
           {suggestions.map((p, i) => {
-            const enPacks = { ...p, packs: packsChoisis };
+            const enPacks = { ...p, packs: packsChoisis, ...themeSuggestion };
             return (
               <div key={i} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>
                 <b style={{ textTransform: 'capitalize' }}>{p.nom}</b>
@@ -201,7 +240,7 @@ export default function Palettes() {
                 <Codes codes={codesPour(p.couleurs, packsChoisis, crayons)} nomsPacks={nomsDe(packsChoisis)} />
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button type="button" className="btn alt" style={petit} onClick={() => enregistrer(enPacks)}><Save size={16} aria-hidden="true" /> Enregistrer</button>
-                  <button type="button" className="btn alt" style={petit} onClick={() => { setErreurCreation(''); setCreation({ nom: p.nom, couleurs: [...p.couleurs], packs: [...packsChoisis] }); }}>
+                  <button type="button" className="btn alt" style={petit} onClick={() => { setErreurCreation(''); setCreation({ nom: p.nom, couleurs: [...p.couleurs], packs: [...packsChoisis], ...themeSuggestion }); }}>
                     <Pencil size={16} aria-hidden="true" /> Modifier
                   </button>
                 </div>
@@ -213,20 +252,23 @@ export default function Palettes() {
 
       {onglet === 'mes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button type="button" className="btn btn-corail" onClick={() => { setErreurCreation(''); setCreation({ nom: '', couleurs: ['#F4C7C3', '#B5D8CC', '#F9E2AE'], packs: [] }); }}
+          <button type="button" className="btn btn-corail" onClick={() => { setErreurCreation(''); setCreation({ nom: '', couleurs: ['#F4C7C3', '#B5D8CC', '#F9E2AE'], packs: [], ambiance: '', fete: '' }); }}
             style={{ minHeight: '48px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <Plus size={18} aria-hidden="true" /> Créer ma palette
           </button>
+          {mes.length > 0 && <BoutonFiltre />}
           {!mes.length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette enregistrée pour l’instant.</p>}
-          {mes.map((p) => (
+          {mes.length > 0 && !filtrer(mes).length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette {nomFiltre} pour l’instant.</p>}
+          {filtrer(mes).map((p) => (
             <div key={p.id} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>
               <b style={{ overflowWrap: 'anywhere' }}>{p.nom || 'Sans titre'}{p.partagee ? ' · partagée' : ''}</b>
+              <Etiquettes p={p} />
               <Bandes couleurs={p.couleurs} />
               <Codes codes={p.codes} nomsPacks={p.noms_packs} />
               <Coloriages liste={p.coloriages} />
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <button type="button" className="btn alt" style={petit}
-                  onClick={() => { setErreurCreation(''); setCreation({ id: p.id, nom: p.nom || '', couleurs: [...p.couleurs], packs: [...(p.packs || [])], partagee: p.partagee }); }}>
+                  onClick={() => { setErreurCreation(''); setCreation({ id: p.id, nom: p.nom || '', couleurs: [...p.couleurs], packs: [...(p.packs || [])], ambiance: p.ambiance || '', fete: p.fete || '', partagee: p.partagee }); }}>
                   <Pencil size={16} aria-hidden="true" /> Modifier
                 </button>
                 <button type="button" className={p.partagee ? 'btn alt' : 'btn'} style={petit} onClick={() => basculerPartage(p)}>
@@ -242,8 +284,10 @@ export default function Palettes() {
 
       {onglet === 'communaute' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {communaute.length > 0 && <BoutonFiltre />}
           {!communaute.length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette partagée pour l’instant. Partage la tienne depuis « Mes palettes ».</p>}
-          {communaute.map((p) => (
+          {communaute.length > 0 && !filtrer(communaute).length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette {nomFiltre} partagée pour l’instant.</p>}
+          {filtrer(communaute).map((p) => (
             <div key={p.id} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Link href={`/membre/${p.auteur_id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'inherit', flex: 1, minWidth: 0, minHeight: '44px' }}>
@@ -255,11 +299,12 @@ export default function Palettes() {
                 </Link>
                 <BoutonJaime aime={p.aime} likes={p.likes} onClick={() => aimer(p)} />
               </div>
+              <Etiquettes p={p} />
               <Bandes couleurs={p.couleurs} />
               <Codes codes={p.codes} nomsPacks={p.noms_packs} />
               <Coloriages liste={p.coloriages} />
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <button type="button" className="btn alt" style={petit} onClick={() => enregistrer({ nom: p.nom, couleurs: p.couleurs, packs: p.packs || [] })}>
+                <button type="button" className="btn alt" style={petit} onClick={() => enregistrer({ nom: p.nom, couleurs: p.couleurs, packs: p.packs || [], ambiance: p.ambiance, fete: p.fete })}>
                   <Save size={16} aria-hidden="true" /> Enregistrer dans mes palettes
                 </button>
                 <BoutonColoriage p={p} />
@@ -279,6 +324,8 @@ export default function Palettes() {
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontWeight: 600 }}>Titre
               <input value={creation.nom} onChange={(e) => setCreation({ ...creation, nom: e.target.value })} maxLength={60} placeholder="ex. Chalet d'hiver" />
             </label>
+            <BoutonTheme libelle="Ambiance" valeur={nomTheme('ambiance', creation.ambiance) || 'Aucune'} icone={Sparkles} onClick={() => setChoixTheme('ambiance')} />
+            <BoutonTheme libelle="Fête" valeur={nomTheme('fete', creation.fete) || 'Aucune'} onClick={() => setChoixTheme('fete')} />
             <ChoixPacks valeur={creation.packs} onChange={(v) => setCreation({ ...creation, packs: v })} />
             <Bandes couleurs={creation.couleurs} />
             <small style={{ color: 'var(--texte-secondaire)' }}>Touche une couleur pour la changer ({creation.couleurs.length} / {MAX_COULEURS}).</small>
@@ -327,6 +374,21 @@ export default function Palettes() {
           packs={packs.filter((p) => creation.packs.includes(p.id)).map((p) => ({ id: p.id, nom: nomPack(p) }))}
           onChoisir={(hex) => { setCreation({ ...creation, couleurs: creation.couleurs.map((x, j) => (j === couleurOuverte ? hex : x)) }); setCouleurOuverte(null); }}
           onFermer={() => setCouleurOuverte(null)} />
+      )}
+
+      {/* Ambiance ou fête : des suggestions, du filtre, ou de la palette en création (une seule catégorie à la fois) */}
+      {choixTheme && (
+        <ChoixTheme
+          categorie={['ambiance', 'fete'].includes(choixTheme) ? choixTheme : undefined}
+          valeur={choixTheme === 'suggestions' ? theme : choixTheme === 'filtre' ? filtre : { categorie: choixTheme, cle: creation?.[choixTheme] }}
+          aucun={choixTheme === 'suggestions' ? 'Au hasard' : choixTheme === 'filtre' ? 'Toutes' : 'Aucune'}
+          onChoisir={(v) => {
+            if (choixTheme === 'suggestions') setTheme(v);
+            else if (choixTheme === 'filtre') setFiltre(v);
+            else setCreation((c) => ({ ...c, [choixTheme]: v?.cle || '' }));
+            setChoixTheme(null);
+          }}
+          onFermer={() => setChoixTheme(null)} />
       )}
 
       {fiche && <FicheDetail id={fiche} onFermer={() => setFiche(null)} />}

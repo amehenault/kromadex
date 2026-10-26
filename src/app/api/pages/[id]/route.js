@@ -3,8 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { lirePublication, lirePalette } from '@/lib/pages';
-import { retirerXP } from '@/lib/series';
-import { accorderXPColoriage } from '@/lib/xpColoriage';
+import { accorderXPColoriage, ajusterXPDoublePage, retirerXPColoriage } from '@/lib/xpColoriage';
 import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
 
 export async function PUT(req, { params }) {
@@ -65,6 +64,8 @@ export async function PUT(req, { params }) {
       `;
     }
 
+    // Double page cochée ou décochée sans nouvelle image : XP de la seconde page donnés ou repris
+    await ajusterXPDoublePage(user.id, id).catch(() => {});
     if (changePalette) await sql`UPDATE pages SET palette_id = ${paletteId} WHERE id = ${id} AND user_id = ${user.id}`;
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     revalidatePath('/');
@@ -90,8 +91,8 @@ export async function DELETE(req, { params }) {
       RETURNING id
     `;
 
-    // Les XP gagnés en ajoutant ce coloriage sont retirés
-    if (supprimee.length) await retirerXP(user.id, `page:${id}`).catch(() => {});
+    // Les XP gagnés en ajoutant ce coloriage sont retirés (les deux pages d'une double page)
+    if (supprimee.length) await retirerXPColoriage(user.id, id).catch(() => {});
 
     revalidatePath('/');
     return NextResponse.json({ success: true });

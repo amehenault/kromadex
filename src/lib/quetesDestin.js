@@ -20,12 +20,13 @@ export async function quetesDestin(userId) {
   await sql`DELETE FROM roue_tirages WHERE user_id = ${userId} AND quete_le IS NOT NULL AND termine_le IS NULL
     AND quete_le < now() - make_interval(days => ${JOURS_QUETE_DESTIN})`;
   // Accomplie : un coloriage avec image de ce tome et de cette page (la page était libre au tirage,
-  // donc un coloriage existant pour elle a forcément été fait ou modifié pour la quête)
+  // donc un coloriage existant pour elle a forcément été fait ou modifié pour la quête ;
+  // une double page « 28-29 » accomplit la quête de la page 28 comme celle de la page 29)
   const finies = await sql`
     UPDATE roue_tirages r SET termine_le = now()
     WHERE r.user_id = ${userId} AND r.quete_le IS NOT NULL AND r.termine_le IS NULL
       AND EXISTS (SELECT 1 FROM pages p WHERE p.user_id = ${userId} AND lower(trim(p.tome)) = lower(trim(r.tome))
-                    AND trim(p.page_no) = trim(r.page_no) AND p.image_b64 IS NOT NULL)
+                    AND trim(r.page_no) = ANY(string_to_array(trim(p.page_no), '-')) AND p.image_b64 IS NOT NULL)
     RETURNING r.id`;
   for (const f of finies) await accorderXP(userId, `destin:${f.id}`, XP_QUETE_DESTIN);
   return sql`

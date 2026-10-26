@@ -23,7 +23,9 @@ export async function raisonsXP(userId, cles) {
   return Object.fromEntries(cles.map((cle) => {
     const [sorte, id] = cle.split(':');
     let raison;
-    if (sorte === 'page') raison = `ajouté le coloriage${guillemets(nom(pages, id, 'title'))}`;
+    if (sorte === 'page') raison = cle.endsWith(':2')
+      ? `ajouté la seconde page de la double page${guillemets(nom(pages, id, 'title'))}`
+      : `ajouté le coloriage${guillemets(nom(pages, id, 'title'))}`;
     else if (sorte === 'quete') raison = `terminé la quête${guillemets(QUETES.find((q) => String(q.id) === id)?.titre)}`;
     else if (sorte === 'destin') {
       const d = destins.find((x) => String(x.id) === id);

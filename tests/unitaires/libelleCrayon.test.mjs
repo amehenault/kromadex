@@ -8,10 +8,10 @@ test('brush et alcool : la marque seule', () => {
   assert.equal(libelleMarque('Ohuhu', 'Alcool'), 'Ohuhu');
 });
 
-test('gel acrylique et High Gloss : « acrylique gel »', () => {
-  assert.equal(libelleMarque('Languo', 'Gel acrylique PLUS 1,0 (P650)'), 'Languo acrylique gel');
-  assert.equal(libelleMarque('Infiart', 'Gel acrylique'), 'Infiart acrylique gel');
-  assert.equal(libelleMarque('Guangna', 'High Gloss'), 'Guangna acrylique gel');
+test('gel acrylique et High Gloss : « gel acrylique »', () => {
+  assert.equal(libelleMarque('Languo', 'Gel acrylique PLUS 1,0 (P650)'), 'Languo gel acrylique');
+  assert.equal(libelleMarque('Infiart', 'Gel acrylique'), 'Infiart gel acrylique');
+  assert.equal(libelleMarque('Guangna', 'High Gloss'), 'Guangna gel acrylique');
 });
 
 test('autre sorte : la sorte sans le modèle', () => {

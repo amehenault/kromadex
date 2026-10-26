@@ -2,6 +2,7 @@
   {
     "ean": "9782295016652",
     "nom": "Adorable petit monde",
+    "autre_nom": "Cozy Cuties",
     "titre": "Adorable petit monde - Coco wyo - Livre de coloriage Cozy cuties - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
@@ -35,6 +36,7 @@
   {
     "ean": "9782295017680",
     "nom": "Cosy Capybara",
+    "autre_nom": "Cozy Capybara",
     "titre": "Coco Wyo - Cosy Capybara - Coloriages mignons et cocooning - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
@@ -46,6 +48,7 @@
   {
     "ean": "9782295017611",
     "nom": "Cosy crim'minou",
+    "autre_nom": "Cat Crimes",
     "titre": "Cosy crim'minou - Jade Summer - Coloriages mignons de vilains chatons - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -57,17 +60,19 @@
   {
     "ean": "9782295017598",
     "nom": "Cosy Girly",
+    "autre_nom": "Girl Moments",
     "titre": "Coco Wyo - Cosy Girly - Coloriages mignons à la maison - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017598.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017598"
   },
   {
     "ean": "9782295017536",
     "nom": "Cosy K-POP",
+    "autre_nom": "Cozy K-Pop",
     "titre": "Cosy K-POP - Jade Summer - Coloriages mignons qui font vibrer - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -79,6 +84,7 @@
   {
     "ean": "9782295017765",
     "nom": "Cosy rétro",
+    "autre_nom": "Retro Rooms",
     "titre": "Cosy rétro - Jade Summer - Retro rooms - Coloriages vintage trop mignons - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -90,6 +96,7 @@
   {
     "ean": "9782295017703",
     "nom": "Cosy Romantasy",
+    "autre_nom": "Cozy Romantasy",
     "titre": "Cosy Romantasy - Jade Summer - Coloriages magiques et romantiques - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -101,6 +108,7 @@
   {
     "ean": "9782295017277",
     "nom": "Cosy Spooky",
+    "autre_nom": "Spooky Moments",
     "titre": "Cosy Spooky - Jade Summer - Coloriages mignons qui font trop peur pour adultes - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -112,6 +120,7 @@
   {
     "ean": "9782295017260",
     "nom": "Cosy Vintage",
+    "autre_nom": "Cozy Eras",
     "titre": "Cosy Vintage - Jade Summer - Coloriages rétros et mignons pour adultes pour se détendre - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -123,6 +132,7 @@
   {
     "ean": "9782295018151",
     "nom": "Douce France",
+    "autre_nom": "Cozy France",
     "titre": "Douce France - Jade Summer- Coloriages cosy à la française - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -134,6 +144,7 @@
   {
     "ean": "9782295017307",
     "nom": "Doux et cosy",
+    "autre_nom": "Comfy and Cozy",
     "titre": "Doux et cosy - Jade Summer - Coloriages chaleureux, mignons et relaxants pour adultes - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -145,6 +156,7 @@
   {
     "ean": "9782295017239",
     "nom": "Europe Cosy",
+    "autre_nom": "Cozy Europe",
     "titre": "Europe Cosy - Jade Summer - Coloriages fun et mignons pour adultes pour se détendre - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -189,6 +201,7 @@
   {
     "ean": "9782295017253",
     "nom": "Japon Cosy",
+    "autre_nom": "Cozy Japan",
     "titre": "Japon Cosy - Jade Summer - Coloriages zen et mignons pour adultes pour se détendre - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -211,39 +224,43 @@
   {
     "ean": "9782295016669",
     "nom": "Ma bulle cosy",
+    "autre_nom": "Cozy Corner",
     "titre": "Ma bulle cosy - Coco wyo - Livre de coloriage - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295016669.webp",
     "url": "https://www.lireka.com/fr/livre/9782295016669"
   },
   {
     "ean": "9782295017499",
     "nom": "Ma petite vie cosy",
+    "autre_nom": "Cozy Days",
     "titre": "Ma petite vie cosy - Coco Wyo - Coloriages mignons et cocooning - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017499.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017499"
   },
   {
     "ean": "9782295017581",
     "nom": "Moments cosy entre amis",
+    "autre_nom": "Cozy Friends",
     "titre": "Coco Wyo - Moments cosy entre amis - Coloriages mignons et cocooning - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 45,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017581.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017581"
   },
   {
     "ean": "9782295017666",
     "nom": "Mon petit monde cosy",
+    "autre_nom": "Comfy Corner",
     "titre": "Coco Wyo - Mon petit monde cosy - Coloriages mignons et cocooning - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
@@ -255,28 +272,31 @@
   {
     "ean": "9782295017673",
     "nom": "Mon petit monde spooky",
+    "autre_nom": "Spooky Cutie",
     "titre": "Coco Wyo - Mon petit monde spooky - Coloriages mignons pour frissonner - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017673.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017673"
   },
   {
     "ean": "9782295017949",
     "nom": "Petites saisons cosy",
+    "autre_nom": "Cozy Season",
     "titre": "Coco Wyo - Petites saisons cosy - Coloriages mignons pour toute l'année - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017949.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017949"
   },
   {
     "ean": "9782295017628",
     "nom": "Petits bonheurs cosy",
+    "autre_nom": "Comfy Places",
     "titre": "Petits bonheurs cosy - Jade Summer - Coloriages mignons qui font craquer - Cosy colo - Coloriages mignons qui font craquer !",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -288,6 +308,7 @@
   {
     "ean": "9782295017635",
     "nom": "Petits jobs cosy",
+    "autre_nom": "Cozy Jobs",
     "titre": "Petits jobs cosy - Jade Summer - Coloriages mignons qui font craquer - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -299,6 +320,7 @@
   {
     "ean": "9782295017284",
     "nom": "Royaume Cosy",
+    "autre_nom": "Cozy Kingdom",
     "titre": "Royaume Cosy - Jade Summer - Coloriages mignons, univers fantastique pour adultes - Cosy colo",
     "type": "cozy",
     "collection": "Jade Summer",
@@ -2244,17 +2266,6 @@
     "url": "https://cocowyo.com/products/cozy-cafe-coloring-book"
   },
   {
-    "ean": "coco-cozy-season-coloring-book",
-    "nom": "Cozy Season",
-    "titre": "Cozy Season Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 45,
-    "couverture": "/tomes/coco-cozy-season-coloring-book.webp",
-    "url": "https://cocowyo.com/products/cozy-season-coloring-book"
-  },
-  {
     "ean": "coco-spooky-girl-coloring-book",
     "nom": "Spooky Girl",
     "titre": "Spooky Girl Coloring Book",
@@ -2288,72 +2299,6 @@
     "url": "https://cocowyo.com/products/girl-moments-coloring-book-vol-3"
   },
   {
-    "ean": "coco-spooky-cutie-coloring-book-penguin-random-house-edition",
-    "nom": "Spooky Cutie",
-    "titre": "Spooky Cutie Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 40,
-    "couverture": "/tomes/coco-spooky-cutie-coloring-book-penguin-random-house-edition.webp",
-    "url": "https://cocowyo.com/products/spooky-cutie-coloring-book-penguin-random-house-edition"
-  },
-  {
-    "ean": "coco-cozy-corner-coloring-book-spiral-bound-penguin-edition",
-    "nom": "Cozy Corner",
-    "titre": "Cozy Corner Coloring Book (Spiral-bound)",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 45,
-    "couverture": "/tomes/coco-cozy-corner-coloring-book-spiral-bound-penguin-edition.webp",
-    "url": "https://cocowyo.com/products/cozy-corner-coloring-book-spiral-bound-penguin-edition"
-  },
-  {
-    "ean": "coco-cozy-friends-coloring-book-penguin-edition",
-    "nom": "Cozy Friends",
-    "titre": "Cozy Friends Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 40,
-    "couverture": "/tomes/coco-cozy-friends-coloring-book-penguin-edition.webp",
-    "url": "https://cocowyo.com/products/cozy-friends-coloring-book-penguin-edition"
-  },
-  {
-    "ean": "coco-girl-moments-coloring-book-vol-1-penguin-edition",
-    "nom": "Girl Moments 1",
-    "titre": "Girl Moments Coloring Book Vol.1",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 40,
-    "couverture": "/tomes/coco-girl-moments-coloring-book-vol-1-penguin-edition.webp",
-    "url": "https://cocowyo.com/products/girl-moments-coloring-book-vol-1-penguin-edition"
-  },
-  {
-    "ean": "coco-cozy-days-coloring-book",
-    "nom": "Cozy Days",
-    "titre": "Cozy Days Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 45,
-    "couverture": "/tomes/coco-cozy-days-coloring-book.webp",
-    "url": "https://cocowyo.com/products/cozy-days-coloring-book"
-  },
-  {
-    "ean": "coco-cozy-vibes-coloring-book",
-    "nom": "Cozy Vibes (Coco Wyo)",
-    "titre": "Cozy Vibes Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 45,
-    "couverture": "/tomes/coco-cozy-vibes-coloring-book.webp",
-    "url": "https://cocowyo.com/products/cozy-vibes-coloring-book"
-  },
-  {
     "ean": "coco-self-care-coloring-book",
     "nom": "Self-care",
     "titre": "Self-care Coloring Book",
@@ -2385,17 +2330,6 @@
     "nb_pages": 40,
     "couverture": "/tomes/coco-lala-friends-coloring-book.webp",
     "url": "https://cocowyo.com/products/lala-friends-coloring-book"
-  },
-  {
-    "ean": "coco-cozy-christmas-coloring-book",
-    "nom": "Cozy Christmas",
-    "titre": "Cozy Christmas Coloring Book",
-    "type": "cozy",
-    "collection": "Coco Wyo",
-    "editeur": "Coco Wyo",
-    "nb_pages": 45,
-    "couverture": "/tomes/coco-cozy-christmas-coloring-book.webp",
-    "url": "https://cocowyo.com/products/cozy-christmas-coloring-book"
   },
   {
     "ean": "coco-into-gardens-coloring-book",
@@ -5293,23 +5227,136 @@
   {
     "ean": "9782295017482",
     "nom": "Petits mots cosy",
+    "autre_nom": "Cozy Vibes",
     "titre": "Petits mots cosy : coloriages mignons et cocooning : 45 citations à colorier",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017482.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017482"
   },
   {
     "ean": "9782295017154",
     "nom": "Un Noël tout doux",
+    "autre_nom": "Cozy Christmas",
     "titre": "Un Noël tout doux - Coco Wyo - Coloriages mignons et cosy - Cosy colo",
     "type": "cozy",
     "collection": "Coco Wyo",
     "editeur": "Coco Wyo",
-    "nb_pages": 40,
+    "nb_pages": 96,
     "couverture": "/tomes/9782295017154.webp",
     "url": "https://www.lireka.com/fr/livre/9782295017154"
+  },
+  {
+    "ean": "coco-little-corner-coloring-book",
+    "nom": "Little Corner",
+    "titre": "Little Corner Coloring Book",
+    "type": "cozy",
+    "collection": "Coco Wyo",
+    "editeur": "Coco Wyo",
+    "nb_pages": 88,
+    "couverture": "/tomes/coco-little-corner-coloring-book.webp",
+    "url": "https://cocowyo.com/products/little-corner-coloring-book"
+  },
+  {
+    "ean": "amz-1967727155",
+    "nom": "Silly Christmas",
+    "titre": "Silly Christmas: Cozy and Funny Coloring Book for Adults and Teens",
+    "type": "cozy",
+    "collection": "Hikaru Kotz",
+    "editeur": "Hikaru Kotz",
+    "nb_pages": 92,
+    "couverture": "/tomes/amz-1967727155.webp",
+    "url": "https://www.amazon.com/dp/1967727155"
+  },
+  {
+    "ean": "amz-B0F1466XYL",
+    "nom": "Hygge Delights",
+    "titre": "Hygge Delights - Super Cute and Fun Adult Coloring Book: Featuring Adorable Animal Characters Engaging in Relaxation, Mindfulness and Stress Relief full of Cozy Food, Treats, Fruit and Candy",
+    "type": "cozy",
+    "collection": "Sui Sui",
+    "editeur": "Sui Sui",
+    "nb_pages": 92,
+    "couverture": "/tomes/amz-B0F1466XYL.webp",
+    "url": "https://www.amazon.com/dp/B0F1466XYL"
+  },
+  {
+    "ean": "amz-B0GCSSDMQC",
+    "nom": "Fuzzy Myths",
+    "titre": "Fuzzy Myths: Cozy and Cute Coloring Book for Adults and Teens with Greek Mythology Characters and Cat Friend in Funny Modern Life Scenes",
+    "type": "cozy",
+    "collection": "Mojidoo",
+    "editeur": "Mojidoo",
+    "nb_pages": 69,
+    "couverture": "/tomes/amz-B0GCSSDMQC.webp",
+    "url": "https://www.amazon.com/dp/B0GCSSDMQC"
+  },
+  {
+    "ean": "amz-B0G4NC8YLN",
+    "nom": "Once Upon a Frozen Dream",
+    "titre": "Once upon a frozen dream: Livre de coloriage magique",
+    "type": "cozy",
+    "collection": "Catherine Leblanc",
+    "editeur": "Catherine Leblanc",
+    "nb_pages": 94,
+    "couverture": "/tomes/amz-B0G4NC8YLN.webp",
+    "url": "https://www.amazon.com/dp/B0G4NC8YLN"
+  },
+  {
+    "ean": "amz-B0F8QRMP6K",
+    "nom": "Cozy Foodie",
+    "titre": "Cozy Foodie: Coloring Book for Adults and Teens Featuring Adorable Fruit and Veggie Characters in Whimsical Cozy Scenes",
+    "type": "cozy",
+    "collection": "Coloring Book Cafe",
+    "editeur": "Coloring Book Cafe",
+    "nb_pages": 94,
+    "couverture": "/tomes/amz-B0F8QRMP6K.webp",
+    "url": "https://www.amazon.com/dp/B0F8QRMP6K"
+  },
+  {
+    "ean": "amz-B0DTYY7LKZ",
+    "nom": "Tiny Gardens",
+    "titre": "Tiny Gardens: Cute & Comfy Coloring Book for Adults and Teens Featuring Adorable Garden Scenes",
+    "type": "cozy",
+    "collection": "Coloring Book Cafe",
+    "editeur": "Coloring Book Cafe",
+    "nb_pages": 74,
+    "couverture": "/tomes/amz-B0DTYY7LKZ.webp",
+    "url": "https://www.amazon.com/dp/B0DTYY7LKZ"
+  },
+  {
+    "ean": "9782017352877",
+    "nom": "Japon kawaï",
+    "autre_nom": "Kawaii Japan",
+    "titre": "Cozy colo - Japon kawaï",
+    "type": "cozy",
+    "collection": "Chickie Cafe",
+    "editeur": "Hachette Heroes",
+    "nb_pages": 80,
+    "couverture": "/tomes/9782017352877.webp",
+    "url": "https://www.lireka.com/fr/livre/9782017352877"
+  },
+  {
+    "ean": "9782017352891",
+    "nom": "Mon coin cozy",
+    "titre": "Cozy colo - Mon coin cozy",
+    "type": "cozy",
+    "collection": "Pomiechi",
+    "editeur": "Hachette Heroes",
+    "nb_pages": 80,
+    "couverture": "/tomes/9782017352891.webp",
+    "url": "https://www.lireka.com/fr/livre/9782017352891"
+  },
+  {
+    "ean": "9782898421143",
+    "nom": "Nos amis chatons",
+    "titre": "Coloriage cozy réconfortant - Nos amis chatons",
+    "type": "cozy",
+    "collection": "Mimi Moty",
+    "editeur": "Éditions Broquet",
+    "nb_pages": 80,
+    "couverture": "/tomes/9782898421143.webp",
+    "url": "https://www.lireka.com/fr/livre/9782898421143"
   }
 ]

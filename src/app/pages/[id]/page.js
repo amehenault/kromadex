@@ -20,7 +20,7 @@ export default async function Fiche({ params, searchParams }) {
     sql`select lower(tome) as t, page_no, id from pages where user_id = ${user.id} and tome <> '' and page_no <> ''`,
   ]);
   const bibliotheque = mesTomes.map((t) => ({
-    nom: t.nom, type: t.type, total: t.total || null,
+    nom: t.nom, autreNom: t.autreNom, type: t.type, total: t.total || null,
     // Pages déjà faites (sans compter le coloriage qu'on modifie ; une double page « 28-29 » donne 28 et 29)
     faites: [...new Set(faites.filter((x) => x.t === t.nom.toLowerCase() && String(x.id) !== String(id))
       .flatMap((x) => { const n = pagesDuNumero(x.page_no); return n.length ? n.map(String) : [String(x.page_no).trim()]; }))],

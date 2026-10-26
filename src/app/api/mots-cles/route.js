@@ -53,12 +53,12 @@ export async function GET(req) {
   const resultats = await sql`
     SELECT c.id, c.nom, c.couverture, c.type, c.collection,
            EXISTS (SELECT 1 FROM user_tomes u WHERE u.tome_id = c.id AND u.user_id = ${String(profil.id)}) AS possede,
-           (lower(c.nom) LIKE ${motif}) AS par_nom,
+           (lower(c.nom) LIKE ${motif} OR lower(c.autre_nom) LIKE ${motif}) AS par_nom,
            COALESCE((SELECT json_agg(json_build_object('mot', m.mot, 'page', m.page_no) ORDER BY m.page_no)
                      FROM mots_cles m WHERE m.tome_id = c.id AND lower(m.mot) LIKE ${motif}), '[]') AS mots
     FROM tome_catalog c
     WHERE c.type = ANY(${visibles})
-      AND (lower(c.nom) LIKE ${motif} OR EXISTS (SELECT 1 FROM mots_cles m WHERE m.tome_id = c.id AND lower(m.mot) LIKE ${motif}))
+      AND (lower(c.nom) LIKE ${motif} OR lower(c.autre_nom) LIKE ${motif} OR EXISTS (SELECT 1 FROM mots_cles m WHERE m.tome_id = c.id AND lower(m.mot) LIKE ${motif}))
     ORDER BY par_nom DESC, c.nom LIMIT 40`;
   return NextResponse.json({ resultats });
 }

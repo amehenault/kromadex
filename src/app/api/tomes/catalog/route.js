@@ -11,7 +11,7 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
     const tomes = await sql`
-      SELECT id, ean, nom, titre, type, editeur, collection, nb_pages, couverture, url
+      SELECT id, ean, nom, autre_nom, titre, type, editeur, collection, nb_pages, couverture, url
       FROM tome_catalog
       ORDER BY nom ASC
     `;

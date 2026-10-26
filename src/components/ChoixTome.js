@@ -4,7 +4,7 @@ import { ChevronDown, Search, Plus, Check } from 'lucide-react';
 
 // Choix du tome ou du livre d'un coloriage : liste déroulante (téléphone et ordinateur) avec recherche,
 // séparée entre coloriage mystère, Cozy colo et les autres, et ajout d'un nouveau tome ou livre.
-// bibliotheque : [{ nom, type, total }] (type : mystere | cozy | autre | null pour un tome perso)
+// bibliotheque : [{ nom, autreNom, type, total }] (autreNom : nom dans l'autre langue, trouvé aussi par la recherche) (type : mystere | cozy | autre | null pour un tome perso)
 export default function ChoixTome({ valeur, bibliotheque, onChange }) {
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState('');
@@ -23,7 +23,7 @@ export default function ChoixTome({ valeur, bibliotheque, onChange }) {
   const groupes = useMemo(() => {
     const q = recherche.trim().toLowerCase();
     const tous = [...bibliotheque, ...ajoutes.map((nom) => ({ nom, type: null }))]
-      .filter((t) => !q || t.nom.toLowerCase().includes(q));
+      .filter((t) => !q || t.nom.toLowerCase().includes(q) || (t.autreNom || '').toLowerCase().includes(q));
     return [
       ['Coloriage mystère', tous.filter((t) => t.type === 'mystere')],
       ['Cozy colo', tous.filter((t) => t.type === 'cozy')],

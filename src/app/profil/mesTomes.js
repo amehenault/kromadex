@@ -162,13 +162,8 @@ export default function MesTomes({ tomes }) {
 
   return (
     <>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-          gap: '14px',
-        }}
-      >
+      {/* 2 colonnes sur téléphone, 3 sur tablette et ordinateur (components.css) */}
+      <div className="grille-mes-tomes">
         {tomes.map((t) => {
           const pct = t.total
             ? Math.min(100, Math.round((t.faites / t.total) * 100))

@@ -98,7 +98,7 @@ export default function CatalogueTomesPage() {
     if (t.type !== type) return false;
     if (collection && t.collection !== collection) return false;
     if (mesTomes && !possedes.has(Number(t.id))) return false;
-    return !q || t.nom.toLowerCase().includes(q) || parMotCle.has(Number(t.id));
+    return !q || t.nom.toLowerCase().includes(q) || (t.autre_nom || '').toLowerCase().includes(q) || parMotCle.has(Number(t.id));
   });
 
   const puce = (actif) => ({
@@ -225,7 +225,7 @@ export default function CatalogueTomesPage() {
                 onClick={() => basculer(t)}
                 style={{ marginTop: 'auto', fontSize: '0.75rem', padding: '7px 6px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
               >
-                {possede ? 'Retirer' : <><Plus size={13} /> Je l'ai</>}
+                {possede ? 'Retirer' : <><Plus size={13} /> Ajouter</>}
               </button>
             </div>
           );

@@ -757,3 +757,9 @@ div.vide {
   [data-feuille] { align-items: center !important; padding: var(--espace-4) !important; }
   [data-feuille] > * { border-radius: var(--rayon-l) !important; border-bottom-width: 1px !important; }
 }
+
+/* Collections > Ma collection : couvertures des tomes et livres, 2 colonnes sur téléphone, 3 sur tablette et ordinateur */
+.grille-mes-tomes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 600px) {
+  .grille-mes-tomes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

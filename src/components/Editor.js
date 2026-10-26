@@ -5,6 +5,7 @@ import SymbolPicker, { Glyph } from './SymbolPicker';
 import MotsClesColoriage from './MotsClesColoriage';
 import ChoixTome from './ChoixTome';
 import ChoixCrayon from './ChoixCrayon';
+import Recadrage from './Recadrage';
 import { useAccord } from '@/components/Genre';
 import { useGardeQuitter } from '@/components/GardeQuitter';
 import { LETTRES, SYMBOLES } from '@/lib/symboles';
@@ -12,7 +13,7 @@ import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { compresserImage } from '@/lib/compressionImage';
 import { appliquerCode, codeDuSymbole } from '@/lib/codesCouleurs';
 import { debutDoublePage, estDoublePage, numeroDoublePage } from '@/lib/doublePage';
-import { X, Camera, AlertTriangle, Check } from 'lucide-react';
+import { X, Camera, AlertTriangle, Check, Crop } from 'lucide-react';
 
 const uid = () => crypto.randomUUID();
 const groupeVide = () => ({ id: uid(), name: '', rows: [{ id: uid(), label: '', sym: 'A', num: '' }] });
@@ -316,6 +317,9 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);
   const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null);
+  // Photo choisie avant recadrage (on recadre toujours depuis elle, pas depuis une image déjà recadrée)
+  const [photoOrigine, setPhotoOrigine] = useState(null);
+  const [aRecadrer, setARecadrer] = useState(null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [enExport, setEnExport] = useState(false);
@@ -368,8 +372,13 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   }
 
   async function choisir(e) {
-    const x = e.target.files[0]; if (!x) return;
-    const b = await reduire(x); setImage(b); setApercu(URL.createObjectURL(b));
+    const x = e.target.files[0]; e.target.value = ''; if (!x) return;
+    const b = await reduire(x); setARecadrer(b);
+  }
+  // Recadrage validé : c'est l'image recadrée qui est enregistrée
+  function recadree(b) {
+    setPhotoOrigine(aRecadrer); setARecadrer(null);
+    setImage(b); setApercu(URL.createObjectURL(b));
   }
 
   const majGroupe = (g) => setGroupes((l) => l.map((x) => (x.id === g.id ? g : x)));
@@ -465,6 +474,11 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
             {apercu ? <img key={apercu} src={apercu} alt="" /> : <span>Ajoute ton image</span>}
           </div>
           {!exp && <label className="btn alt">Choisir une photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>}
+          {!exp && apercu && (
+            <button type="button" className="btn alt" onClick={() => setARecadrer(photoOrigine || apercu)}>
+              <Crop size={16} aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: '6px' }} />Recadrer
+            </button>
+          )}
         </div>
         <div className="droite">
           {exp ? (
@@ -616,6 +630,8 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       <div className="zone-export-conteneur" style={{ background: 'var(--arriere-plan, #e4f0ec)', padding: 'var(--espace-2)' }}>
         {contenu(false)}
       </div>
+
+      {aRecadrer && <Recadrage source={aRecadrer} onValider={recadree} onFermer={() => setARecadrer(null)} />}
 
       {/* Copie pour l'image, hors de l'écran, avec le logo et l'adresse de Kromadex en bas */}
       {enExport && (

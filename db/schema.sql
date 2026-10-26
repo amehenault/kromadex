@@ -706,3 +706,6 @@ alter table xp_journal alter column vu set default false;
 -- Mots-clefs : clé de comparaison (minuscules, sans accents, au singulier, lib/cleMot.js) ; une seule fois le même mot par page
 alter table mots_cles add column if not exists cle text;
 create unique index if not exists mots_cles_cle_unique on mots_cles (tome_id, page_no, cle);
+
+-- Nom du livre dans l'autre langue (ex. Royaume Cosy / Cozy Kingdom) : la recherche trouve le livre par ses deux noms
+alter table tome_catalog add column if not exists autre_nom text not null default '';

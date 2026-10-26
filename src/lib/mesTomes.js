@@ -10,8 +10,8 @@ export const pagesFaites = (pages) => new Set(pages.flatMap((p) => pagesDuNumero
 export async function listerMesTomes(userId) {
   const uid = String(userId);
   const [possedes, utilises, masques, couvertures, perso] = await Promise.all([
-    sql`SELECT c.id, c.nom, c.couverture, c.nb_pages, c.type FROM user_tomes u JOIN tome_catalog c ON c.id = u.tome_id WHERE u.user_id = ${uid}`,
-    sql`SELECT p.tome, p.page_no, c.id AS cat_id, c.nom AS cat_nom, c.couverture, c.nb_pages, c.type
+    sql`SELECT c.id, c.nom, c.autre_nom, c.couverture, c.nb_pages, c.type FROM user_tomes u JOIN tome_catalog c ON c.id = u.tome_id WHERE u.user_id = ${uid}`,
+    sql`SELECT p.tome, p.page_no, c.id AS cat_id, c.nom AS cat_nom, c.autre_nom, c.couverture, c.nb_pages, c.type
         FROM pages p LEFT JOIN tome_catalog c ON lower(c.nom) = lower(p.tome)
         WHERE p.user_id = ${userId} AND p.tome <> ''`,
     sql`SELECT nom FROM user_tomes_masques WHERE user_id = ${uid}`,
@@ -30,6 +30,7 @@ export async function listerMesTomes(userId) {
       const maj = couv[cle];
       tomes.set(cle, {
         nom: cat?.nom || nom,
+        autreNom: cat?.autre_nom || '',
         catalogueId: cat?.id ?? null,
         perso: !cat,
         type: cat?.type || null,
@@ -44,7 +45,7 @@ export async function listerMesTomes(userId) {
 
   for (const c of possedes) ajouter(c.nom, c);
   for (const p of utilises) {
-    const t = ajouter(p.tome, p.cat_id ? { id: p.cat_id, nom: p.cat_nom, couverture: p.couverture, nb_pages: p.nb_pages, type: p.type } : null);
+    const t = ajouter(p.tome, p.cat_id ? { id: p.cat_id, nom: p.cat_nom, autre_nom: p.autre_nom, couverture: p.couverture, nb_pages: p.nb_pages, type: p.type } : null);
     if (t) t.pages.push(p);
   }
 

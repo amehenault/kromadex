@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/auth';
-import { sql } from '@/lib/db';
 import { getUserProfile } from '@/lib/user';
 import { progressionNiveau } from '@/lib/niveaux';
 import { titreNiveau, titreAffiche } from '@/lib/titres';
@@ -67,11 +66,6 @@ export default async function ProfilPage() {
   const profile = await getUserProfile(authUser.id);
   // Pastilles : missives non lues, sondages terminés pas encore vus et réponses de l'Invocatrice pas encore vues
   const nonLus = await aLire(authUser.id);
-
-  // Admin : nombre de demandes d'aide à traiter (nouvelles ou en cours)
-  const demandesATraiter = profile?.role === 'admin'
-    ? (await sql`SELECT count(*)::int AS n FROM demandes WHERE statut IN ('nouvelle', 'en_cours')`)[0].n
-    : 0;
 
   // Récompenses des activités ; une relique complète donne un cadre de profil exclusif
   await parcheminDuMois(authUser.id);
@@ -459,10 +453,11 @@ export default async function ProfilPage() {
             <Shield size={22} aria-hidden="true" />
             <span>
               {role === 'admin' ? 'Espace de l’Invocatrice' : role === 'modo' ? 'Espace sentinelle' : `Espace ${accord(profile?.genre, 'ménestrelle', 'ménestrel')}`}
-              {role === 'admin' && demandesATraiter > 0 && ` · ${demandesATraiter} demande${demandesATraiter > 1 ? 's' : ''} à traiter`}
+              {nonLus.espace > 0 && ` · ${nonLus.espace} notification${nonLus.espace > 1 ? 's' : ''}`}
             </span>
-            {/* Point rouge : demandes d'aide et sondages (Invocatrice), contenus et mots-clefs signalés (Invocatrice et Sentinelles) */}
-            {((role === 'admin' && nonLus.demandes + nonLus.sondages > 0) || nonLus.signales + nonLus.mots_cles_signales > 0) && <span className="pastille" aria-hidden="true" />}
+            {/* Point rouge : tout ce qui se traite dans les onglets de l'Espace (demandes, signalements, validation des bingos,
+                missives à approuver, inscriptions), et les sondages terminés de l'Invocatrice */}
+            {(nonLus.espace > 0 || (role === 'admin' && nonLus.sondages > 0)) && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 
@@ -487,6 +482,7 @@ export default async function ProfilPage() {
           <Link href="/activites-a-venir" className="btn profil-acces-plein">
             <CalendarClock size={22} aria-hidden="true" />
             <span>Activités à venir</span>
+            {nonLus.rappels > 0 && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
 
@@ -566,6 +562,7 @@ export default async function ProfilPage() {
         <Link href="/combats" className="btn profil-acces-lien">
           <Swords size={22} aria-hidden="true" />
           <span>Combats</span>
+          {nonLus.invitations > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>
 
         {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}

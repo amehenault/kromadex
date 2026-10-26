@@ -709,3 +709,6 @@ create unique index if not exists mots_cles_cle_unique on mots_cles (tome_id, pa
 
 -- Nom du livre dans l'autre langue (ex. Royaume Cosy / Cozy Kingdom) : la recherche trouve le livre par ses deux noms
 alter table tome_catalog add column if not exists autre_nom text not null default '';
+
+-- Dernière visite de l'onglet Lancement (Invocatrice) : les inscriptions arrivées depuis ont une pastille rouge
+alter table users add column if not exists lancement_vu timestamptz;

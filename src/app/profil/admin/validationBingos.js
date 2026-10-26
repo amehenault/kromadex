@@ -20,7 +20,10 @@ export default function ValidationBingos() {
   async function decider(c, valide) {
     const r = await envoyer('/api/bingos/validation', 'PUT', { bingoId: c.bingo_id, userId: c.user_id, case: c.case_no, valide });
     setMessage(r.ok ? (valide ? 'Case validée' : 'Case refusée') : r.error);
-    if (r.ok) setCases((l) => l.filter((x) => !(x.bingo_id === c.bingo_id && x.user_id === c.user_id && x.case_no === c.case_no)));
+    if (r.ok) {
+      setCases((l) => l.filter((x) => !(x.bingo_id === c.bingo_id && x.user_id === c.user_id && x.case_no === c.case_no)));
+      window.dispatchEvent(new Event('kromadex-lu'));
+    }
   }
 
   if (!cases) return <p>Chargement…</p>;

@@ -57,6 +57,7 @@ export default function Missives({ role, monId }) {
   async function decider(m, statut) {
     await envoyer('/api/missives', 'PUT', { id: m.id, statut });
     charger();
+    window.dispatchEvent(new Event('kromadex-lu'));
   }
 
   async function changerEpingle(m, date) {

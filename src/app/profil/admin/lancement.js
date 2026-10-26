@@ -19,7 +19,7 @@ export default function Lancement() {
 
   async function charger() {
     const r = await fetch('/api/lancement');
-    if (r.ok) setDonnees(await r.json());
+    if (r.ok) { setDonnees(await r.json()); window.dispatchEvent(new Event('kromadex-lu')); }
   }
   useEffect(() => { charger(); }, []);
 

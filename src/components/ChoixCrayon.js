@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Search, ChevronRight } from 'lucide-react';
 import Feuille from './Feuille';
+import { libelleMarque } from '@/lib/libelleCrayon';
 
 // Crayons de la personne, rechargés à chaque ouverture (un crayon ajouté juste avant apparaît) : ceux de ses coffrets, puis ses crayons à l'unité
 // (entrés à la main dans Collection de crayons), regroupés dans un coffret « Crayons à l'unité » placé en premier
@@ -30,8 +31,9 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
   useEffect(() => { charger().then(setDonnees); }, []);
 
   const q = recherche.trim().toLowerCase();
-  // Marque affichée sous le crayon : celle du coffret, ou celle entrée à la main pour un crayon à l'unité
-  const marqueDe = (c) => (pack?.id === UNITE ? c.marque : pack?.marque || nomPack(pack || {}));
+  // Marque affichée sous le crayon et écrite dans le code : celle du coffret avec sa sorte si ce n'est ni du brush ni de l'alcool
+  // (lib/libelleCrayon.js), ou celle entrée à la main pour un crayon à l'unité
+  const marqueDe = (c) => (pack?.id === UNITE ? c.marque : (pack?.marque ? libelleMarque(pack.marque, pack.sorte) : nomPack(pack || {})));
   const packs = useMemo(() => (donnees?.packs || []).filter((p) => !q || nomPack(p).toLowerCase().includes(q)), [donnees, q]);
   const crayons = useMemo(() => (donnees?.crayons || [])
     .filter((c) => c.pack === pack?.id)

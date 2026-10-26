@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Trophy, Plus, User } from 'lucide-react';
 
 // Menu du bas (icônes seules) : Épreuves à gauche, + au centre (ajouter un coloriage), Profil à droite.
-// Une pastille sur le profil signale une missive non lue ou une réponse de l'Invocatrice.
+// Une pastille sur le profil signale tout ce qui attend (lib/notifications.js : missives, réponses, invitations, Espace…).
 export default function MenuBas({ avatar }) {
   const chemin = usePathname() || '/';
   const surDefis = chemin === '/' || chemin.startsWith('/defis') || chemin.startsWith('/communaute');
@@ -14,7 +14,7 @@ export default function MenuBas({ avatar }) {
 
   useEffect(() => {
     const verifier = () => fetch('/api/notifications').then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setALire(d.missives + (d.sondages || 0) + d.reponses + (d.demandes || 0) + (d.signales || 0) + (d.mots_cles_signales || 0) > 0)).catch(() => {});
+      .then((d) => d && setALire(d.total > 0)).catch(() => {});
     verifier();
     window.addEventListener('kromadex-lu', verifier);
     return () => window.removeEventListener('kromadex-lu', verifier);

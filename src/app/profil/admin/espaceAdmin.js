@@ -49,12 +49,15 @@ export default function EspaceAdmin({ role, monId }) {
     if (onglets.some((x) => x.cle === o)) setActif(o);
   }, []);
 
-  // Points rouges des onglets : demandes nouvelles, contenus signalés et mots-clefs signalés à traiter
-  // (rechargés après chaque action qui envoie l'événement « kromadex-lu »)
+  // Points rouges des onglets : demandes nouvelles, contenus et mots-clefs signalés, cases de bingo à valider,
+  // missives à approuver et nouvelles inscriptions (rechargés après chaque action qui envoie l'événement « kromadex-lu »)
   const [aTraiter, setATraiter] = useState({});
   useEffect(() => {
     const verifier = () => fetch('/api/notifications').then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setATraiter({ demandes: d.demandes, signalements: d.signales, motscles: d.mots_cles_signales })).catch(() => {});
+      .then((d) => d && setATraiter({
+        demandes: d.demandes, signalements: d.signales, motscles: d.mots_cles_signales,
+        validation: d.validation, missives: d.missives_attente, lancement: d.inscriptions,
+      })).catch(() => {});
     verifier();
     window.addEventListener('kromadex-lu', verifier);
     return () => window.removeEventListener('kromadex-lu', verifier);

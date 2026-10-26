@@ -101,22 +101,25 @@ export default function Palettes() {
       {couleurs.map((c, i) => <span key={i} title={c} style={{ flex: 1, background: c }} />)}
     </div>
   );
-  // Un cercle par crayon, avec son code (ou son nom s'il n'a pas de code)
-  const Codes = ({ codes, nomsPacks }) => (
-    codes?.length ? (
+  // Un cercle par crayon, avec son code (ou son nom s'il n'a pas de code), tous sur une seule rangée
+  // (une colonne par couleur ; cercles et texte plus petits à partir de 6 couleurs pour tenir sur un téléphone)
+  const Codes = ({ codes, nomsPacks }) => {
+    if (!codes?.length) return null;
+    const serre = codes.length > 5;
+    return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${codes.length}, minmax(0, 1fr))`, gap: serre ? '4px' : '8px' }}>
           {codes.map((c, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: 0, textAlign: 'center' }}>
-              <span aria-hidden="true" style={{ width: 32, height: 32, borderRadius: '50%', background: c.hex, border: '1px solid var(--bordure-carte)' }} />
-              <small style={{ fontWeight: 700, overflowWrap: 'anywhere', lineHeight: 1.2 }}>{c.code || c.nom || c.hex}</small>
+              <span aria-hidden="true" style={{ width: serre ? 26 : 32, height: serre ? 26 : 32, borderRadius: '50%', background: c.hex, border: '1px solid var(--bordure-carte)' }} />
+              <small style={{ fontWeight: 700, overflowWrap: 'anywhere', lineHeight: 1.15, fontSize: serre ? '0.68rem' : undefined }}>{c.code || c.nom || c.hex}</small>
             </div>
           ))}
         </div>
         {nomsPacks?.length > 0 && <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>{nomsPacks.length > 1 ? 'Packs' : 'Pack'} : {nomsPacks.join(', ')}</small>}
       </div>
-    ) : null
-  );
+    );
+  };
   const nomsDe = (ids) => ids.map((id) => packs.find((p) => p.id === id)).filter(Boolean).map(nomPack);
 
   // Bouton qui ouvre le choix d'une ambiance ou d'une fête (ChoixTheme), avec le choix actuel à droite

@@ -11,7 +11,6 @@ export async function poster(url, corps, method = 'POST') {
   return r.ok ? r.json().catch(() => ({})) : null;
 }
 
-// Petite photo de profil ronde
 export function Avatar({ x, taille = 24 }) {
   return (
     <span style={{
@@ -25,7 +24,6 @@ export function Avatar({ x, taille = 24 }) {
   );
 }
 
-// Bouton J'aime avec compteur
 export function BoutonJaime({ aime, likes, onClick, petit }) {
   return (
     <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}

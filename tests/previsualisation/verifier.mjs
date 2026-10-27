@@ -1,22 +1,3 @@
-// Vérifications sur la PRÉVISUALISATION Vercel (branche securite-beta, base Neon de test).
-//
-//   PREVIEW_URL=https://kromadex-xxxx-amehenaults-projects.vercel.app \
-//   VERCEL_BYPASS=<jeton « Protection Bypass for Automation »> \
-//   node --env-file=.env.test.local tests/previsualisation/verifier.mjs
-//
-// Refuse de viser app.kromadex.com ou toute adresse qui n'est pas une prévisualisation *.vercel.app,
-// et refuse une base qui n'est pas marquée comme base de test.
-//
-// Ce qui est vérifié dans le vrai environnement Vercel :
-//  - détection de l'IP : des en-têtes d'IP inventés par le client (x-real-ip, x-forwarded-for, etc.) sont ignorés,
-//    donc changer d'« IP » à chaque essai ne contourne pas la limite ;
-//  - cookies de session et « appareil connu » : HttpOnly, Secure, SameSite=Lax ;
-//  - CSRF : une écriture venant d'un autre site est refusée ;
-//  - aucune action extérieure : « mot de passe oublié » n'envoie pas de courriel (pas de clé Resend en prévisualisation),
-//    le lien est seulement noté dans la base de test ;
-//  - ThriveCart en mode TEST : la prévisualisation attend THRIVECART_MODE=test (variable Vercel de la branche),
-//    alors que les tests locaux attendent « live ». Ici, un avis « test » est appliqué une seule fois et un avis « live »
-//    est ignoré. Le secret fictif est celui de .env.test.local (le même que dans Vercel pour cette branche).
 import { neon } from '@neondatabase/serverless';
 
 const BASE = (process.env.PREVIEW_URL || '').replace(/\/$/, '');
@@ -100,7 +81,6 @@ await sql`UPDATE users SET plus_statut = ${t2.plus_statut}, plus_jusqu = ${t2.pl
 await sql`DELETE FROM paiements_traites WHERE cle LIKE ${'%' + marque + '%'}`;
 await sql`DELETE FROM paiements_evenements WHERE recu_le >= ${debut.toISOString()}`;
 
-// Nettoyage de la base de test
 await sql`DELETE FROM essais_limites WHERE cree_le >= ${debut.toISOString()}`;
 await sql`DELETE FROM demandes WHERE type = 'motdepasse' AND cree_le >= ${debut.toISOString()}`;
 await sql`DELETE FROM reinitialisations WHERE cree_le >= ${debut.toISOString()}`;

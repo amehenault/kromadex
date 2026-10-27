@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GENRES } from '@/lib/titres';
 import { PAYS } from '@/lib/pays';
+import Deroulant from '@/components/Deroulant';
 
-// Pseudo, nom, biographie et genre
 export default function APropos() {
   const router = useRouter();
   const [f, setF] = useState(null);
@@ -44,17 +44,15 @@ export default function APropos() {
         <textarea rows={3} value={f.bio} onChange={(e) => set('bio', e.target.value)} maxLength={500} placeholder="Ce que tu aimes colorier, tes crayons préférés…" />
       </label>
       <label style={champ}>Genre
-        <select value={f.genre} onChange={(e) => set('genre', e.target.value)}>
-          {GENRES.map((g) => <option key={g.valeur} value={g.valeur}>{g.label}</option>)}
-        </select>
+        <Deroulant titre="Genre" value={f.genre} onChange={(v) => set('genre', v)}
+          options={GENRES.map((g) => ({ valeur: g.valeur, label: g.label }))} />
         <small style={{ color: 'var(--texte-secondaire)' }}>
           Sert seulement à accorder ton titre. Non-binaire et Autre utilisent la forme masculine.
         </small>
       </label>
       <label style={champ}>Pays ou région
-        <select value={f.pays} onChange={(e) => set('pays', e.target.value)}>
-          {PAYS.map((p) => <option key={p.valeur} value={p.valeur}>{p.label}</option>)}
-        </select>
+        <Deroulant titre="Pays ou région" value={f.pays} onChange={(v) => set('pays', v)}
+          options={PAYS.map((p) => ({ valeur: p.valeur, label: p.label }))} />
         <small style={{ color: 'var(--texte-secondaire)' }}>
           Sert à afficher les heures dans ton fuseau horaire (fin des épreuves, des bingos, des combats…).
         </small>

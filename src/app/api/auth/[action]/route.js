@@ -11,13 +11,10 @@ import { essaiConnexion, connexionReussie, appareilConnu, retenirAppareil, limit
 
 const err = (m, s) => NextResponse.json({ error: m }, { status: s });
 const TROP = 'Trop d’essais. Réessaie dans quelques minutes.';
-// Empreinte factice : la vérification prend le même temps, que le compte existe ou non
 const FAUSSE_EMPREINTE = hashPassword('kromadex-empreinte-factice');
 
 export async function POST(req, { params }) {
   const { action } = await params;
-  // Déconnexion. { endpoint } : les notifications de ce compte s'arrêtent sur cet appareil (dans la même requête,
-  // pour que la déconnexion reste immédiate)
   if (action === 'logout') {
     const { endpoint } = await req.json().catch(() => ({}));
     const user = endpoint ? await getUser() : null;
@@ -28,7 +25,6 @@ export async function POST(req, { params }) {
   const b = await req.json().catch(() => ({}));
   const email = String(b.email || '').trim().toLowerCase();
   const pw = String(b.password || '');
-  // Inscription : compte (courriel, mot de passe confirmé) et profil (pseudo, nom, genre, pays, types de coloriage)
   if (action === 'register') {
     if (await limiteParIp('inscription', req)) return err(TROP, 429);
     if (!/^\S+@\S+\.\S+$/.test(email)) return err('Entre un courriel valide.', 400);
@@ -53,23 +49,19 @@ export async function POST(req, { params }) {
                 ${pratiques}, ${types(b.typesVus)})
         returning id`;
       await createSession(r[0].id);
-      // Lancement : l'Invocatrice est prévenue de chaque nouvelle inscription (désactivable dans Lancement ou Paramètres)
       prevenir('inscriptions', { postes: ['admin'] },
         { titre: 'Nouvelle inscription', texte: `@${pseudo} vient de s’inscrire sur Kromadex.`, lien: '/profil/admin?onglet=lancement' });
       return NextResponse.json({ ok: true });
     } catch (e) {
-      // Doublon au même moment (courriel ou pseudo pris entre la vérification et l'enregistrement)
       if (estDoublon(e)) return err(String(e.message || '').includes('pseudo') ? MESSAGE_PRIS : 'Ce courriel est déjà utilisé.', 409);
       throw e;
     }
   }
   if (action === 'login') {
     if (!email) return err('Courriel ou mot de passe incorrect.', 401);
-    // Limite des essais (voir lib/limites.js) : l'essai est noté avant la vérification du mot de passe
     const essai = await essaiConnexion(req, email);
     if (essai.bloque) return err(TROP, 429);
     const r = await sql`select id, password_hash, suspendu_jusqu from users where email = ${email}`;
-    // Compte visé par beaucoup d'essais : seuls les appareils déjà connus de ce compte peuvent encore essayer
     if (essai.compteSature && !(r.length && await appareilConnu(r[0].id))) return err(TROP, 429);
     const bon = verifyPassword(pw, r.length ? r[0].password_hash : FAUSSE_EMPREINTE);
     if (!r.length || !bon) return err('Courriel ou mot de passe incorrect.', 401);
@@ -82,7 +74,6 @@ export async function POST(req, { params }) {
     await retenirAppareil(r[0].id);
     return NextResponse.json({ ok: true });
   }
-  // Mot de passe oublié : réponse identique que le compte existe ou non
   if (action === 'oubli') {
     if (await limiteParIp('oubli', req)) return err(TROP, 429);
     if (/^\S+@\S+\.\S+$/.test(email)) await demanderReinitialisation(email, new URL(req.url).origin).catch(() => {});
@@ -91,7 +82,6 @@ export async function POST(req, { params }) {
   if (action === 'reinitialiser') {
     const { erreur, userId } = await reinitialiser(String(b.jeton || ''), pw);
     if (erreur) return err(erreur, 400);
-    // La personne a prouvé qu'elle reçoit les courriels du compte : cet appareil devient un appareil connu
     await retenirAppareil(userId);
     return NextResponse.json({ ok: true });
   }

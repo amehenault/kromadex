@@ -13,12 +13,11 @@ import {
   Camera,
 } from 'lucide-react';
 
-// Grille de progression : 2 colonnes, couverture, nom, « 12 / 100 pages » et barre
 export default function MesTomes({ tomes }) {
   const router = useRouter();
 
-  const [menu, setMenu] = useState(null); // tome dont le menu est ouvert
-  const [edition, setEdition] = useState(null); // { nom, nouveauNom, nbPages, fichier }
+  const [menu, setMenu] = useState(null);
+  const [edition, setEdition] = useState(null);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState('');
 
@@ -79,7 +78,6 @@ export default function MesTomes({ tomes }) {
       if (edition.fichier) {
         const fd = new FormData();
         fd.append('tome', nom);
-        // Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
         fd.append('image', await compresserImage(edition.fichier, 1200), 'couverture.jpg');
 
         const rc = await fetch('/api/tomes/cover', {
@@ -162,7 +160,6 @@ export default function MesTomes({ tomes }) {
 
   return (
     <>
-      {/* 2 colonnes sur téléphone, 3 sur tablette et ordinateur (components.css) */}
       <div className="grille-mes-tomes">
         {tomes.map((t) => {
           const pct = t.total

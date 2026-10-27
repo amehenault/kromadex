@@ -8,7 +8,6 @@ const MAX_CRAYONS = 500;
 const texte = (v, n) => String(v ?? '').trim().slice(0, n);
 const estHex = (c) => /^#[0-9a-f]{6}$/i.test(c || '');
 
-// Mes crayons à l'unité (entrés à la main : marque, code, couleur de la pastille)
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -16,7 +15,6 @@ export async function GET() {
   return NextResponse.json({ crayons });
 }
 
-// Ajouter un crayon à l'unité
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -31,7 +29,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, crayon: c });
 }
 
-// Retirer un de mes crayons à l'unité
 export async function DELETE(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

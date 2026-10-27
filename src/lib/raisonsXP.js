@@ -1,11 +1,7 @@
 import { sql } from '@/lib/db';
 import { QUETES } from '@/lib/quetes';
 
-// Pourquoi des XP ont été gagnés, d'après la clé du journal (xp_journal.cle) :
-// la fin de la phrase « … tu as gagné 10 XP car tu as … » (ex. « terminé la quête « Première visite » »).
-// Les noms (coloriage, épreuve, bingo, aventure) sont lus dans la base en une requête par sorte.
 export async function raisonsXP(userId, cles) {
-  // Identifiants après un préfixe : un uuid (coloriages) ou un nombre (le reste)
   const ids = (prefixe, motif = '\\d+') => [...new Set(cles.map((c) => c.match(new RegExp(`^${prefixe}:(${motif})(?::|$)`))?.[1]).filter(Boolean))];
   const nums = (prefixe) => ids(prefixe).map(Number).filter(Number.isInteger);
   const uuids = ids('page', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');

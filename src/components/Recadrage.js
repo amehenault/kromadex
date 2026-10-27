@@ -5,14 +5,10 @@ import Feuille from './Feuille';
 
 const ZOOM_MAX = 4;
 
-// Recadrer une photo dans un cadre 3:4 (celui de la fiche du coloriage) :
-// glisser pour placer l'image, pincer à deux doigts (ou la molette) et le curseur pour zoomer, « Centrer » pour recentrer.
-//  source : Blob ou adresse de l'image ; onValider(blob) reçoit l'image recadrée en JPEG
 export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onValider, onFermer }) {
   const cadre = useRef(null);
   const [img, setImg] = useState(null);
   const [W, setW] = useState(0);
-  // Zoom (1 = l'image remplit juste le cadre) et point de l'image (en pixels d'origine) placé au centre du cadre
   const [vue, setVue] = useState(null);
   const doigts = useRef(new Map());
   const geste = useRef(null);
@@ -27,7 +23,6 @@ export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onVal
     return () => { if (typeof source !== 'string') URL.revokeObjectURL(url); };
   }, [source]);
 
-  // Largeur du cadre suivie à l'écran (rotation du téléphone, fenêtre redimensionnée)
   useEffect(() => {
     if (!cadre.current) return;
     const o = new ResizeObserver(([e]) => setW(e.contentRect.width));
@@ -38,7 +33,6 @@ export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onVal
   const H = W / ratio;
   const echelleBase = img && W ? Math.max(W / img.naturalWidth, H / img.naturalHeight) : 1;
 
-  // Garde l'image collée aux bords : jamais de vide dans le cadre
   function borner({ z, cx, cy }) {
     const zz = Math.min(ZOOM_MAX, Math.max(1, z));
     const s = echelleBase * zz;
@@ -50,7 +44,6 @@ export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onVal
     };
   }
 
-  // Zoom autour d'un point du cadre (px depuis son coin haut gauche) : ce point reste sous le doigt
   function zoomer(v, z, px = W / 2, py = H / 2) {
     const s = echelleBase * v.z, s2 = echelleBase * Math.min(ZOOM_MAX, Math.max(1, z));
     const ix = v.cx + (px - W / 2) / s, iy = v.cy + (py - H / 2) / s;
@@ -86,7 +79,6 @@ export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onVal
       geste.current = { d, m };
       if (!g) return;
       setVue((v) => {
-        // Le milieu des deux doigts sert de point fixe pour le zoom, puis déplace l'image s'il bouge
         const z = zoomer(v, v.z * (d / g.d), m.x, m.y);
         const s = echelleBase * z.z;
         return borner({ ...z, cx: z.cx - (m.x - g.m.x) / s, cy: z.cy - (m.y - g.m.y) / s });
@@ -99,7 +91,6 @@ export default function Recadrage({ source, ratio = 3 / 4, coteMax = 1400, onVal
     geste.current = null;
   }
 
-  // Molette (ordinateur) : zoom autour du pointeur
   useEffect(() => {
     const el = cadre.current;
     if (!el || !vue) return;

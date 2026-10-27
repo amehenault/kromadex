@@ -14,6 +14,7 @@ import { compresserImage } from '@/lib/compressionImage';
 import { appliquerCode, codeDuSymbole } from '@/lib/codesCouleurs';
 import { debutDoublePage, estDoublePage, numeroDoublePage } from '@/lib/doublePage';
 import { X, Camera, AlertTriangle, Check, Crop } from 'lucide-react';
+import Deroulant from './Deroulant';
 
 const uid = () => crypto.randomUUID();
 const groupeVide = () => ({ id: uid(), name: '', rows: [{ id: uid(), label: '', sym: 'A', num: '' }] });
@@ -72,10 +73,8 @@ function normaliser(codes) {
   }));
 }
 
-// Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
 const reduire = (file) => compresserImage(file, 1400, 0.82);
 
-// Le champ grandit avec son texte (étiquette ou code long sur 2 ou 3 lignes en colonne étroite)
 function useHauteurAuto(deps) {
   const champ = useRef(null);
   useEffect(() => {
@@ -83,25 +82,20 @@ function useHauteurAuto(deps) {
     if (!t) return;
     t.style.height = 'auto';
     t.style.height = `${t.scrollHeight + 2}px`;
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  }, deps);
   return champ;
 }
 
-// Petit cercle de la couleur du crayon choisi dans un coffret
 const Pastille = ({ hex }) => (hex ? (
   <span aria-hidden="true" style={{ width: 16, height: 16, flex: '0 0 auto', borderRadius: '50%', background: hex, border: '1px solid rgba(0,0,0,0.15)' }} />
 ) : null);
 
-// Largeur de l'image exportée (px) selon le nombre de colonnes de codes
 const LARGEUR_EXPORT = { 2: 390, 3: 560, 4: 740 };
 
-// Code couleur d'une ligne : une liste « Choisir dans mes packs de couleurs » ou « Écrire manuellement ».
-// Un code déjà rempli est protégé : on confirme avant de le changer.
 function ChampCodeCouleur({ value, hex, onChange, enExport, sym, label }) {
-  const [mode, setMode] = useState(value ? 'rempli' : 'choix'); // choix | manuel | rempli
+  const [mode, setMode] = useState(value ? 'rempli' : 'choix');
   const [packs, setPacks] = useState(false);
   const champ = useHauteurAuto([value, mode, enExport]);
-  // Code rempli (ou vidé) depuis une autre ligne du même symbole : l'affichage suit
   useEffect(() => {
     setMode((m) => (value ? (m === 'choix' ? 'rempli' : m) : (m === 'rempli' ? 'choix' : m)));
   }, [value]);
@@ -129,12 +123,12 @@ function ChampCodeCouleur({ value, hex, onChange, enExport, sym, label }) {
         </button>
       )}
       {mode === 'choix' && (
-        <select value="" onChange={(e) => choisirMode(e.target.value)} aria-label="Code de couleur" className="code-choix">
-          <option value="" disabled>Code…</option>
-          <option value="packs">Choisir dans mes packs de couleurs</option>
-          <option value="manuel">Écrire manuellement</option>
-          {value && <option value="garder">Garder : {value}</option>}
-        </select>
+        <Deroulant compact ariaLabel="Code de couleur" placeholder="Code…" value="" onChange={(v) => choisirMode(v)}
+          options={[
+            { valeur: 'packs', label: 'Choisir dans mes packs de couleurs' },
+            { valeur: 'manuel', label: 'Écrire manuellement' },
+            ...(value ? [{ valeur: 'garder', label: `Garder : ${value}` }] : []),
+          ]} />
       )}
       {mode === 'manuel' && (
         <textarea
@@ -151,7 +145,6 @@ function ChampCodeCouleur({ value, hex, onChange, enExport, sym, label }) {
       )}
       {packs && (
         <ChoixCrayon
-          // Rappel de la ligne qu'on remplit : symbole, lettre ou numéro, et nom de la couleur
           rappel={<>Couleur pour <span style={{ fontSize: '1.4rem', fontFamily: 'var(--typo-code)', minWidth: '28px', textAlign: 'center', lineHeight: 1 }}><Glyph v={sym} /></span>{label?.trim() ? <span style={{ fontWeight: 400, overflowWrap: 'anywhere' }}>· {label}</span> : null}</>}
           onFermer={() => setPacks(false)}
           onManuel={() => { setPacks(false); choisirMode('manuel'); }}
@@ -162,7 +155,6 @@ function ChampCodeCouleur({ value, hex, onChange, enExport, sym, label }) {
   );
 }
 
-// Étiquette d'une couleur (ex. Ombre de la casquette) : passe à la ligne et grandit, jusqu'à 100 caractères
 function ChampEtiquette({ value, onChange }) {
   const champ = useHauteurAuto([value]);
   return (
@@ -172,18 +164,15 @@ function ChampEtiquette({ value, onChange }) {
   );
 }
 
-// colonnes : nombre de colonnes de codes dans l'image exportée (2 à l'écran)
 function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode, codePour = () => null }) {
   const [glisserIndex, setGlisserIndex] = useState(null);
 
-  // Nouveau symbole choisi pour une ligne sans code : elle reçoit tout de suite le code de ce symbole dans ce coloriage
   const setRow = (id, k, v) => maj({ ...g, rows: g.rows.map((r) => {
     if (r.id !== id) return r;
     const code = k === 'sym' && !r.num ? codePour(v, id) : null;
     return code ? { ...r, [k]: v, num: code.num, hex: code.hex } : { ...r, [k]: v };
   }) });
 
-  // Nouvelle ligne : symbole suivant, avec son code s'il est déjà choisi ailleurs dans ce coloriage
   const ajouter = () => {
     const sym = suivant(g.rows.at(-1)?.sym);
     const code = codePour(sym);
@@ -204,12 +193,10 @@ function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode, codePour
     }
   };
 
-  // Les codes se lisent colonne par colonne : on remplit la première, puis la suivante
   const nbColonnes = enExport ? colonnes : 2;
   const parColonne = Math.ceil(g.rows.length / nbColonnes);
   const colonnesCodes = Array.from({ length: nbColonnes }, (_, c) => g.rows.slice(c * parColonne, (c + 1) * parColonne));
 
-  // Image exportée : une ligne compacte (symbole à gauche, nom de la couleur et code à droite) pour que l'image reste courte
   const RendreLigneExport = (r) => (
     <div className="code-export" key={r.id}>
       <SymbolPicker value={r.sym} onChange={() => {}} />
@@ -235,9 +222,6 @@ function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode, codePour
       }}
       style={{ display: 'flex', flexDirection: enExport ? 'column' : 'row', alignItems: 'stretch', gap: '2px', margin: '6px 0', minWidth: 0 }}
     >
-      {/* Nom de la couleur au-dessus, puis le symbole et le code (comme dans l'image exportée) ;
-          en modification, les flèches et le X sont en colonne à droite pour laisser toute la largeur au nom,
-          ce qui permet 2 colonnes même sur un petit téléphone */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {enExport ? (
           r.label?.trim() ? (
@@ -291,25 +275,19 @@ function Groupe({ g, maj, retirer, enExport, colonnes = 2, changerCode, codePour
 }
 
 export default function Editor({ page, initial, bibliotheque = [], mesTypes = [], tomeCatalogue = null, palette: paletteInitiale = null }) {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
-  // Palette de couleurs dont s'inspire le coloriage (affichée dans la Communauté)
+  const acc = useAccord();
   const [palette, setPalette] = useState(paletteInitiale);
   const pageRef = useRef(null);
 
-  // initial : pré-remplissage d'une nouvelle fiche (ex. depuis la grille d'un tome)
-  // Double page (coloriage mystère) : f.page_no garde la première page, « 28-29 » est envoyé à l'enregistrement
   const pageDepart = page?.page_no ?? initial?.page_no ?? '';
   const [f, setF] = useState({ title: page?.title ?? '', tome: page?.tome ?? initial?.tome ?? '', page_no: String(debutDoublePage(pageDepart) ?? pageDepart), memo: page?.memo ?? '' });
   const [double, setDouble] = useState(estDoublePage(pageDepart));
-  // Tome choisi dans la bibliothèque (type et nombre de pages connus, ou tome perso)
   const tomeChoisi = bibliotheque.find((t) => t.nom.toLowerCase() === (f.tome || '').toLowerCase());
-  // Publication dans la communauté : le type vient du tome ; le choix ne s'affiche qu'aux personnes qui font plusieurs types
   const typesProposes = TYPES_COLORIAGE.filter((t) => !mesTypes.length || mesTypes.includes(t.valeur));
   const [publiee, setPubliee] = useState(Boolean(page?.publiee));
   const [typeColo, setTypeColo] = useState(page?.type_coloriage || '');
   const typeDuTome = ['mystere', 'cozy', 'autre'].includes(tomeChoisi?.type) ? tomeChoisi.type : '';
   const typeFinal = typeColo || typeDuTome || (typesProposes.length === 1 ? typesProposes[0].valeur : '');
-  // Double page possible seulement en coloriage mystère, avec une page qui a une suivante dans le tome
   const premiere = parseInt(f.page_no, 10);
   const doublePossible = typeFinal === 'mystere' && /^\d+$/.test(f.page_no.trim()) && premiere > 0
     && (!tomeChoisi?.total || premiere < tomeChoisi.total);
@@ -317,15 +295,12 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   const [groupes, setGroupes] = useState(() => normaliser(page?.codes));
   const [image, setImage] = useState(null);
   const [apercu, setApercu] = useState(page?.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null);
-  // Photo choisie avant recadrage (on recadre toujours depuis elle, pas depuis une image déjà recadrée)
   const [photoOrigine, setPhotoOrigine] = useState(null);
   const [aRecadrer, setARecadrer] = useState(null);
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState('');
   const [enExport, setEnExport] = useState(false);
-  // Mots-clefs d'un nouveau coloriage, enregistrés avec lui
   const [motsAttente, setMotsAttente] = useState([]);
-  // Message « Coloriage enregistré » après un enregistrement (?enregistre=1), puis l'adresse est nettoyée
   const [enregistre, setEnregistre] = useState(false);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('enregistre')) {
@@ -333,15 +308,11 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
       window.history.replaceState(null, '', window.location.pathname);
     }
   }, []);
-  // Contenu non enregistré : on demande avant de quitter la page (lien, touche Retour, fermeture de l'onglet)
   const etat = (idPalette) => JSON.stringify({ f, double, groupes, publiee, typeColo, palette: idPalette, image: Boolean(image) });
   const etatPage = etat(palette?.id || null);
-  // Coloriage existant ouvert depuis une palette (?palette=) : la palette ajoutée reste à enregistrer
   const etatDepart = useRef(page ? etat(page.palette_id || null) : etatPage);
   const { confirmer: confirmerQuitter, liberer: libererPage } = useGardeQuitter(etatPage !== etatDepart.current,
     `Es-tu ${acc('sûre', 'sûr')} de vouloir quitter cette page ? Tu perdras tout le contenu de cette page.`);
-  // Logo de Kromadex déjà converti en image intégrée : html-to-image n'a rien à télécharger pendant l'export,
-  // donc le logo apparaît toujours en bas de l'image
   const [logoExport, setLogoExport] = useState('/logo.svg');
   useEffect(() => {
     fetch('/logo.svg').then((r) => r.text())
@@ -350,23 +321,20 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
   }, []);
 
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
-  // Changer de tome vide la page si elle dépasse le nombre de pages du nouveau tome
   function choisirTome(nom) {
     const t = bibliotheque.find((x) => x.nom.toLowerCase() === nom.toLowerCase());
     setF((s) => ({ ...s, tome: nom, page_no: t?.total && Number(s.page_no) > t.total ? '' : s.page_no }));
   }
 
-  // Pages déjà coloriées du tome choisi : on les signale dans la liste et on demande avant de créer un doublon
   const pagesFaites = new Set(tomeChoisi?.faites || []);
   function choisirPage(n) {
     const v = String(n).trim();
     if (v && pagesFaites.has(v) && !confirm(`Tu as déjà fait cette page, es-tu ${acc('sûre', 'sûr')} de vouloir créer un doublon ?`)) {
-      if (!tomeChoisi?.total) set('page_no', ''); // la liste garde la page d'avant
+      if (!tomeChoisi?.total) set('page_no', '');
       return;
     }
     set('page_no', v);
   }
-  // Cocher « Double page » : on prévient aussi si la page suivante est déjà faite
   function choisirDouble(oui) {
     if (oui && pagesFaites.has(String(premiere + 1))
       && !confirm(`Tu as déjà fait la page ${premiere + 1}, es-tu ${acc('sûre', 'sûr')} de vouloir créer un doublon ?`)) return;
@@ -377,31 +345,26 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     const x = e.target.files[0]; e.target.value = ''; if (!x) return;
     const b = await reduire(x); setARecadrer(b);
   }
-  // Recadrage validé : c'est l'image recadrée qui est enregistrée
   function recadree(b) {
     setPhotoOrigine(aRecadrer); setARecadrer(null);
     setImage(b); setApercu(URL.createObjectURL(b));
   }
 
   const majGroupe = (g) => setGroupes((l) => l.map((x) => (x.id === g.id ? g : x)));
-  // Code couleur d'une ligne : les autres lignes du même symbole de ce coloriage suivent (lib/codesCouleurs.js)
   const changerCode = (rowId, num, hex) => setGroupes((l) => appliquerCode(l, rowId, num, hex));
   const retirerGroupe = (g) => {
     if (g.rows.length && !confirm('Retirer cette sous-catégorie et ses codes?')) return;
     setGroupes((l) => l.filter((x) => x.id !== g.id));
   };
 
-  // Image exportée : plus il y a de codes, plus elle s'élargit (2, 3 ou 4 colonnes) pour rester à peu près carrée
   const nbCodes = groupes.reduce((n, g) => n + (g.rows?.length || 0), 0);
   const exportColonnes = nbCodes <= 12 ? 2 : nbCodes <= 30 ? 3 : 4;
 
-  // L'image est faite à partir d'une copie hors de l'écran : la page visible ne bouge pas pendant l'export
   async function exporterEnImage() {
     setEnExport(true);
     await new Promise((resolve) => setTimeout(resolve, 200));
     try {
       if (!pageRef.current) throw new Error('Copie introuvable');
-      // Attendre que la photo et le logo de la copie soient chargés avant de faire l'image
       await Promise.all([...pageRef.current.querySelectorAll('img')].map((i) => (i.decode ? i.decode().catch(() => {}) : null)));
       const dataUrl = await toPng(pageRef.current, { cacheBust: true, pixelRatio: 2 });
       const link = document.createElement('a');
@@ -431,11 +394,9 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     fd.append('type_coloriage', typeFinal);
     fd.append('palette_id', palette ? String(palette.id) : '');
     if (image) fd.append('image', image, 'image.jpg');
-    // Nouveau coloriage : les mots-clefs ajoutés avant l'enregistrement partent avec lui
     if (!page) fd.append('mots_cles_attente', JSON.stringify(motsAttente));
 
     const res = await fetch(page ? `/api/pages/${page.id}` : '/api/pages', { method: page ? 'PUT' : 'POST', body: fd, cache: 'no-store' });
-    // Enregistré : on reste sur ce coloriage (rechargé depuis la base, avec un message de confirmation)
     if (res.ok) {
       const d = await res.json().catch(() => ({}));
       libererPage();
@@ -467,7 +428,6 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     }
   }
 
-  // Contenu de la fiche ; exp = version image (sans champs ni boutons)
   const contenu = (exp) => (
     <>
       <div className="haut">
@@ -502,15 +462,10 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
                   <span style={{ display: 'block', fontSize: '0.8rem' }}>Tome ou livre</span>
                   <ChoixTome valeur={f.tome} bibliotheque={bibliotheque} onChange={choisirTome} />
                 </div>
-                {/* Page : liste des pages quand le nombre de pages du tome est connu, sinon champ libre */}
                 <label>Page
                   {tomeChoisi?.total ? (
-                    <select value={f.page_no} onChange={(e) => choisirPage(e.target.value)}>
-                      <option value="">Choisir</option>
-                      {Array.from({ length: tomeChoisi.total }, (_, i) => String(i + 1)).map((n) => (
-                        <option key={n} value={n}>{pagesFaites.has(n) ? `${n} - Page déjà faite` : n}</option>
-                      ))}
-                    </select>
+                    <Deroulant titre="Page" value={f.page_no} onChange={(v) => choisirPage(v)}
+                      options={Array.from({ length: tomeChoisi.total }, (_, i) => String(i + 1)).map((n) => ({ valeur: n, label: pagesFaites.has(n) ? `${n} - Page déjà faite` : n }))} />
                   ) : (
                     <input inputMode="numeric" value={f.page_no} onChange={(e) => set('page_no', e.target.value)}
                       onBlur={(e) => e.target.value && choisirPage(e.target.value)} />
@@ -518,7 +473,6 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
                 </label>
               </div>
 
-              {/* Double page de coloriage mystère : la page suivante est liée, les codes couleurs ne s'écrivent qu'une fois */}
               {doublePossible && (
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={double} onChange={(e) => choisirDouble(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0, flex: '0 0 auto' }} />
@@ -548,7 +502,6 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
                   onChange={(e) => set('memo', e.target.value)} style={{ width: '100%', resize: 'vertical', font: 'inherit' }} />
               </label>
 
-              {/* Partage dans la communauté (le mémo reste privé) */}
               <div style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, cursor: 'pointer' }}>
                   <input type="checkbox" checked={publiee} onChange={(e) => setPubliee(e.target.checked)} style={{ width: '22px', height: '22px', margin: 0 }} />
@@ -606,8 +559,6 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
         <button className="btn btn-save" onClick={enregistrer} disabled={busy || !f.title.trim() || (publiee && !typeFinal)}>{busy ? 'Enregistrement...' : 'Enregistrer'}</button>
       </div>
 
-      {/* Coloriage déjà enregistré : mots-clefs du coloriage (et de sa page dans le tome) */}
-      {/* Nouveau coloriage : les mots-clefs sont gardés et enregistrés avec lui */}
       {page
         ? <MotsClesColoriage pageId={page.id} tome={tomeCatalogue} pageNo={page.page_no} image={page.has_image ? `/api/pages/${page.id}/image?s=${page.img_size || 0}` : null} />
         : <MotsClesColoriage tomeNom={f.tome} pageNo={pageFinale} image={apercu} enAttente={motsAttente} onAttente={setMotsAttente} />}
@@ -635,14 +586,12 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
 
       {aRecadrer && <Recadrage source={aRecadrer} onValider={recadree} onFermer={() => setARecadrer(null)} />}
 
-      {/* Copie pour l'image, hors de l'écran, avec le logo et l'adresse de Kromadex en bas */}
       {enExport && (
         <div aria-hidden="true" style={{ position: 'fixed', left: '-10000px', top: 0, pointerEvents: 'none' }}>
           <div ref={pageRef} className="zone-export-conteneur mode-export"
             style={{ background: 'var(--arriere-plan, #e4f0ec)', '--largeur-export': `${LARGEUR_EXPORT[exportColonnes]}px` }}>
             {contenu(true)}
             <div className="pied-export">
-              {/* Le logo (4228 x 732) a une taille fixe : sans largeur ni hauteur propres, il pouvait disparaître de l'image */}
               <img src={logoExport} alt="Kromadex" width={162} height={28} style={{ width: '162px', height: '28px' }} />
               <span>app.kromadex.com</span>
             </div>

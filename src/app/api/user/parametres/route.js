@@ -9,8 +9,6 @@ import { calculerNiveau } from '@/lib/niveaux';
 
 export const dynamic = 'force-dynamic';
 
-// Paramètres : notifications voulues par type ({ notifs: { missives: false, … } }), cadre de profil ({ cadre })
-// et titre affiché ({ titre } parmi les titres spéciaux débloqués ou les titres de niveau atteints, '' = titre du niveau actuel)
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -20,7 +18,6 @@ export async function POST(req) {
     FROM users WHERE id = ${user.id}`;
 
   if (b.notifs && typeof b.notifs === 'object') {
-    // Seulement les types proposés à son poste, en vrai ou faux
     const permis = typesPour(u.role).map((t) => t.cle);
     const notifs = { ...(u.notifs || {}) };
     for (const [cle, v] of Object.entries(b.notifs)) if (permis.includes(cle)) notifs[cle] = v === true;
@@ -34,7 +31,6 @@ export async function POST(req) {
     }
     await sql`UPDATE users SET cadre = ${choix} WHERE id = ${user.id}`;
   }
-  // Badges épinglés sur le profil (clés « genre|détail », 6 au maximum ; [] = les 6 plus récents)
   if ('badges' in b) {
     if (!Array.isArray(b.badges)) return NextResponse.json({ error: 'Liste invalide' }, { status: 400 });
     const badges = [...new Set(b.badges.filter((x) => typeof x === 'string' && x.length <= 200))].slice(0, MAX_EPINGLES);

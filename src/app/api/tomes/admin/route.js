@@ -4,7 +4,6 @@ import { exigerPoste } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
-// Invocatrice : catalogue des tomes et livres, pour changer le nombre de pages sans relancer npm run db:tomes
 export async function GET() {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
@@ -13,8 +12,6 @@ export async function GET() {
   return NextResponse.json({ tomes });
 }
 
-// Changer le nombre de pages d'un tome ({ id, nbPages }) : effet immédiat (collections, Roue, quêtes du Destin),
-// et npm run db:tomes ne l'écrase plus (nb_pages_manuel)
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

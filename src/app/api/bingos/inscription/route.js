@@ -5,7 +5,6 @@ import { verifierLimite } from '@/lib/abonnement';
 
 export const dynamic = 'force-dynamic';
 
-// S'inscrire à un bingo en cours ({ bingoId }) : la version gratuite permet 1 bingo par mois, Kromadex+ les 2
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

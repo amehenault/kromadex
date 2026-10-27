@@ -8,10 +8,6 @@ import { regrouperRecompenses, nomRecompense, MAX_EPINGLES } from '@/lib/recompe
 
 const cle = (g) => `${g.genre}|${g.detail}`;
 
-// Récompenses du profil : 6 badges (2 rangées de 3), et le détail complet avec « Voir plus ».
-// La personne peut épingler les 6 badges de son choix ; sans épingle, Kromadex montre les 6 plus récents.
-// vide : texte affiché quand il n'y a encore aucune récompense (sinon l'encadré est caché)
-// epingles : clés des badges épinglés ; modifiable : la personne regarde son propre profil
 export default function MesRecompenses({ recompenses, titre = 'Mes récompenses', vide, epingles: initiales = [], modifiable = false }) {
   const router = useRouter();
   const [tout, setTout] = useState(false);
@@ -27,7 +23,6 @@ export default function MesRecompenses({ recompenses, titre = 'Mes récompenses'
     );
   }
   const groupes = regrouperRecompenses(recompenses);
-  // Badges épinglés encore possédés, dans l'ordre choisi ; sinon les 6 plus récents
   const choisis = epingles.map((k) => groupes.find((g) => cle(g) === k)).filter(Boolean);
   const recents = [...groupes].sort((a, b) => new Date(b.cree_le || 0) - new Date(a.cree_le || 0));
   const affiches = (choisis.length ? choisis : recents).slice(0, MAX_EPINGLES);

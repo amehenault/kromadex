@@ -1,18 +1,12 @@
 import { sql } from '@/lib/db';
 import { isId } from '@/lib/pages';
 
-// Verdicts de l'Assemblée.
-// Une activité = epreuve:<id>, combat:<id> ou match:<id> (match d'un tournoi).
-//  - une personne rend un seul verdict par activité, et peut le changer une seule fois ;
-//  - on ne voit jamais l'autrice ou l'auteur des coloriages, ni le nombre de verdicts par coloriage ;
-//  - on ne peut pas voter pour son propre coloriage, ni dans un combat auquel on participe.
 
 export function lireActivite(activite) {
   const m = /^(epreuve|combat|match):(\d+)$/.exec(String(activite || ''));
   return m ? { genre: m[1], id: Number(m[2]) } : null;
 }
 
-// Coloriages en lice, personnes qui ne peuvent pas voter et fenêtre de vote
 async function lice({ genre, id }) {
   if (genre === 'epreuve') {
     const [d] = await sql`
@@ -45,7 +39,6 @@ async function lice({ genre, id }) {
   return { ouvert: m.ouvert, fin: m.verdict_fin, entrees, exclus: [m.joueur_a, m.joueur_b].filter(Boolean).map(String) };
 }
 
-// Ce que voit une personne : les coloriages (sans autrice ni compte), son verdict et le nombre de votants
 export async function vueVerdict(activite, userId) {
   const a = lireActivite(activite);
   const l = a && (await lice(a));
@@ -56,7 +49,6 @@ export async function vueVerdict(activite, userId) {
         FROM pages WHERE id = ANY(${l.entrees.map((e) => e.page_id)})
         ORDER BY md5(id::text || ${String(userId)})`
     : [];
-  // Combats et matchs de tournoi : « Coloriste 1, 2… » dans l'ordre de soumission, le même pour tout le monde
   const numerote = a.genre !== 'epreuve';
   if (numerote) {
     const ordre = [...l.entrees].sort((x, y) => new Date(x.soumis_le) - new Date(y.soumis_le)).map((e) => String(e.page_id));
@@ -80,7 +72,6 @@ export async function vueVerdict(activite, userId) {
   };
 }
 
-// Rendre (ou changer une seule fois) son verdict
 export async function rendreVerdict(activite, userId, pageId) {
   const a = lireActivite(activite);
   const l = a && (await lice(a));
@@ -103,8 +94,6 @@ export async function rendreVerdict(activite, userId, pageId) {
   return { ok: true };
 }
 
-// Gagnant.e d'après les verdicts. Égalité : le coloriage soumis le premier l'emporte.
-// sansVote : 'aucun' (pas de gagnant sans verdict) ou 'premier' (le premier soumis l'emporte, pour les tournois)
 export async function gagnantVerdict(activite, entrees, { sansVote = 'aucun', egalite = 'premier' } = {}) {
   if (!entrees.length) return null;
   const votes = await sql`SELECT page_id, count(*)::int AS n FROM verdicts WHERE activite = ${activite} GROUP BY page_id`;

@@ -8,26 +8,23 @@ import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import Pseudo from '@/components/Pseudo';
 import Sondage from '@/components/Sondage';
 import MissivesEpinglees from '@/app/communaute/missivesEpinglees';
+import Deroulant from '@/components/Deroulant';
 
 const STATUT = { publiee: 'Publiée', en_attente: "En attente de l’Invocatrice des couleurs", refusee: 'Refusée' };
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 
-// Écrire des missives : l'admin publie directement, la modo envoie à l'admin pour approbation
 export default function Missives({ role, monId }) {
   const [missives, setMissives] = useState([]);
   const [titre, setTitre] = useState('');
   const [contenu, setContenu] = useState('');
   const [commentaires, setCommentaires] = useState(true);
-  // Épinglage sur l'accueil jusqu'à une date d'échéance (incluse), une semaine par défaut
   const [epingler, setEpingler] = useState(false);
   const [echeance, setEcheance] = useState(() => ajouterJours(jourQuebec(), 7));
   const [message, setMessage] = useState('');
-  // Sondage facultatif : 2 à 8 réponses, une ou plusieurs réponses permises, durée (48 heures par défaut)
   const sondageVide = () => ({ actif: false, options: ['', ''], multiple: false, heures: DUREE_PAR_DEFAUT });
   const [sondage, setSondage] = useState(sondageVide);
   const reponses = sondage.options.filter((o) => o.trim()).length;
   const sondageIncomplet = sondage.actif && reponses < MIN_REPONSES;
-  // Brouillon automatique dès qu'on commence à écrire la missive
   const brouillon = useBrouillon('missive', { titre, contenu, commentaires, epingler, echeance, sondage }, Boolean(titre.trim() || contenu.trim()));
   function reprendre(d) {
     if (!d) return;
@@ -102,7 +99,6 @@ export default function Missives({ role, monId }) {
             <input type="date" value={echeance} min={jourQuebec()} onChange={(e) => setEcheance(e.target.value)} style={dateStyle} />
           </label>
         )}
-        {/* Sondage */}
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
           <input type="checkbox" checked={sondage.actif} onChange={(e) => setSondage({ ...sondage, actif: e.target.checked })} style={{ width: '20px', height: '20px', margin: 0 }} />
           <BarChart3 size={18} aria-hidden="true" /> Ajouter un sondage
@@ -136,9 +132,8 @@ export default function Missives({ role, monId }) {
               ))}
             </div>
             <label style={champ}>Durée du sondage
-              <select value={sondage.heures} onChange={(e) => setSondage({ ...sondage, heures: Number(e.target.value) })}>
-                {DUREES_SONDAGE.map((d) => <option key={d.heures} value={d.heures}>{d.label}{d.heures === DUREE_PAR_DEFAUT ? ' (par défaut)' : ''}</option>)}
-              </select>
+              <Deroulant titre="Durée du sondage" value={sondage.heures} onChange={(v) => setSondage({ ...sondage, heures: Number(v) })}
+                options={DUREES_SONDAGE.map((d) => ({ valeur: d.heures, label: `${d.label}${d.heures === DUREE_PAR_DEFAUT ? ' (par défaut)' : ''}` }))} />
             </label>
             {!estAdmin && <small style={aide}>La durée commence quand l’Invocatrice des couleurs approuve la missive.</small>}
             {sondageIncomplet && <small style={{ color: 'var(--danger)', fontWeight: 600 }}>Écris au moins {MIN_REPONSES} réponses.</small>}
@@ -158,7 +153,6 @@ export default function Missives({ role, monId }) {
               <small style={aide}>De <Pseudo x={{ pseudo: m.auteur, role: m.role_auteur }} repli="modo" /></small>
               <b>{m.titre}</b>
               {m.contenu && <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>{m.contenu}</p>}
-              {/* Sondage : résultats en lecture seule */}
               {m.sondage && <Sondage missiveId={m.id} sondage={m.sondage} lectureSeule />}
               <div style={actions}>
                 <button type="button" className="btn" style={petitBtn} onClick={() => decider(m, 'publiee')}><Check size={14} /> Approuver</button>
@@ -169,8 +163,6 @@ export default function Missives({ role, monId }) {
         </div>
       )}
 
-      {/* Invocatrice : le fil des missives comme le voient les membres (sondages compris) ;
-          une missive ouverte montre Modifier, Épingler jusqu'au… et Supprimer */}
       {estAdmin && (
         <div style={colonne}>
           <b>Toutes les missives</b>

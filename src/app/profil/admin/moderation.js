@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search, AlertTriangle } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
 import Pseudo from '@/components/Pseudo';
+import Deroulant from '@/components/Deroulant';
 
 const DUREES = [
   { jours: 0, label: 'Avertissement seulement' },
@@ -14,7 +15,6 @@ const DUREES = [
 ];
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 
-// Avertissements et suspensions temporaires (admin et modo)
 export default function Moderation({ role, monId }) {
   const [membres, setMembres] = useState([]);
   const [historique, setHistorique] = useState([]);
@@ -33,7 +33,6 @@ export default function Moderation({ role, monId }) {
   }
   useEffect(() => { charger(); }, []);
 
-  // Membres qu'on a le droit d'avertir
   const possibles = useMemo(() => membres.filter((u) =>
     String(u.id) !== String(monId) && u.role !== 'admin' && !(role === 'modo' && u.role === 'modo')), [membres, role, monId]);
   const trouves = useMemo(() => {
@@ -92,9 +91,8 @@ export default function Moderation({ role, monId }) {
           <textarea rows={3} value={motif} onChange={(e) => setMotif(e.target.value)} maxLength={500} placeholder="ex. Propos irrespectueux dans les commentaires" />
         </label>
         <label style={champ}>Sanction
-          <select value={jours} onChange={(e) => setJours(Number(e.target.value))}>
-            {DUREES.map((d) => <option key={d.jours} value={d.jours}>{d.label}</option>)}
-          </select>
+          <Deroulant titre="Sanction" value={jours} onChange={(v) => setJours(Number(v))}
+            options={DUREES.map((d) => ({ valeur: d.jours, label: d.label }))} />
         </label>
         <button type="submit" className="btn danger" disabled={!cible || motif.trim().length < 3}
           style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px' }}>

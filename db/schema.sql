@@ -253,8 +253,6 @@ create table if not exists combat_votes (
   primary key (combat_id, user_id)
 )
 ;
--- Combats : duel chromatique (sur invitation) ou joute ouverte (2 à 4 coloristes).
--- Les coloriages et les votes sont maintenant dans combat_participants et verdicts.
 alter table combats alter column page_a drop not null;
 alter table combats add column if not exists genre text not null default 'duel';
 alter table combats add column if not exists categorie text not null default 'mystere';
@@ -283,7 +281,6 @@ alter table bingos add column if not exists conditions text[] not null default '
 alter table bingos add column if not exists categorie text not null default 'les_deux'
 ;
 create unique index if not exists defis_cheffe_mois on defis (mois, choisi_par) where genre = 'cheffe';
--- Épreuves de groupe : 1 par mois en gratuit, 5 avec Kromadex+ (limite vérifiée dans l'API, plus d'index unique)
 drop index if exists defis_groupe_mois
 ;
 alter table users add column if not exists cheffe_depuis timestamptz
@@ -322,7 +319,6 @@ create table if not exists palette_likes (
   primary key (user_id, palette_id)
 )
 ;
--- Verdicts de l'Assemblée : un vote par personne et par activité (epreuve:12, combat:5, match:33)
 create table if not exists verdicts (
   activite text not null,
   user_id uuid not null references users(id) on delete cascade,
@@ -331,7 +327,6 @@ create table if not exists verdicts (
   cree_le timestamptz not null default now(),
   primary key (activite, user_id)
 );
--- Récompenses gagnées (coffre, sceau, fragment, relique, boussole, blason, orbe, parchemin, épée, joute, insigne)
 create table if not exists recompenses (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -346,7 +341,6 @@ create table if not exists recompenses (
   unique (user_id, genre, source)
 );
 create index if not exists recompenses_date_idx on recompenses (cree_le desc);
--- Épreuves : titre et image de la récompense, sceau de la cheffe, objectif des épreuves de groupe, clôture
 alter table defis add column if not exists titre_gagnant text not null default '';
 alter table defis add column if not exists image text not null default '';
 alter table defis add column if not exists sceau int;
@@ -369,11 +363,9 @@ create table if not exists defi_signalements (
   cree_le timestamptz not null default now(),
   primary key (defi_id, page_id, user_id)
 );
--- Bingos : validation des cases par l'admin et les sentinelles, clôture
 alter table bingo_cases add column if not exists valide boolean;
 alter table bingo_cases add column if not exists valide_par uuid;
 alter table bingos add column if not exists cloture boolean not null default false;
--- Tournois du royaume
 create table if not exists tournois (
   id serial primary key,
   genre text not null check (genre in ('creatif', 'couleur', 'ambiance')),
@@ -412,7 +404,6 @@ create table if not exists tournoi_matchs (
   gagnant uuid,
   unique (tournoi_id, ronde, ordre)
 );
--- Expéditions, épopées et prophéties, entièrement configurables
 create table if not exists aventures (
   id serial primary key,
   genre text not null check (genre in ('expedition', 'epopee', 'prophetie')),
@@ -473,7 +464,6 @@ create table if not exists aventure_soumissions (
   cree_le timestamptz not null default now(),
   unique (aventure_id, page_id)
 );
--- Notifications push (rappels des activités à planifier)
 create table if not exists push_abonnements (
   endpoint text primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -481,22 +471,16 @@ create table if not exists push_abonnements (
   cree_le timestamptz not null default now()
 )
 ;
--- Missive épinglée sur l'accueil jusqu'à cette date (incluse, heure du Québec)
 alter table missives add column if not exists epinglee_jusqu date;
--- Deux personnes ne peuvent pas avoir le même pseudo (sans tenir compte des majuscules)
 create unique index if not exists users_pseudo_unique on users (lower(pseudo)) where pseudo is not null
 ;
--- Présentation de Kromadex vue (elle s'ouvre seule à la première visite)
 alter table users add column if not exists tutoriel_vu boolean not null default false
 ;
--- Kromadex+ : abonnement payé par ThriveCart (actif, annule = actif jusqu'à la fin de la période payée, aucun)
 alter table users add column if not exists plus_statut text not null default 'aucun';
 alter table users add column if not exists plus_jusqu timestamptz;
 alter table users add column if not exists plus_formule text;
--- Kromadex+ offert par l'Invocatrice jusqu'à une date (concours, bêta-testrices…)
 alter table users add column if not exists plus_offert_jusqu timestamptz;
 alter table users drop column if exists plus_offert;
--- Chaque avis reçu de ThriveCart, pour vérifier ce qui s'est passé en cas de problème
 create table if not exists paiements_evenements (
   id serial primary key,
   recu_le timestamptz not null default now(),
@@ -508,22 +492,16 @@ create table if not exists paiements_evenements (
   donnees jsonb not null default '{}'
 )
 ;
--- Pionnière ou Pionnier : bêta-testrices et bêta-testeurs, s'ajoute à leur poste
 alter table users add column if not exists pionnier boolean not null default false;
--- Cadre de profil choisi (null = le plus prestigieux débloqué, 'aucun' = sans cadre)
 alter table users add column if not exists cadre text;
--- Notifications push voulues, par type (une clé absente = activée)
 alter table users add column if not exists notifs jsonb not null default '{}'
 ;
--- Mots-clefs perso d'un coloriage (tome perso hors catalogue) ; ceux d'un tome du catalogue sont partagés dans mots_cles
 alter table pages add column if not exists mots_cles text[] not null default '{}'
 ;
--- Kromadex+ offert par l'Invocatrice : sans date limite si plus_offert_jusqu est vide ; raison = note pour elle-même
 alter table users add column if not exists plus_offert boolean not null default false;
 alter table users add column if not exists plus_offert_raison text not null default '';
 alter table users add column if not exists plus_offert_le timestamptz
 ;
--- Tirages de la Roue du Destin (résumé des participations dans Mes statistiques)
 create table if not exists roue_tirages (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -532,14 +510,11 @@ create table if not exists roue_tirages (
   tire_le timestamptz not null default now()
 )
 ;
--- Joute : nombre de coloristes choisi par la personne qui la lance (2, 3 ou 4) ; le verdict commence quand c'est complet
 alter table combats add column if not exists places int not null default 4
 ;
--- Quête du Destin : un tirage ajouté aux quêtes (14 jours pour colorier la page, 10 XP à la fin, sinon la quête disparaît)
 alter table roue_tirages add column if not exists quete_le timestamptz;
 alter table roue_tirages add column if not exists termine_le timestamptz
 ;
--- Inscription à un bingo (on s'inscrit avant d'ajouter ses coloriages ; la version gratuite permet 1 bingo par mois)
 create table if not exists bingo_inscriptions (
   bingo_id int not null references bingos(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
@@ -547,7 +522,6 @@ create table if not exists bingo_inscriptions (
   primary key (bingo_id, user_id)
 )
 ;
--- Brouillons enregistrés automatiquement pendant la création (bingo, épreuve, aventure, missive)
 create table if not exists brouillons (
   user_id uuid not null references users(id) on delete cascade,
   cle text not null,
@@ -556,12 +530,9 @@ create table if not exists brouillons (
   primary key (user_id, cle)
 )
 ;
--- Palettes : packs de crayons choisis (vide = sans pack précis) ; coloriage inspiré d'une palette
 alter table palettes add column if not exists packs int[] not null default '{}';
 alter table pages add column if not exists palette_id int references palettes(id) on delete set null;
 
--- Sécurité (audit avant la bêta) : tables ajoutées seulement, aucune table existante modifiée
--- Essais de connexion, d'inscription et de mot de passe oublié (empreintes, jamais le courriel ou l'IP en clair)
 create table if not exists essais_limites (
   id bigserial primary key,
   genre text not null,
@@ -572,13 +543,11 @@ create table if not exists essais_limites (
 create index if not exists essais_limites_ip on essais_limites (genre, ip_h, cree_le);
 create index if not exists essais_limites_email on essais_limites (genre, email_h, cree_le);
 create index if not exists essais_limites_date on essais_limites (cree_le);
--- Appareils déjà connectés avec succès à un compte (le blocage par compte ne les vise pas)
 create table if not exists appareils_connus (
   jeton_hash text primary key,
   user_id uuid not null references users(id) on delete cascade,
   cree_le timestamptz not null default now()
 );
--- Avis ThriveCart déjà appliqués (un avis renvoyé ou reçu en double n'a aucun effet)
 create table if not exists paiements_traites (
   cle text primary key,
   evenement text not null default '',
@@ -586,17 +555,14 @@ create table if not exists paiements_traites (
   user_id uuid,
   traite_le timestamptz not null default now()
 );
--- Les avis déjà reçus avant cette table sont marqués comme traités
 insert into paiements_traites (cle, evenement, mode, user_id, traite_le)
 select evenement || ':' || (donnees->>'event_id'), evenement, mode, user_id, recu_le
 from paiements_evenements
 where donnees ? 'event_id' and user_id is not null and resultat not like 'refusé%' and resultat <> 'ignoré'
 on conflict do nothing;
 
--- Badges épinglés sur le profil (6 au maximum, clés « genre|détail »), vide = les 6 plus récents
 alter table users add column if not exists badges_epingles jsonb not null default '[]';
 
--- Crayons à l'unité : entrés à la main dans Collection de crayons (marque, code et couleur de la pastille)
 create table if not exists crayons_unite (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -607,9 +573,7 @@ create table if not exists crayons_unite (
 );
 create index if not exists crayons_unite_user on crayons_unite (user_id);
 
--- Bingos : apparence de chaque case (couleur de fond et de texte), une entrée par case
 alter table bingos add column if not exists styles jsonb not null default '[]';
--- Image de fond d'une case de bingo (réencodée en WebP par le serveur), servie à part pour garder la liste légère
 create table if not exists bingo_images (
   bingo_id int not null references bingos(id) on delete cascade,
   case_no int not null,
@@ -619,12 +583,10 @@ create table if not exists bingo_images (
   primary key (bingo_id, case_no)
 );
 
--- Sondage dans une missive : 2 à 8 réponses, une ou plusieurs réponses permises, durée en heures (fin fixée à la publication)
 alter table missives add column if not exists sondage_options text[] not null default '{}';
 alter table missives add column if not exists sondage_multiple boolean not null default false;
 alter table missives add column if not exists sondage_heures int;
 alter table missives add column if not exists sondage_fin timestamptz;
--- Votes des sondages : une ligne par réponse choisie
 create table if not exists missive_votes (
   missive_id int not null references missives(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
@@ -632,13 +594,11 @@ create table if not exists missive_votes (
   cree_le timestamptz not null default now(),
   primary key (missive_id, user_id, option_no)
 );
--- Sondages terminés dont la personne a vu le résultat final (pop-up et pastille des missives)
 create table if not exists sondages_vus (
   missive_id int not null references missives(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
   primary key (missive_id, user_id)
 );
--- Contenu signalé par un membre (règles d'utilisation) : coloriage publié, commentaire, commentaire de missive ou profil
 create table if not exists signalements (
   id serial primary key,
   genre text not null check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre')),
@@ -651,19 +611,13 @@ create table if not exists signalements (
   unique (genre, cible, user_id)
 );
 create index if not exists signalements_a_traiter on signalements (genre, cible) where not traite;
--- Demandes d'aide : date de fermeture (résolue, ajoutée, refusée), remise à vide si la demande est rouverte.
--- Le nettoyage automatique supprime la demande 30 jours après cette date.
 alter table demandes add column if not exists ferme_le timestamptz;
 update demandes set ferme_le = maj_le where ferme_le is null and statut in ('resolue', 'ajoutee', 'refusee');
 create index if not exists demandes_ferme_le on demandes (ferme_le) where ferme_le is not null;
 create index if not exists paiements_evenements_recu on paiements_evenements (recu_le);
--- Ménestrelle : une épreuve par mois et par ménestrelle
 create unique index if not exists defis_menestrel_mois on defis (mois, choisi_par) where genre = 'menestrel';
--- Bingos : qui l'a créé (une ménestrelle peut en créer un par mois)
 alter table bingos add column if not exists createur uuid references users(id) on delete set null;
--- Nombre de pages d'un tome changé par l'Invocatrice dans son Espace : npm run db:tomes ne l'écrase plus
 alter table tome_catalog add column if not exists nb_pages_manuel boolean not null default false;
--- Communauté : publications « Question » (texte et images) et « Coloriage en cours » (photo du téléphone ou coloriage existant)
 create table if not exists publications (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -673,7 +627,6 @@ create table if not exists publications (
   cree_le timestamptz not null default now()
 );
 create index if not exists publications_genre_date on publications (genre, cree_le desc);
--- Images d'une publication (jusqu'à 4), vérifiées et réencodées
 create table if not exists publication_images (
   publication_id int not null references publications(id) on delete cascade,
   no int not null,
@@ -695,24 +648,18 @@ create table if not exists publication_commentaires (
   cree_le timestamptz not null default now()
 );
 create index if not exists publication_commentaires_pub on publication_commentaires (publication_id);
--- Signalements : publications et leurs commentaires aussi
 alter table signalements drop constraint if exists signalements_genre_check;
 alter table signalements add constraint signalements_genre_check
   check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre', 'publication', 'commentaire_publication'))
 ;
--- Pop-up « Bravo, tu as gagné … XP » : les gains pas encore montrés (les gains passés comptent comme vus)
 alter table xp_journal add column if not exists vu boolean not null default true;
 alter table xp_journal alter column vu set default false;
--- Mots-clefs : clé de comparaison (minuscules, sans accents, au singulier, lib/cleMot.js) ; une seule fois le même mot par page
 alter table mots_cles add column if not exists cle text;
 create unique index if not exists mots_cles_cle_unique on mots_cles (tome_id, page_no, cle);
 
--- Nom du livre dans l'autre langue (ex. Royaume Cosy / Cozy Kingdom) : la recherche trouve le livre par ses deux noms
 alter table tome_catalog add column if not exists autre_nom text not null default '';
 
--- Dernière visite de l'onglet Lancement (Invocatrice) : les inscriptions arrivées depuis ont une pastille rouge
 alter table users add column if not exists lancement_vu timestamptz;
 
--- Palettes : une ambiance et une fête facultatives (clés de lib/themesPalettes.js, vide = aucune)
 alter table palettes add column if not exists ambiance text not null default '';
 alter table palettes add column if not exists fete text not null default '';

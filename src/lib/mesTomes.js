@@ -1,12 +1,8 @@
 import { sql } from '@/lib/db';
 import { pagesDuNumero } from '@/lib/doublePage';
 
-// Pages coloriées = numéros de page distincts enregistrés pour ce tome (progression automatique ;
-// une double page « 28-29 » compte pour deux)
 export const pagesFaites = (pages) => new Set(pages.flatMap((p) => pagesDuNumero(p.page_no)));
 
-// Tomes affichés dans le profil : tomes possédés du catalogue + tomes utilisés dans des fiches,
-// moins ceux masqués par la personne
 export async function listerMesTomes(userId) {
   const uid = String(userId);
   const [possedes, utilises, masques, couvertures, perso] = await Promise.all([
@@ -35,7 +31,6 @@ export async function listerMesTomes(userId) {
         perso: !cat,
         type: cat?.type || null,
         total: cat ? cat.nb_pages : totPerso[cle] ?? null,
-        // couverture perso en priorité, sinon celle du catalogue
         couverture: maj ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(maj).getTime()}` : cat?.couverture || null,
         pages: [],
       });

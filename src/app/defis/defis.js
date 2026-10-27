@@ -9,11 +9,9 @@ import ListeAventures from '@/app/aventures/liste';
 import Combats from '@/app/combats/combats';
 import VerdictsARendre from './verdictsARendre';
 
-// Rôle de la personne qui crée chaque genre d'épreuve, pour le tri
 const ROLE_DU_GENRE = { officiel: 'admin', modo: 'modo', cheffe: 'cheffe', menestrel: 'menestrel', groupe: 'communaute' };
 const FILTRES_ROLE = [['tous', 'Toutes'], ['admin', 'Invocatrice'], ['modo', 'Sentinelles'], ['cheffe', 'Cheffes'], ['menestrel', 'Ménestrelles'], ['communaute', 'Communauté']];
 
-// Verdicts à rendre (vue par défaut), épreuves en cours (triables par rôle), bingos du mois, épreuves de groupe, aventures, combats
 export default function Defis({ monId, integre }) {
   const [onglet, setOnglet] = useState('verdicts');
   const [aVoter, setAVoter] = useState(null);
@@ -31,9 +29,7 @@ export default function Defis({ monId, integre }) {
   }
   useEffect(() => { charger(); }, []);
 
-  // La Roue du Destin, à droite de Combats, ouvre sa propre page
   const ONGLETS = [['mois', 'En cours', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users], ['aventures', 'Aventures', Compass], ['combats', 'Combats', Swords], ['roue', 'Roue du Destin', Dices, '/roue']];
-  // Tri par rôle de la personne qui a créé l'épreuve
   const duMois = (donnees?.defis || []).filter((d) => role === 'tous' || ROLE_DU_GENRE[d.genre] === role);
   const groupe = (donnees?.defis || []).filter((d) => d.genre === 'groupe');
 
@@ -48,7 +44,6 @@ export default function Defis({ monId, integre }) {
         </div>
       )}
 
-      {/* Grand bouton corail : les coloriages qui attendent mon verdict (vue par défaut), sans contour */}
       <button type="button" onClick={() => setOnglet('verdicts')} aria-pressed={onglet === 'verdicts'}
         className="btn btn-corail"
         style={{ width: '100%', minHeight: '52px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px',

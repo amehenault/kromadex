@@ -3,7 +3,6 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-// Choisir un nouveau mot de passe à partir du lien reçu
 function Formulaire() {
   const jeton = useSearchParams().get('jeton') || '';
   const [msg, setMsg] = useState('');

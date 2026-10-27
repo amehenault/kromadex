@@ -4,7 +4,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Catalogue complet des tomes + ceux possédés par l'utilisatrice, avec sa progression
 export async function GET() {
   try {
     const user = await getUser();
@@ -15,8 +14,6 @@ export async function GET() {
       FROM tome_catalog
       ORDER BY nom ASC
     `;
-    // Progression automatique : numéros de page distincts enregistrés dans les fiches de ce tome
-    // (une double page « 28-29 » compte pour 28 et 29)
     const possedes = await sql`
       SELECT u.tome_id,
         (SELECT COUNT(DISTINCT n)::int FROM pages p,
@@ -38,7 +35,6 @@ export async function GET() {
   }
 }
 
-// Ajouter / retirer un tome de sa bibliothèque
 export async function POST(req) {
   try {
     const user = await getUser();
@@ -50,7 +46,6 @@ export async function POST(req) {
     if (!id) return NextResponse.json({ error: 'Tome invalide' }, { status: 400 });
 
     if (action === 'ADD') {
-      // Ré-ajouter un tome le rend de nouveau visible dans le profil
       await sql.transaction([
         sql`INSERT INTO user_tomes (user_id, tome_id) VALUES (${userIdStr}, ${id}) ON CONFLICT DO NOTHING`,
         sql`DELETE FROM user_tomes_masques WHERE user_id = ${userIdStr}

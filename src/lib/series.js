@@ -1,10 +1,8 @@
 import { sql } from '@/lib/db';
 import { addXP } from '@/lib/user';
 
-// Fuseau des journées (une journée de coloriage = une date locale)
 export const FUSEAU = 'America/Toronto';
 
-// Bonus des séries : XP gagnés à chaque tranche complète de 7 jours consécutifs
 export const BONUS_SERIE = { coloriage: 300, connexion: 75 };
 
 const jourMoins = (iso, n) => {
@@ -13,8 +11,6 @@ const jourMoins = (iso, n) => {
   return d.toISOString().slice(0, 10);
 };
 
-// Série en cours à partir d'une liste de dates (AAAA-MM-JJ, sans doublon).
-// La série reste vivante si le dernier jour est aujourd'hui ou hier.
 export function serieEnCours(jours, aujourdhui) {
   const set = new Set(jours);
   let fin = set.has(aujourdhui) ? aujourdhui : set.has(jourMoins(aujourdhui, 1)) ? jourMoins(aujourdhui, 1) : null;
@@ -24,7 +20,6 @@ export function serieEnCours(jours, aujourdhui) {
   return { longueur, debut: jourMoins(fin, longueur - 1) };
 }
 
-// Plus longue série jamais faite
 export function meilleureSerie(jours) {
   const tries = [...new Set(jours)].sort();
   let meilleure = 0, actuelle = 0, precedent = null;
@@ -51,21 +46,18 @@ export async function joursConnectes(userId) {
   return (await sql`SELECT to_char(jour, 'YYYY-MM-DD') AS j FROM connexions WHERE user_id = ${userId}`).map((r) => r.j);
 }
 
-// Donne des XP une seule fois pour une clé donnée (ex. page:<id>, quete:<id>). Renvoie true si accordé.
 export async function accorderXP(userId, cle, xp) {
   const ok = await sql`INSERT INTO xp_journal (user_id, cle, xp) VALUES (${userId}, ${cle}, ${xp}) ON CONFLICT DO NOTHING RETURNING 1`;
   if (ok.length && xp > 0) await addXP(userId, xp);
   return ok.length > 0;
 }
 
-// Reprend les XP donnés pour une clé (ex. page:<id> quand le coloriage est supprimé)
 export async function retirerXP(userId, cle) {
   const [r] = await sql`DELETE FROM xp_journal WHERE user_id = ${userId} AND cle = ${cle} RETURNING xp`;
   if (r?.xp) await addXP(userId, -r.xp);
   return r?.xp || 0;
 }
 
-// Pénalité : retire des XP une seule fois pour une clé donnée (ex. penalite:epreuve:<id>)
 export async function penaliserXP(userId, cle, xp) {
   if (!(xp > 0)) return false;
   const ok = await sql`INSERT INTO xp_journal (user_id, cle, xp) VALUES (${userId}, ${cle}, ${-xp}) ON CONFLICT DO NOTHING RETURNING 1`;
@@ -73,7 +65,6 @@ export async function penaliserXP(userId, cle, xp) {
   return ok.length > 0;
 }
 
-// Donne les bonus de série dus (une seule fois par tranche de 7 jours d'une même série)
 export async function accorderSerie(userId, type) {
   const aujourdhui = await aujourdhuiLocal();
   const jours = type === 'coloriage' ? await joursColories(userId) : await joursConnectes(userId);
@@ -88,7 +79,6 @@ export async function accorderSerie(userId, type) {
   return gagne;
 }
 
-// Note la visite du jour ; la première visite de la journée vérifie la série de connexion
 export async function noterConnexion(userId) {
   const nouveau = await sql`
     INSERT INTO connexions (user_id, jour) VALUES (${userId}, (now() AT TIME ZONE ${FUSEAU})::date)

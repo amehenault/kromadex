@@ -1,5 +1,3 @@
--- Guangna Brush : couleur des pastilles reprise de lovelycolors.fr (code hexa affiché sous chaque pastille, relevé le 2026-10-26).
--- Les noms ne changent pas. Tous les coffrets Brush du catalogue (Set de 12 à Set de 488), pas les High Gloss ni les kits perso.
 UPDATE marker_colors m SET hex_value = v.hex
 FROM marker_brands b, (VALUES
   ('330', '#AF9437'),

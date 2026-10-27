@@ -16,12 +16,10 @@ export const dynamic = 'force-dynamic';
 const JOURS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const nomMois = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' });
 
-// Statistiques personnelles : séries, mois en cours, tomes, J'aime, résumé des participations, historique
 export default async function StatistiquesPage() {
   const user = await getUser();
   if (!user) redirect('/login');
   const uid = user.id;
-  // Genre de la personne : « Inscrite », ou « Inscrit » pour le genre masculin
   const [{ genre } = {}] = await sql`SELECT genre FROM users WHERE id = ${uid}`;
 
   const aujourdhui = await aujourdhuiLocal();
@@ -60,7 +58,6 @@ export default async function StatistiquesPage() {
     sql`SELECT COALESCE(sum(xp), 0)::int AS xp FROM xp_journal WHERE user_id = ${uid} AND cle LIKE 'serie-%'`,
   ]);
 
-  // Historique : tous les mois pour Kromadex+, les 30 derniers jours pour la version gratuite
   const { plus } = await abonnementDe(uid);
   const historique = plus
     ? await sql`SELECT to_char(date_trunc('month', created_at AT TIME ZONE ${FUSEAU}), 'YYYY-MM-01') AS mois, count(*)::int AS n
@@ -69,7 +66,6 @@ export default async function StatistiquesPage() {
   const [recents] = plus ? [null] : await sql`SELECT count(*)::int AS n FROM pages
       WHERE user_id = ${uid} AND created_at > now() - make_interval(days => ${JOURS_STATS_GRATUIT})`;
 
-  // Résumé de mes participations : aventures, combats et tournois en cours, derniers tirages de la Roue du Destin
   const [aventures, combats, tournois, tirages] = await Promise.all([
     sql`SELECT a.id, a.genre, a.titre,
           (SELECT count(*)::int FROM aventure_soumissions s WHERE s.aventure_id = a.id AND s.user_id = ${uid}) AS soumis
@@ -97,7 +93,6 @@ export default async function StatistiquesPage() {
     : c.soumis ? 'Coloriage envoyé' : 'Coloriage à envoyer';
   const rienEnCours = !defis.length && !bingos.length && !aventures.length && !combats.length && !tournois.length && !tirages.length;
 
-  // Nombre de tomes (coloriage mystère) et de livres (Cozy colo), comme dans Collections > Ma collection
   const [profile, mesTomes] = await Promise.all([getUserProfile(uid), listerMesTomes(uid)]);
   const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
   const voitMystere = visibles.includes('mystere');
@@ -114,7 +109,6 @@ export default async function StatistiquesPage() {
   const resteColo = 7 - (serieColo.longueur % 7);
   const resteCo = 7 - (serieCo.longueur % 7);
 
-  // Calendrier du mois : cases vides avant le 1er (semaine commençant le lundi)
   const nbJours = new Date(Number(aujourdhui.slice(0, 4)), Number(aujourdhui.slice(5, 7)), 0).getDate();
   const decalage = (new Date(`${debutMois}T12:00:00`).getDay() + 6) % 7;
   const coloriesSet = new Set(colories);
@@ -142,7 +136,6 @@ export default async function StatistiquesPage() {
         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Statistiques</h2>
       </div>
 
-      {/* Séries */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: 'var(--espace-3)' }}>
         <div style={tuile}>
           <Flame size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} />
@@ -165,7 +158,6 @@ export default async function StatistiquesPage() {
         </p>
       )}
 
-      {/* Tomes et livres par type de coloriage */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${parType.length}, minmax(0, 1fr))`, gap: '8px', marginBottom: 'var(--espace-3)' }}>
         {parType.map((t) => (
           <Link key={t.cle} href="/profil/progression" style={{ ...tuile, textDecoration: 'none', color: 'inherit' }}>
@@ -177,7 +169,6 @@ export default async function StatistiquesPage() {
         ))}
       </div>
 
-      {/* Mois en cours */}
       <div className="carte" style={carte}>
         <b style={{ textTransform: 'capitalize' }}>{nomMois(debutMois)}</b>
         <small style={petit}>{mois.coloriages} coloriage{mois.coloriages > 1 ? 's' : ''} sur {joursMois} jour{joursMois > 1 ? 's' : ''}</small>
@@ -199,7 +190,6 @@ export default async function StatistiquesPage() {
         </div>
       </div>
 
-      {/* Tomes les plus utilisés */}
       <div className="carte" style={carte}>
         <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><BookOpen size={18} aria-hidden="true" /> Tomes les plus utilisés</b>
         <small style={{ ...petit, fontWeight: 700 }}>Ce mois-ci</small>
@@ -208,7 +198,6 @@ export default async function StatistiquesPage() {
         {tomesAvant.length ? tomesAvant.map(ligneTome) : <small style={petit}>Aucun coloriage le mois dernier.</small>}
       </div>
 
-      {/* Interactions */}
       <div className="carte" style={carte}>
         <b>Interactions</b>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
@@ -227,7 +216,6 @@ export default async function StatistiquesPage() {
         </div>
       </div>
 
-      {/* Coloriages les plus aimés */}
       <div className="carte" style={carte}>
         <b>Mes coloriages les plus aimés</b>
         {!topLikes.length && <small style={petit}>Publie tes coloriages dans la Communauté pour recevoir des J'aime.</small>}
@@ -245,7 +233,6 @@ export default async function StatistiquesPage() {
         </div>
       </div>
 
-      {/* Résumé de mes participations : épreuves, bingos, aventures, combats et Roue du Destin */}
       <div className="carte" style={carte}>
         <b>Résumé de mes participations</b>
         <small style={petit}>Tout ce que tu as en cours, au même endroit : touche une ligne pour y aller.</small>
@@ -294,7 +281,6 @@ export default async function StatistiquesPage() {
         ))}
       </div>
 
-      {/* Historique des coloriages */}
       <div className="carte" style={carte}>
         <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><History size={18} aria-hidden="true" /> Mon historique</b>
         {plus ? (

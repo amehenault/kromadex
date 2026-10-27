@@ -6,11 +6,7 @@ import { LIGNES_BINGO, NB_CASES } from '@/lib/bingos';
 import { XP_EPREUVES, XP_GROUPE, FRAGMENTS_PAR_RELIQUE, XP_RELIQUE, XP_BINGO } from '@/lib/activites';
 import { nomPoste } from '@/lib/postes';
 
-// Clôture des épreuves et des bingos, faite au besoin quand on consulte les activités.
-// Une épreuve dure un mois moins un jour : le verdict se termine la veille du dernier jour du mois
-// et les gagnant.es sont annoncé.es le dernier jour.
 
-// Reliques : chaque groupe de 4 fragments complète une relique (400 XP de plus)
 async function verifierReliques(userId) {
   const [{ fragments, reliques }] = await sql`
     SELECT count(*) FILTER (WHERE genre = 'fragment')::int AS fragments, count(*) FILTER (WHERE genre = 'relique')::int AS reliques
@@ -22,7 +18,6 @@ async function verifierReliques(userId) {
   }
 }
 
-// La personne qui gagne l'épreuve du mois devient Cheffe ou Chef des coloristes pour un mois (titre accordé à son genre)
 async function nommerCheffe(userId) {
   const maj = await sql`
     UPDATE users SET role = 'cheffe', cheffe_depuis = now(), cheffe_expires_at = now() + interval '1 month'
@@ -56,13 +51,10 @@ async function cloturerEpreuve(d) {
       cleXP: `victoire:${source}`, xp, genre: 'sceau', detail: `de ${auteur}`, source, image: `kromadex-sceau${d.sceau || 1}.svg`,
     });
   }
-  // Épreuve de ménestrelle : les XP de la victoire
   else if (d.genre === 'menestrel') await accorderXP(gagnant, `victoire:${source}`, xp);
-  // Titre exclusif créé par la personne qui a lancé l'épreuve
   if (d.titre_gagnant) await donnerTitre(gagnant, d.titre_gagnant);
 }
 
-// Épreuve de groupe : 150 XP chacun si l'objectif est atteint, sinon 10 XP ; 5 XP par coloriage supplémentaire
 async function cloturerGroupe(d) {
   const fige = await sql`UPDATE defis SET cloture = true WHERE id = ${d.id} AND NOT cloture RETURNING id`;
   if (!fige.length) return;
@@ -85,14 +77,12 @@ export async function cloturerEpreuves() {
   }
 }
 
-// XP d'un bingo pour une personne, d'après ses cases validées (versés une seule fois chacun)
 export async function recompenserBingo(bingoId, userId) {
   const cases = await sql`SELECT case_no, page_id FROM bingo_cases WHERE bingo_id = ${bingoId} AND user_id = ${userId} AND valide AND page_id IS NOT NULL`;
   const faites = new Set(cases.map((c) => c.case_no));
   const lignes = LIGNES_BINGO.filter((l) => l.every((i) => faites.has(i))).length;
   for (let k = 1; k <= Math.min(lignes, XP_BINGO.lignesMax); k++) await accorderXP(userId, `bingo:${bingoId}:ligne:${k}`, XP_BINGO.ligne);
   if (faites.size >= NB_CASES) await accorderXP(userId, `bingo:${bingoId}:grille`, XP_BINGO.grille);
-  // Un même coloriage qui remplit plusieurs cases
   const parPage = {};
   for (const c of cases) parPage[c.page_id] = (parPage[c.page_id] || 0) + 1;
   for (const [page, n] of Object.entries(parPage)) {
@@ -101,8 +91,6 @@ export async function recompenserBingo(bingoId, userId) {
   }
 }
 
-// Bingo terminé (le dernier jour du mois) : les XP des cases déjà validées sont versés.
-// Les cases validées plus tard sont récompensées au moment de leur validation.
 export async function bingoTermine(bingoId) {
   const [b] = await sql`
     SELECT COALESCE(fin, (date_trunc('month', debut) + interval '1 month - 2 days')::date) < (now() AT TIME ZONE 'America/Toronto')::date AS fini

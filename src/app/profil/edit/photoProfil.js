@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, Trash2, User } from 'lucide-react';
 
-// Recadre l'image au centre en carré et la réduit à 256 px avant l'envoi
 async function preparer(fichier) {
   const bitmap = await createImageBitmap(fichier);
   const cote = Math.min(bitmap.width, bitmap.height);

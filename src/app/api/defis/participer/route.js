@@ -9,8 +9,6 @@ import { jourQuebec } from '@/lib/temps';
 
 const to_iso = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d).slice(0, 10));
 
-// ?mes=1 : mes coloriages publiés, pour en choisir un à envoyer
-// ?defi=id : coloriages d'une épreuve de groupe (les épreuves avec verdict passent par /api/verdicts, sans autrice)
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -29,7 +27,6 @@ export async function GET(req) {
   return NextResponse.json({ fiches });
 }
 
-// Participer à une épreuve, et y envoyer un de ses coloriages publiés ({ defiId, pageId })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -54,16 +51,13 @@ export async function POST(req) {
   if (d.genre === 'groupe') {
     await sql`INSERT INTO defi_participations (defi_id, user_id) VALUES (${d.id}, ${user.id}) ON CONFLICT DO NOTHING`;
     if (page) {
-      // Un seul coloriage par personne, sauf si l'épreuve permet d'en envoyer plusieurs (remplir un tome, un live)
       if (!d.multiple) await sql`DELETE FROM defi_envois WHERE defi_id = ${d.id} AND user_id = ${user.id}`;
       await sql`INSERT INTO defi_envois (defi_id, user_id, page_id) VALUES (${d.id}, ${user.id}, ${page}) ON CONFLICT DO NOTHING`;
       await sql`UPDATE defi_participations SET page_id = ${page} WHERE defi_id = ${d.id} AND user_id = ${user.id}`;
     }
-    // Les XP de l'épreuve de groupe sont donnés à la fin, selon l'objectif atteint
     return NextResponse.json({ ok: true });
   }
 
-  // Changer de coloriage garde les verdicts déjà reçus
   const [avant] = await sql`SELECT page_id FROM defi_participations WHERE defi_id = ${d.id} AND user_id = ${user.id}`;
   if (page && avant?.page_id && String(avant.page_id) !== String(page)) {
     await sql`UPDATE verdicts SET page_id = ${page} WHERE activite = ${`epreuve:${d.id}`} AND page_id = ${avant.page_id}`;
@@ -72,12 +66,10 @@ export async function POST(req) {
     INSERT INTO defi_participations (defi_id, user_id, page_id) VALUES (${d.id}, ${user.id}, ${page})
     ON CONFLICT (defi_id, user_id) DO UPDATE SET page_id = COALESCE(EXCLUDED.page_id, defi_participations.page_id),
       cree_le = CASE WHEN EXCLUDED.page_id IS NOT NULL THEN now() ELSE defi_participations.cree_le END`;
-  // Coloriage envoyé : XP de participation selon le genre d'épreuve, une seule fois par épreuve
   if (page) await accorderXP(user.id, `epreuve:${d.id}`, XP_EPREUVES[d.genre]?.participation || 0).catch(() => {});
   return NextResponse.json({ ok: true });
 }
 
-// Quitter une épreuve (ou retirer un coloriage d'une épreuve de groupe : { defiId, pageId })
 export async function DELETE(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -91,7 +83,6 @@ export async function DELETE(req) {
   await sql`DELETE FROM defi_envois WHERE defi_id = ${d.id} AND user_id = ${user.id}`;
   await sql`DELETE FROM defi_participations WHERE defi_id = ${d.id} AND user_id = ${user.id}`;
   await sql`DELETE FROM verdicts WHERE activite = ${`epreuve:${d.id}`} AND page_id IN (SELECT id FROM pages WHERE user_id = ${user.id})`;
-  // Quitter l'épreuve reprend les XP gagnés pour elle
   await retirerXP(user.id, `epreuve:${d.id}`).catch(() => {});
   return NextResponse.json({ ok: true });
 }

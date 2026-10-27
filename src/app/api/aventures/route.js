@@ -14,8 +14,6 @@ const GENRES_CONTRAINTES = ['obligatoire', 'secondaire', 'facile', 'intermediair
 const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
 const entier = (v, min, max, defaut) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : defaut; };
 
-// Ce qu'une personne voit d'une aventure : les contraintes secrètes restent cachées
-// (énigme pas résolue, route pas ouverte, étape de prophétie pas encore révélée). La réponse de l'énigme n'est jamais envoyée.
 async function vueMembre(a, userId) {
   const aujourdhui = jourQuebec();
   const [inscription] = await sql`SELECT enigme_ok FROM aventure_inscriptions WHERE aventure_id = ${a.id} AND user_id = ${userId}`;
@@ -48,7 +46,6 @@ async function vueMembre(a, userId) {
   };
 }
 
-// Liste des aventures en cours et récentes, ou une aventure (?id=), ou toutes pour l'admin (?gestion=1)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -76,7 +73,6 @@ export async function GET(req) {
     return NextResponse.json({ aventure: await vueMembre(a, profil.id) });
   }
 
-  // Kromadex+ : le Parchemin du Destin du mois arrive dans l'inventaire
   await parcheminDuMois(profil.id);
   const visibles = await mesTypesVisibles(profil.id);
   const aventures = await sql`
@@ -94,7 +90,6 @@ export async function GET(req) {
   return NextResponse.json({ aventures, parchemins: await parcheminsDisponibles(profil.id) });
 }
 
-// Membres : inscrire (épopée), enigme, soumettre. Admin : enregistrer une aventure et ses étapes.
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -104,7 +99,6 @@ export async function POST(req) {
   if (b.action && b.action !== 'enregistrer') {
     const a = await chargerAventure(b.id);
     if (!a || a.debut > jourQuebec()) return non('Aventure introuvable', 404);
-    // S'inscrire à une aventure (expédition, épopée ou prophétie) : la limite de la version gratuite s'applique ici
     if (b.action === 'inscrire') {
       if (a.fin < jourQuebec()) return non('Cette aventure est terminée');
       const cle = { epopee: 'epopees', expedition: 'expeditions', prophetie: 'propheties' }[a.genre];
@@ -119,7 +113,6 @@ export async function POST(req) {
     }
     if (b.action === 'soumettre') {
       if (!isId(String(b.pageId || ''))) return non('Choisis un coloriage');
-      // Il faut être inscrit.e à l'aventure pour soumettre (la limite de la version gratuite est vérifiée à l'inscription)
       const [inscrit] = await sql`SELECT 1 FROM aventure_inscriptions WHERE aventure_id = ${a.id} AND user_id = ${profil.id}`;
       if (!inscrit) return non('Inscris-toi d’abord à cette aventure', 403);
       const r = await soumettre(a, profil.id, b);
@@ -128,7 +121,6 @@ export async function POST(req) {
     return non('Action inconnue');
   }
 
-  // Enregistrer une aventure (admin)
   if (profil.role !== 'admin') return non('Réservé à l’Invocatrice', 403);
   const genre = GENRES.includes(b.genre) ? b.genre : null;
   const titre = String(b.titre || '').trim().slice(0, 100);
@@ -168,7 +160,6 @@ export async function POST(req) {
     id = a.id;
   }
 
-  // Étapes et contraintes : mises à jour, ajoutées ou retirées (une étape qui a déjà des soumissions ne peut pas être retirée)
   const gardees = [];
   for (const [i, e] of etapes.entries()) {
     const nom = String(e.nom || '').trim().slice(0, 100) || `Étape ${i + 1}`;

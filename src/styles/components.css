@@ -140,7 +140,6 @@
   text-decoration: underline;
 }
 
-/* Bouton secondaire de suppression : fond clair, texte et contour en couleur d'alerte */
 .btn.alt.danger {
   color: var(--danger);
   border-color: var(--danger);
@@ -224,7 +223,6 @@
   width: 100%;
 }
 
-/* Chaque étiquette au-dessus de son champ (Titre, Page, Mémo) ; Tome et Page côte à côte */
 .droite > label,
 .deux > label {
   display: flex;
@@ -483,7 +481,6 @@
   margin-bottom: var(--espace-3);
 }
 
-/* Ordinateur : 4 colonnes (Kromadex+, Aide, Statistiques, Missives puis Coloriages, Quêtes, Aventures, Combats) */
 @media (min-width: 900px) {
   .profil-acces {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -516,7 +513,6 @@
   color: var(--noir);
 }
 
-/* Activités à venir (Invocatrice) : bouton turquoise sur toute la largeur, sous l'Espace de l'Invocatrice */
 .profil-acces > .profil-acces-plein {
   grid-column: 1 / -1;
   flex-direction: row;
@@ -527,7 +523,6 @@
 }
 .profil-acces > .profil-acces-plein:not(:disabled):hover { background: var(--btn-principal-survol); border-color: var(--btn-principal-survol); color: var(--noir); }
 
-/* Long bouton des collections : toute la largeur, les deux icônes à gauche du titre */
 .profil-acces > .profil-acces-long {
   grid-column: 1 / -1;
   flex-direction: row !important;
@@ -536,7 +531,6 @@
   min-height: 64px !important;
 }
 
-/* Kromadex+ : logo en haut, texte en bas, pour que « abonnement » ne soit jamais coupé */
 .profil-acces > .profil-acces-plus {
   flex-direction: column;
 }
@@ -626,13 +620,11 @@
   .deux { grid-template-columns: 1fr; gap: var(--espace-1); }
 }
 
-/* Flèches et X d'un code, en colonne à sa droite (les codes restent sur 2 colonnes, même sur un petit téléphone) */
 .actions-code { flex: 0 0 28px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
 .actions-code .fleche { width: 28px; min-height: 26px; padding: 0; }
 .actions-code .retirer { width: 28px; height: 32px; }
 .mode-export .actions-code { display: none !important; }
 
-/* Étiquette d'une couleur : passe à la ligne et grandit avec son texte */
 .champ-etiquette {
   width: 100%; min-width: 0; box-sizing: border-box; margin: 4px 0; padding: 2px 4px;
   font: inherit; font-size: 0.8rem; line-height: 1.3; resize: none; overflow: hidden;
@@ -641,7 +633,6 @@
 }
 .champ-etiquette:focus-visible { border-bottom: 2px solid var(--couleur-secondaire); }
 
-/* Code couleur : liste « Choisir dans mes packs » / « Écrire manuellement », ou le code choisi */
 .code-choix { margin: 0; min-width: 0; width: 100%; min-height: var(--cible-tactile); font-size: 0.82rem; padding: 4px 6px; }
 .code-rempli {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; width: 100%;
@@ -651,7 +642,6 @@
 }
 .code-rempli > span { min-width: 0; max-width: 100%; }
 
-/* Téléphones : boutons retirer et flèches assez grands pour le doigt */
 @media (max-width: 600px) {
   .groupe-tete { grid-template-columns: 1fr var(--cible-tactile); }
   .retirer { width: var(--cible-tactile); }
@@ -707,7 +697,6 @@ div.vide {
 }
 .menu-bas-plus:hover { background: #f58b63; }
 
-/* Pastille de contenu à lire (missives, réponses aux demandes) */
 .pastille {
   display: inline-block; flex: 0 0 auto;
   width: 10px; height: 10px; border-radius: 50%;
@@ -717,9 +706,7 @@ div.vide {
 .profil-acces > .btn { position: relative; }
 .profil-acces > .btn > .pastille { position: absolute; top: 8px; right: 8px; }
 
-/* Image exportée : codes couleurs toujours sur 2 colonnes (même depuis un téléphone), logo et adresse en bas */
 .mode-export .grille-codes-deux-colonnes { flex-direction: row !important; }
-/* Image exportée : une ligne compacte par code (symbole à gauche, nom et code à droite) pour que l'image reste courte */
 .mode-export .colonne-codes { gap: 4px; }
 .mode-export .groupe { padding: 6px 8px; }
 .mode-export .groupe-tete { margin-bottom: 4px; }
@@ -727,7 +714,6 @@ div.vide {
 .code-export .symbole-btn { width: 28px; height: 28px; flex-basis: 28px; font-size: 0.95rem; }
 .code-export-nom { font-weight: 700; font-size: 0.75rem; line-height: 1.15; overflow-wrap: anywhere; }
 .code-export .valeur-export-code { justify-content: flex-start !important; padding: 0; font-size: 0.78rem; line-height: 1.2; text-align: left; }
-/* Logo, puis l'adresse juste dessous, les deux centrés */
 .pied-export {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--bordure);
@@ -735,7 +721,7 @@ div.vide {
 }
 .pied-export img { height: 28px; width: auto; }
 
-/* Fenêtres : montent du bas sur téléphone, centrées sur tablette et ordinateur */
+/* --- FENÊTRES DU BAS --- */
 .fond-feuille {
   position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.45);
   display: flex; align-items: flex-end; justify-content: center;
@@ -752,14 +738,31 @@ div.vide {
   .feuille.haute { height: 88dvh; }
 }
 
-/* Les autres fenêtres du bas (data-feuille) : centrées et arrondies partout sur tablette et ordinateur */
 @media (min-width: 600px) {
   [data-feuille] { align-items: center !important; padding: var(--espace-4) !important; }
   [data-feuille] > * { border-radius: var(--rayon-l) !important; border-bottom-width: 1px !important; }
 }
 
-/* Collections > Ma collection : couvertures des tomes et livres, 2 colonnes sur téléphone, 3 sur tablette et ordinateur */
 .grille-mes-tomes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (min-width: 600px) {
   .grille-mes-tomes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* --- MENU DÉROULANT --- */
+.deroulant {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0;
+  min-height: var(--cible-tactile); margin: var(--espace-1) 0 var(--espace-2); padding: 6px 10px; box-sizing: border-box;
+  background: var(--blanc); color: var(--texte); font: inherit; font-size: 1rem; font-weight: 400; text-align: left;
+  border: 1px solid var(--bordure); border-radius: var(--rayon-s); cursor: pointer;
+}
+.deroulant:disabled { opacity: 0.55; cursor: not-allowed; }
+.deroulant.compact { margin: 0; font-size: 0.82rem; padding: 4px 6px; }
+.deroulant-valeur { min-width: 0; overflow-wrap: anywhere; }
+.deroulant-valeur.vide { color: var(--texte-secondaire); }
+.deroulant-choix {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  min-height: 54px; padding: 10px 14px; box-sizing: border-box; border-radius: var(--rayon-m);
+  border: 1px solid var(--bordure-carte); background: var(--carte); color: var(--texte-principal);
+  font: inherit; text-align: left; overflow-wrap: anywhere; cursor: pointer;
+}
+.deroulant-choix.actif { border: 2px solid var(--btn); background: var(--accent-doux); }

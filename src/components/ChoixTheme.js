@@ -4,17 +4,10 @@ import { ArrowLeft, Search, ChevronRight, Check } from 'lucide-react';
 import Feuille from './Feuille';
 import { CATEGORIES_THEMES, themesDe, couleursDuTheme } from '@/lib/themesPalettes';
 
-// Choisir une ambiance ou une fête de palette, comme le choix d'un crayon : d'abord la catégorie (Ambiance ou Fête),
-// puis le thème (avec recherche et un aperçu de ses couleurs).
-//  categorie : 'ambiance' ou 'fete' pour aller directement à cette liste (sans revenir aux catégories)
-//  valeur : { categorie, cle } du choix actuel (coché dans la liste)
-//  aucun : texte de la ligne « sans thème » (ex. « Au hasard », « Aucune ») ; onChoisir(null) quand on la choisit
-//  onChoisir({ categorie, cle })
 export default function ChoixTheme({ categorie: fixe, valeur, aucun, onChoisir, onFermer }) {
   const [categorie, setCategorie] = useState(fixe || null);
   const [recherche, setRecherche] = useState('');
   const q = recherche.trim().toLowerCase();
-  // Aperçu : une palette de 5 couleurs par thème, tirée une fois à l'ouverture
   const apercus = useMemo(() => Object.fromEntries(CATEGORIES_THEMES.flatMap((c) => themesDe(c.cle).map((t) => [`${c.cle}:${t.cle}`, couleursDuTheme(t, 5)]))), []);
   const themes = themesDe(categorie).filter((t) => !q || t.nom.toLowerCase().includes(q));
   const nomCategorie = CATEGORIES_THEMES.find((c) => c.cle === categorie)?.nom;
@@ -23,7 +16,6 @@ export default function ChoixTheme({ categorie: fixe, valeur, aucun, onChoisir, 
 
   return (
     <Feuille haute titre={categorie ? nomCategorie : 'Ambiance ou fête'} onFermer={onFermer}>
-      {/* Étape 1 : choisir la catégorie */}
       {!categorie && (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {aucun && (
@@ -42,7 +34,6 @@ export default function ChoixTheme({ categorie: fixe, valeur, aucun, onChoisir, 
         </div>
       )}
 
-      {/* Étape 2 : choisir l'ambiance ou la fête */}
       {categorie && (
         <>
           {!fixe && (

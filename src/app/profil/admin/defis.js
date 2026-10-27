@@ -9,17 +9,13 @@ import Pseudo from '@/components/Pseudo';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import { NUMEROS_SCEAUX, imageSceau } from '@/lib/recompenses';
 import { useAccord } from '@/components/Genre';
+import Deroulant from '@/components/Deroulant';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const GENRES = { officiel: 'Officielle', modo: 'De sentinelle', cheffe: 'De cheffe', menestrel: 'De ménestrelle' };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: '', fin: '', titre_gagnant: '', image: '', sceau: 1 });
 const DOSSIER_BADGE = { officiel: 'epreuve/mensuelles', modo: 'epreuve/sentinelles' };
 
-// Épreuves.
-//  admin : épreuve officielle, programmable (dates libres)
-//  modo : sa propre épreuve du mois ; elle commence le 1er du mois prochain,
-//         ou tout de suite si on est dans les 7 premiers jours du mois et qu'on le choisit
-//  cheffe : son épreuve, à créer dans les 7 jours qui suivent sa nomination ; elle commence tout de suite
 export default function Defis({ role, monId }) {
   const [donnees, setDonnees] = useState({ defis: [], aujourdhui: '' });
   const [form, setForm] = useState(vide);
@@ -27,11 +23,9 @@ export default function Defis({ role, monId }) {
   const [message, setMessage] = useState('');
   const estAdmin = role === 'admin';
   const fuseau = useFuseau();
-  const genre = estAdmin ? 'officiel' : role; // 'modo', 'menestrel' ou 'cheffe'
-  // Sentinelle et ménestrelle : une épreuve par mois, même fonctionnement
+  const genre = estAdmin ? 'officiel' : role;
   const mensuelle = role === 'modo' || role === 'menestrel';
   const acc = useAccord();
-  // Brouillon automatique dès qu'on commence à écrire l'épreuve
   const brouillon = useBrouillon('epreuve', form, Boolean(form.titre.trim() || form.description.trim()));
 
   async function charger() {
@@ -51,7 +45,6 @@ export default function Defis({ role, monId }) {
 
   function enregistrer(e) {
     e.preventDefault();
-    // Modo et cheffe : dans les 7 premiers jours du mois, on demande quand l'épreuve commence
     const premiersJours = Number((donnees.aujourdhui || '').slice(8, 10)) <= 7;
     if (mensuelle && !form.id && premiersJours) { setChoixDepart(true); return; }
     publier('mois_prochain');
@@ -64,7 +57,6 @@ export default function Defis({ role, monId }) {
   }
 
   const visibles = donnees.defis.filter((d) => estAdmin || String(d.createur_id) === monId);
-  // Cheffe : 7 jours après la nomination pour créer son épreuve, une seule par mandat
   const delai = donnees.cheffe;
   const cheffeBloquee = role === 'cheffe' && !form.id && (!delai?.ouvert || delai?.deja);
   const texteCheffe = !delai ? '' : delai.deja
@@ -103,14 +95,12 @@ export default function Defis({ role, monId }) {
           <input value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} placeholder="ex. Que des tons pastel" maxLength={100} />
         </label>
         <label style={champ}>Catégorie
-          <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
-            {CATEGORIES_DEFI.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
-          </select>
+          <Deroulant titre="Catégorie" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
+            options={CATEGORIES_DEFI.map((c) => ({ valeur: c.valeur, label: c.label }))} />
         </label>
         <label style={champ}>Règles et détails
           <textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} />
         </label>
-        {/* Récompense de la personne gagnante */}
         <label style={champ}>Titre exclusif de la personne gagnante (facultatif)
           <input value={form.titre_gagnant} onChange={(e) => setForm({ ...form, titre_gagnant: e.target.value })} maxLength={60} placeholder="ex. Reine des pastels" />
           <small style={{ ...aide, fontWeight: 400 }}>Ce nouveau titre est débloqué pour la personne qui gagne l’épreuve.</small>
@@ -124,7 +114,6 @@ export default function Defis({ role, monId }) {
         {genre === 'cheffe' && (
           <fieldset style={{ ...champ, border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <legend style={{ padding: 0, marginBottom: '6px' }}>Sceau remis à la personne gagnante</legend>
-            {/* Les sceaux de cheffe (public/recompenses-activites/epreuve/chef) : on touche celui qu'on veut remettre */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
               {NUMEROS_SCEAUX.map((n) => (
                 <button key={n} type="button" onClick={() => setForm({ ...form, sceau: n })} aria-pressed={form.sceau === n}

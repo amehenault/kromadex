@@ -5,8 +5,6 @@ import { envoyer, colonne, ligneCarte, aide, petitBtn } from './outils';
 
 const NOMS_TYPES = { mystere: 'Tome', cozy: 'Cozy colo' };
 
-// Tomes et livres : changer le nombre de pages directement, sans modifier db/tomes.json ni relancer npm run db:tomes.
-// Le changement s'applique tout de suite (collections, Roue du Destin, quêtes du Destin en cours).
 export default function TomesAdmin() {
   const [tomes, setTomes] = useState(null);
   const [recherche, setRecherche] = useState('');

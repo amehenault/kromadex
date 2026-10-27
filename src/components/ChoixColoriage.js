@@ -7,9 +7,6 @@ import TexteErreur from '@/components/TexteErreur';
 
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
-// Choisir un de ses coloriages pour une activité.
-// type : mystere | cozy | autre (sinon tous) · tomes : seulement la section Tomes / Livres · publiees : seulement les publiés
-// nonPubliees : seulement ceux pas encore publiés · avertissement : message des activités (affiché par défaut avant de soumettre)
 export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, tomes, publiees, nonPubliees, avertissement = true, exclure = [], aide, onChoisir, onFermer, erreur }) {
   const [fiches, setFiches] = useState(null);
   const [tout, setTout] = useState(false);
@@ -23,7 +20,6 @@ export default function ChoixColoriage({ titre = 'Choisis ton coloriage', type, 
     fetch(`/api/mes-coloriages?${p}`).then((r) => r.json()).then((d) => setFiches(d.fiches || [])).catch(() => setFiches([]));
   }, [type, tomes, publiees, nonPubliees]);
 
-  // Section Tomes / Livres : rangée par tome ; le filtre « Tout mélangé » montre tous les coloriages ensemble
   const visibles = (fiches || []).filter((f) => !exclure.includes(f.id));
   const parTome = tomes && !tout
     ? Object.entries(visibles.reduce((g, f) => ((g[f.tome] ||= []).push(f), g), {})).sort(([a], [b]) => a.localeCompare(b, 'fr', { numeric: true }))

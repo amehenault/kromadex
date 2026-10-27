@@ -1,8 +1,6 @@
 'use client';
 import { X } from 'lucide-react';
 
-// Fenêtre qui monte du bas de l'écran sur téléphone (centrée sur ordinateur), fermée en touchant le fond ou le X
-// haute : garde toujours la même hauteur (la barre de recherche ne bouge pas quand la liste se raccourcit)
 export default function Feuille({ titre, onFermer, children, haute }) {
   return (
     <div className="fond-feuille" onClick={onFermer}>

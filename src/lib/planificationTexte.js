@@ -1,6 +1,4 @@
-// Textes des rappels d'activités à planifier (utilisables dans le navigateur et sur le serveur)
 
-// « dans 12 jours », « demain », « aujourd'hui », « il y a 3 jours »
 export function quand(jours) {
   if (jours > 1) return `dans ${jours} jours`;
   if (jours === 1) return 'demain';
@@ -8,7 +6,6 @@ export function quand(jours) {
   return `il y a ${-jours} jour${jours < -1 ? 's' : ''}`;
 }
 
-// Phrase du rappel : « Activité à planifier, début d'une nouvelle expédition dans 12 jours »
 export function texteRappel(a) {
   const quoi = a.genre === 'bingo'
     ? (a.manquants > 1 ? `de ${a.manquants} nouveaux bingos` : 'd’un nouveau bingo')

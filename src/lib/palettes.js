@@ -1,4 +1,3 @@
-// Outils de couleurs pour les palettes (utilisables dans le navigateur et sur le serveur)
 
 export const MIN_COULEURS = 2;
 export const MAX_COULEURS = 8;
@@ -17,7 +16,6 @@ const hexVersRgb = (hex) => {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
 
-// Couleur en Lab, pour comparer deux couleurs comme l'œil les perçoit
 function rgbVersLab([r, g, b]) {
   const lin = (c) => { c /= 255; return c > 0.04045 ? ((c + 0.055) / 1.055) ** 2.4 : c / 12.92; };
   const [R, G, B] = [lin(r), lin(g), lin(b)];
@@ -33,7 +31,6 @@ export function distanceCouleurs(a, b) {
   return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
 }
 
-// Crayon de l'inventaire le plus proche d'une couleur
 export function crayonLePlusProche(hex, crayons) {
   let meilleur = null;
   for (const c of crayons) {
@@ -43,7 +40,6 @@ export function crayonLePlusProche(hex, crayons) {
   return meilleur;
 }
 
-// Suggestions de palettes harmonieuses, pensées pour le Cozy colo (tons doux et chaleureux)
 const HARMONIES = [
   { nom: 'Douceur analogue', teintes: (h, n) => Array.from({ length: n }, (_, i) => h + (i - (n - 1) / 2) * 22) },
   { nom: 'Complémentaires', teintes: (h, n) => Array.from({ length: n }, (_, i) => (i % 2 ? h + 180 : h) + Math.floor(i / 2) * 14) },
@@ -67,7 +63,6 @@ export function genererPalettes(nombre, combien = 6) {
     const teintes = harmonie.teintes(base, nombre);
     const couleurs = teintes.map((h, i) => {
       const t = nombre > 1 ? i / (nombre - 1) : 0;
-      // En monochrome, la luminosité varie d'une couleur à l'autre
       const l = harmonie.nom === 'Monochrome' ? ambiance.l[0] - 25 + t * 40 : hasard(...ambiance.l);
       return hslVersHex(((h % 360) + 360) % 360, hasard(...ambiance.s), Math.max(15, Math.min(92, l)));
     });
@@ -75,8 +70,6 @@ export function genererPalettes(nombre, combien = 6) {
   });
 }
 
-// Un crayon par couleur : le plus proche parmi ceux pas encore pris (autant de crayons que de couleurs ;
-// un crayon ne se répète que si les crayons disponibles ne suffisent pas)
 export function crayonsPourCouleurs(couleurs, dispo) {
   if (!dispo.length) return [];
   const pris = new Set();

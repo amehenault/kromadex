@@ -5,7 +5,6 @@ import Feuille from '@/components/Feuille';
 import ChoixCadre from '@/components/ChoixCadre';
 import PhotoProfil from './edit/photoProfil';
 
-// Photo du profil : la toucher ouvre une fenêtre pour changer la photo et choisir son cadre
 export default function PhotoEtCadre({ cadres, cadre, genre, children }) {
   const [ouverte, setOuverte] = useState(false);
   return (
@@ -13,7 +12,6 @@ export default function PhotoEtCadre({ cadres, cadre, genre, children }) {
       <button type="button" onClick={() => setOuverte(true)} aria-label="Changer ma photo de profil et mon cadre"
         style={{ all: 'unset', cursor: 'pointer', position: 'relative', display: 'inline-flex', borderRadius: '50%' }}>
         {children}
-        {/* Petit appareil photo en haut à droite : on comprend que la photo se touche */}
         <span aria-hidden="true" style={{
           position: 'absolute', top: 0, right: 0, width: 24, height: 24, borderRadius: '50%',
           background: 'var(--btn)', color: '#ffffff', border: '2px solid var(--fond-carte)',

@@ -30,7 +30,6 @@ test('le mot secret est comparé exactement', () => {
 
 test('formule mensuelle ou annuelle', () => {
   assert.equal(formuleDe({ base_product_name: 'Kromadex+ annuel' }), 'annuel');
-  // Montants réels de ThriveCart : total en cents, total_str en dollars
   assert.equal(formuleDe({ order: { total: '379' } }), 'mensuel');
   assert.equal(formuleDe({ order: { total: '4099' } }), 'annuel');
   assert.equal(formuleDe({ order: { total: '379', total_str: '3.79' } }), 'mensuel');

@@ -1,9 +1,5 @@
--- Nom du livre dans l'autre langue (ex. Royaume Cosy / Cozy Kingdom) : la recherche trouve le livre par ses deux noms.
--- Le nom affiché reste celui de la couverture (colonne nom).
 alter table tome_catalog add column if not exists autre_nom text not null default '';
 
--- Éditions anglaises en double d'un livre déjà au catalogue en français : une seule fiche (la française).
--- Les bibliothèques passent sur la fiche gardée, puis la fiche anglaise est retirée (aucun coloriage ne l'utilisait).
 INSERT INTO user_tomes (user_id, tome_id)
 SELECT u.user_id, fr.id
 FROM (VALUES

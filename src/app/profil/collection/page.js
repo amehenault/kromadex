@@ -14,7 +14,6 @@ export default function CollectionCrayonsPage() {
   const [recherche, setRecherche] = useState('');
   const [chargement, setChargement] = useState(true);
 
-  // Modal / Formulaire d'ajout
   const [afficherModalAjout, setAfficherModalAjout] = useState(false);
   const [setAAjouter, setSetAAjouter] = useState('');
   const [modeCreationCustom, setModeCreationCustom] = useState(false);
@@ -37,8 +36,6 @@ export default function CollectionCrayonsPage() {
         const setsPossedes = new Set((data.userSets || []).map(Number));
         setMesSetsIds(setsPossedes);
 
-        // Coffret ouvert au départ : le premier coffret possédé. Sans coffret, aucun n'est ouvert
-        // (avant, le premier coffret du catalogue s'affichait, avec « Retirer le pack », sans être possédé)
         if (setsPossedes.size > 0 && data.allBrands) {
           const premierSet = data.allBrands.find((b) => setsPossedes.has(Number(b.id)));
           if (premierSet) setSetActif(Number(premierSet.id));
@@ -116,7 +113,6 @@ export default function CollectionCrayonsPage() {
     setRechercheMarque('');
   }
 
-  // Ajout / retrait direct depuis le catalogue (mise à jour immédiate de l'écran)
   async function ajouterSet(idNum) {
     setMesSetsIds((prev) => new Set([...prev, idNum]));
     if (!setActif) setSetActif(idNum);
@@ -164,7 +160,6 @@ export default function CollectionCrayonsPage() {
     }
   }
 
-  // Tri des kits par nombre de couleurs (« Set de 12 » avant « Set de 24 »), puis par nom
   const parNumero = (a, b) => {
     const na = parseInt(a.range_name.match(/\d+/)?.[0] ?? '0', 10);
     const nb = parseInt(b.range_name.match(/\d+/)?.[0] ?? '0', 10);
@@ -203,7 +198,6 @@ export default function CollectionCrayonsPage() {
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-4)' }}>
       
-      {/* Collections : onglet Crayons (celui ouvert par défaut) */}
       <OngletsCollections actif="crayons" />
 
       <div className="carte" style={{ marginBottom: 'var(--espace-4)', display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)' }}>
@@ -216,7 +210,6 @@ export default function CollectionCrayonsPage() {
           <Plus size={18} aria-hidden="true" /> Ajouter un coffret de crayons
         </button>
 
-        {/* Un coffret par ligne : le nom passe à la ligne au lieu de dépasser */}
         {marquesAffichees.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-2)' }}>
             {marquesAffichees.map((b) => {
@@ -250,7 +243,6 @@ export default function CollectionCrayonsPage() {
         )}
       </div>
 
-      {/* Crayons à l'unité entrés à la main (marque, code, pastille) */}
       <CrayonsUnite />
 
       {setActifInfo && (
@@ -285,7 +277,6 @@ export default function CollectionCrayonsPage() {
         </div>
       )}
 
-      {/* Grille d'affichage des couleurs */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
@@ -375,7 +366,6 @@ export default function CollectionCrayonsPage() {
 
             {!modeCreationCustom ? (
               !marqueOuverte ? (
-                // Étape 1 : la liste des marques
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' }}>
                   <input
                     type="search"
@@ -414,7 +404,6 @@ export default function CollectionCrayonsPage() {
                     })}
                 </div>
               ) : (
-                // Étape 2 : les kits de la marque choisie, touchés = ajoutés
                 <div style={{ marginBottom: 'var(--espace-3)' }}>
                   <button
                     type="button"

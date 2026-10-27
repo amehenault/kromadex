@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 
-// « Je fais du… » et « Je veux voir les… » : rien de coché dans « voir » = tout est montré
 export default function Preferences() {
   const [pratiques, setPratiques] = useState([]);
   const [vus, setVus] = useState([]);

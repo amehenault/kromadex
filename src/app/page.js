@@ -9,8 +9,6 @@ import Tutoriel from '@/components/Tutoriel';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Accueil : présentation (première visite ou ?tutoriel=1), annonces, missives épinglées (jusqu'à leur échéance),
-// puis deux onglets, Défis et Communauté
 export default async function Accueil({ searchParams }) {
   const user = await getUser();
   if (!user) redirect('/login');

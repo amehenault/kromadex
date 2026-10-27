@@ -1,9 +1,6 @@
 import Link from 'next/link';
 import { Info, X } from 'lucide-react';
 
-// Livres Cozy colo : le nombre de pages connu ne correspond pas toujours au nombre de coloriages à l'intérieur.
-// tome : le livre concerné (le lien vers Aide arrive déjà rempli), sinon un message général.
-// onFermer : affiche un X pour fermer le message.
 export default function AvisPagesCozy({ tome, onFermer }) {
   const lien = `/aide?type=erreur_tome${tome ? `&tome=${encodeURIComponent(tome)}` : ''}`;
   return (

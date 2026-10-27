@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic';
 
 const TYPES = ['image/jpeg', 'image/webp', 'image/png'];
 
-// Photo de profil : ?id=<membre> (par défaut, la personne connectée)
 export async function GET(req) {
   const user = await getUser();
   if (!user) return new NextResponse(null, { status: 401 });
@@ -15,15 +14,12 @@ export async function GET(req) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return new NextResponse(null, { status: 400 });
   const [r] = await sql`SELECT avatar_b64 FROM users WHERE id = ${id}`;
   if (!r?.avatar_b64) return new NextResponse(null, { status: 404 });
-  // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
   const contenu = Buffer.from(r.avatar_b64, 'base64');
-  // Copie gardée 1 jour au plus sur l'appareil (l'adresse change à chaque nouvelle photo)
   const entetes = enTetesImage(contenu, 'private, max-age=86400');
   if (!entetes) return new NextResponse(null, { status: 404 });
   return new NextResponse(contenu, { headers: entetes });
 }
 
-// Reçoit l'image déjà recadrée et réduite par le téléphone ({ type, b64 })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -32,7 +28,6 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Image invalide' }, { status: 400 });
   }
   if (b64.length > 400_000) return NextResponse.json({ error: 'Image trop lourde' }, { status: 413 });
-  // Contenu réel vérifié, puis réencodé (le type annoncé ne suffit pas)
   let image;
   try { image = await traiterImage(Buffer.from(b64, 'base64'), { coteMax: COTE.avatar, qualite: 85 }); }
   catch (e) { if (e instanceof ErreurImage) return reponseErreurImage(e); throw e; }

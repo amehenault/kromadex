@@ -4,9 +4,8 @@ import { Archive, Inbox } from 'lucide-react';
 import { GROUPES_DEMANDE, groupeDuType, nomType, nomStatut, estArchivee } from '@/lib/demandes';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 import Pseudo from '@/components/Pseudo';
+import Deroulant from '@/components/Deroulant';
 
-// Demandes envoyées depuis la page Aide, en 3 catégories.
-// Les demandes à traiter passent en premier ; résolues, ajoutées et refusées sont archivées, puis supprimées après 30 jours.
 export default function Demandes() {
   const [demandes, setDemandes] = useState([]);
   const [groupe, setGroupe] = useState('questions');
@@ -35,7 +34,6 @@ export default function Demandes() {
 
   return (
     <div className="carte" style={colonne}>
-      {/* 2 par rangée pour que « Fonctionnalités » ne soit jamais coupé ; la 3e catégorie prend toute la largeur */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px' }}>
         {GROUPES_DEMANDE.map((g, i) => {
           const aTraiter = duGroupe(g.cle).filter((d) => !estArchivee(d.statut)).length;
@@ -70,9 +68,8 @@ export default function Demandes() {
             <small><Pseudo x={d} /></small>
             <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: '0.9rem' }}>{d.message}</p>
             <label style={champ}>Statut
-              <select value={e.statut ?? d.statut} onChange={(ev) => modifier(d.id, 'statut', ev.target.value)}>
-                {statuts.map((s) => <option key={s} value={s}>{nomStatut(s)}</option>)}
-              </select>
+              <Deroulant titre="Statut" value={e.statut ?? d.statut} onChange={(v) => modifier(d.id, 'statut', v)}
+                options={statuts.map((s) => ({ valeur: s, label: nomStatut(s) }))} />
             </label>
             <label style={champ}>Réponse
               <textarea rows={3} value={e.reponse ?? d.reponse} onChange={(ev) => modifier(d.id, 'reponse', ev.target.value)} maxLength={2000} />

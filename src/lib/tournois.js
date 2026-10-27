@@ -4,11 +4,6 @@ import { gagnantVerdict } from '@/lib/verdicts';
 import { donnerRecompense } from '@/lib/recompensesServeur';
 import { TOURNOIS, XP_TOURNOI, GENRES_TOURNOI } from '@/lib/activites';
 
-// Tournoi du royaume
-//  - 7 jours d'inscription, 8 ou 16 personnes (complet à 16 : le tournoi commence tout de suite) ;
-//  - moins de 8 : annulé ; entre 9 et 15 : les inscriptions sont prolongées une fois de 7 jours, puis le tournoi est annulé ;
-//  - chaque ronde : duos au hasard, 5 jours pour soumettre son coloriage, puis 3 jours de verdict ;
-//  - sans coloriage, la personne perd sa ronde (si personne n'a soumis, la première du duo passe).
 
 const SOUMISSION = TOURNOIS.joursSoumission;
 const VERDICT = TOURNOIS.joursSoumission + TOURNOIS.joursVerdict;
@@ -21,7 +16,6 @@ async function creerRonde(tournoiId, ronde, joueurs) {
               now() + make_interval(days => ${SOUMISSION}), now() + make_interval(days => ${VERDICT}))
       ON CONFLICT DO NOTHING`;
   }
-  // Finale : 100 XP pour les deux finalistes
   if (joueurs.length === 2) for (const j of joueurs) await accorderXP(j, `tournoi:${tournoiId}:finale`, XP_TOURNOI.finale);
 }
 
@@ -50,7 +44,6 @@ async function deciderMatch(m) {
     gagnant = m.joueur_a || m.joueur_b;
   }
   const fige = await sql`UPDATE tournoi_matchs SET gagnant = ${gagnant} WHERE id = ${m.id} AND gagnant IS NULL RETURNING id`;
-  // 50 XP par ronde remportée avec un coloriage
   if (fige.length && pages.length) await accorderXP(gagnant, `victoire:match:${m.id}`, XP_TOURNOI.ronde);
 }
 
@@ -61,7 +54,6 @@ async function avancerRonde(t) {
   if (!apres.length || apres.some((m) => !m.gagnant)) return;
 
   if (apres.length === 1) {
-    // Finale décidée : le tournoi est terminé
     const gagnant = apres[0].gagnant;
     const fige = await sql`UPDATE tournois SET statut = 'termine', gagnant = ${gagnant}, termine_le = now() WHERE id = ${t.id} AND statut = 'en_cours' RETURNING id`;
     if (!fige.length) return;
@@ -78,7 +70,6 @@ async function avancerRonde(t) {
 }
 
 export async function avancerTournois() {
-  // Fin des inscriptions
   const fins = await sql`
     SELECT t.id, t.prolonge, (SELECT count(*)::int FROM tournoi_inscrits i WHERE i.tournoi_id = t.id) AS n
     FROM tournois t WHERE t.statut = 'inscriptions' AND t.inscriptions_fin <= now()`;
@@ -94,7 +85,6 @@ export async function avancerTournois() {
   for (const t of enCours) await avancerRonde(t);
 }
 
-// Peut-on créer un tournoi maintenant ? Un par mois au maximum, et 72 h après la fin du précédent.
 export async function peutCreerTournoi() {
   const [actif] = await sql`SELECT 1 FROM tournois WHERE statut IN ('inscriptions', 'en_cours')`;
   if (actif) return { ok: false, raison: 'Un tournoi est déjà en cours' };

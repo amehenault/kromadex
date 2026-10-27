@@ -17,7 +17,6 @@ const ETIQUETTE = { officiel: 'Épreuve du mois', modo: 'Épreuve de sentinelle'
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 
-// Ce que la personne gagnante remporte, selon le genre d'épreuve
 function recompenses(d) {
   const xp = XP_EPREUVES[d.genre];
   if (d.genre === 'groupe') {
@@ -30,9 +29,8 @@ function recompenses(d) {
   return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP et le sceau de la cheffe${titre}`;
 }
 
-// Une épreuve : infos, récompenses, envoyer son coloriage, verdict de l'Assemblée (ou progression pour une épreuve de groupe)
 export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
+  const acc = useAccord();
   const [choix, setChoix] = useState(false);
   const [galerie, setGalerie] = useState(null);
   const [verdict, setVerdict] = useState(false);
@@ -102,7 +100,6 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
       </small>
       {!termine && <TempsRestant fin={d.fin_instant} />}
 
-      {/* Épreuve de groupe : progression vers l'objectif */}
       {groupe && d.objectif > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div className="profil-xp-barre" style={{ flex: 1, margin: 0 }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Progression de l’épreuve">
@@ -112,7 +109,6 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
         </div>
       )}
 
-      {/* Résultat annoncé le dernier jour du mois */}
       {d.cloture && !groupe && (
         <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}>
           <Trophy size={16} aria-hidden="true" />

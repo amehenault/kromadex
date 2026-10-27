@@ -6,9 +6,6 @@ import {
   ArrowLeft, ArrowRight, X,
 } from 'lucide-react';
 
-// Présentation de Kromadex : un écran par grande fonctionnalité.
-// S'ouvre une seule fois après l'inscription, et se revoit depuis la page Aide.
-// Les textes finissent par un point ; les points de liste, jamais.
 const ECRANS = [
   {
     icone: Sparkles, titre: 'Bienvenue dans Kromadex',
@@ -107,7 +104,6 @@ export default function Tutoriel({ ouvertAuDepart }) {
   const [ouvert, setOuvert] = useState(ouvertAuDepart);
   const [i, setI] = useState(0);
 
-  // Pas de défilement de la page derrière la présentation
   useEffect(() => {
     if (!ouvert) return;
     const avant = document.body.style.overflow;
@@ -118,7 +114,6 @@ export default function Tutoriel({ ouvertAuDepart }) {
   function terminer() {
     setOuvert(false);
     fetch('/api/user/tutoriel', { method: 'POST' }).catch(() => {});
-    // Retire ?tutoriel=1 de l'adresse quand on venait de la page Aide
     if (window.location.search.includes('tutoriel')) router.replace('/');
   }
 
@@ -167,7 +162,6 @@ export default function Tutoriel({ ouvertAuDepart }) {
           </div>
         )}
 
-        {/* Points de progression */}
         <div aria-hidden="true" style={{ display: 'flex', justifyContent: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {ECRANS.map((_, n) => (
             <span key={n} style={{ width: '8px', height: '8px', borderRadius: '50%', background: n === i ? 'var(--accent-primaire)' : 'var(--bordure)' }} />

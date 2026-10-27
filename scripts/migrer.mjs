@@ -1,4 +1,3 @@
-// Applique un fichier de migration : node --env-file=.env.local scripts/migrer.mjs db/migrations/<fichier>.sql
 import { neon } from '@neondatabase/serverless';
 import { readFileSync } from 'node:fs';
 const fichier = process.argv[2];

@@ -5,14 +5,6 @@ import { pageConvient } from '@/lib/defis';
 import { jourQuebec } from '@/lib/temps';
 import { XP_EPOPEE, XP_PROPHETIE, PALIERS_BOUSSOLE } from '@/lib/activites';
 
-// Expéditions, épopées et prophéties.
-//  Expédition : un seul coloriage, une contrainte obligatoire et des contraintes secondaires ;
-//               réussie si l'obligatoire et au moins une secondaire sont respectées. Pas de verdict.
-//  Épopée : phase 1, une énigme révèle les contraintes du premier coloriage ; il faut 6 contributions
-//           de 6 personnes pour ouvrir la route. Phase 2, chaque contrainte respectée retire des points
-//           de résistance au dragon (une attaque par jour et par personne).
-//  Prophétie : des étapes d'une semaine, révélées au fil du mois.
-// Le Parchemin du Destin élimine une contrainte obligatoire.
 
 const xpDe = (a, cle, defaut) => (Number.isFinite(Number(a.xp?.[cle])) ? Number(a.xp[cle]) : defaut);
 export const normaliser = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -33,7 +25,6 @@ export async function chargerAventure(id) {
   return { ...a, etapes };
 }
 
-// Progression de l'épopée : contributions de la phase 1, attaques et dégâts de la phase 2
 export async function etatEpopee(a) {
   const [p1, p2] = a.etapes;
   const [r] = await sql`
@@ -48,7 +39,6 @@ export async function etatEpopee(a) {
   };
 }
 
-// Boussole : un nouveau niveau à la 1re, 3e, 5e, 7e et 9e expédition réussie (voir PALIERS_BOUSSOLE)
 async function verifierBoussole(userId) {
   const [{ n }] = await sql`
     SELECT count(DISTINCT s.aventure_id)::int AS n FROM aventure_soumissions s JOIN aventures a ON a.id = s.aventure_id
@@ -61,7 +51,6 @@ async function verifierBoussole(userId) {
   }
 }
 
-// Épopée gagnée : 200 XP et le blason pour chaque personne qui a contribué à une des deux phases
 async function verifierVictoireEpopee(a) {
   const etat = await etatEpopee(a);
   if (a.victoire_le || etat.attaques < a.min_attaques || etat.pvRestants > 0) return false;
@@ -70,7 +59,6 @@ async function verifierVictoireEpopee(a) {
   const contributeurs = await sql`SELECT DISTINCT user_id FROM aventure_soumissions WHERE aventure_id = ${a.id} AND reussie`;
   const xp = Math.min(xpDe(a, 'victoire', XP_EPOPEE.victoire), xpDe(a, 'max', XP_EPOPEE.max));
   for (const c of contributeurs) {
-    // Plafond par personne et par épopée
     const [{ deja }] = await sql`SELECT COALESCE(sum(xp), 0)::int AS deja FROM xp_journal WHERE user_id = ${c.user_id} AND cle LIKE ${`aventure:${a.id}:%`}`;
     const reste = Math.max(0, Math.min(xp, xpDe(a, 'max', XP_EPOPEE.max) - deja));
     if (reste) await accorderXP(c.user_id, `aventure:${a.id}:victoire`, reste);
@@ -79,8 +67,6 @@ async function verifierVictoireEpopee(a) {
   return true;
 }
 
-// Soumettre un coloriage à une étape. contraintes : ids des contraintes respectées ;
-// parchemin : id d'une contrainte obligatoire éliminée avec un Parchemin du Destin.
 export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], parchemin = null }) {
   const aujourdhui = jourQuebec();
   if (a.debut > aujourdhui) return { erreur: 'Cette aventure n’a pas encore commencé' };
@@ -90,7 +76,6 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   if (etape.debut && etape.debut > aujourdhui) return { erreur: 'Cette étape n’est pas encore révélée' };
   if (etape.fin && etape.fin < aujourdhui) return { erreur: 'Cette étape est terminée' };
 
-  // Le coloriage vient de la section Tomes / Livres, du bon type, et ne sert qu'une fois par aventure
   const [p] = await sql`SELECT id, COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') AS type_coloriage, tome FROM pages WHERE id = ${pageId} AND user_id = ${userId} AND image_b64 IS NOT NULL`;
   if (!p) return { erreur: 'Coloriage introuvable' };
   if (!p.tome) return { erreur: 'Le coloriage doit venir de ta section Tomes / Livres' };
@@ -142,7 +127,6 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
     return { erreur: 'Ce coloriage a déjà servi dans cette aventure' };
   }
 
-  // XP et récompenses
   let xp = 0;
   const gagner = async (cle, montant) => { if (montant > 0 && (await accorderXP(userId, cle, montant))) xp += montant; };
   if (a.genre === 'expedition') {
@@ -166,7 +150,6 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   return { ok: true, xp, degats };
 }
 
-// Énigme de l'épopée : la bonne réponse révèle les contraintes de la phase 1
 export async function repondreEnigme(a, userId, reponse) {
   const [inscription] = await sql`SELECT enigme_ok FROM aventure_inscriptions WHERE aventure_id = ${a.id} AND user_id = ${userId}`;
   if (!inscription) return { erreur: 'Inscris-toi d’abord à l’épopée' };

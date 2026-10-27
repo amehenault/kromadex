@@ -7,7 +7,6 @@ import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } fr
 
 export const dynamic = 'force-dynamic';
 
-// Pseudo, nom, biographie, genre (sert seulement à accorder le titre) et pays (sert au fuseau horaire)
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

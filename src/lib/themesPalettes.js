@@ -1,7 +1,3 @@
-// Ambiances et fêtes des palettes de couleurs (utilisable dans le navigateur et sur le serveur).
-// Chaque thème a sa recette : des plages de teintes (degrés sur le cercle des couleurs), une saturation et une luminosité,
-// et parfois des couleurs fixes typiques (ex. le noir d'Halloween, le blanc neige de Noël).
-//  arcEnCiel : les teintes font le tour du cercle (couleurs toutes différentes)
 import { hslVersHex } from './palettes.js';
 
 export const CATEGORIES_THEMES = [
@@ -43,14 +39,11 @@ const LISTES = { ambiance: AMBIANCES, fete: FETES };
 export const themesDe = (categorie) => LISTES[categorie] || [];
 export const themeDe = (categorie, cle) => themesDe(categorie).find((t) => t.cle === cle) || null;
 export const nomTheme = (categorie, cle) => themeDe(categorie, cle)?.nom || '';
-// Valeur reçue par l'API : une clé connue, sinon vide
 export const cleValide = (categorie, cle) => (themeDe(categorie, cle) ? cle : '');
 
 const hasard = (min, max) => min + Math.random() * (max - min);
 const melanger = (l) => l.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
 
-// Une palette de n couleurs dans un thème : teintes tirées dans ses plages (tour à tour pour bien les mélanger),
-// luminosités étalées pour garder du contraste, et au plus une couleur fixe du thème (deux à partir de 6 couleurs)
 export function couleursDuTheme(theme, n) {
   const fixes = melanger(theme.fixes || []).slice(0, theme.fixes?.length ? (n >= 6 ? 2 : 1) : 0).filter(() => Math.random() < 0.8);
   const reste = n - fixes.length;

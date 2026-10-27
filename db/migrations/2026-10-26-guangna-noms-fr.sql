@@ -1,6 +1,3 @@
--- Guangna Brush : noms des couleurs en français, d'après les noms et les couleurs de lovelycolors.fr
--- (couleurs reprises dans 2026-10-26-guangna-couleurs-lovelycolors.sql). Les noms chinois sont remplacés par un nom de couleur français courant.
--- Tous les coffrets Brush du catalogue (Set de 12 à Set de 488), pas les High Gloss ni les kits perso.
 UPDATE marker_colors m SET color_name = v.nom
 FROM marker_brands b, (VALUES
   ('330', 'Or'),

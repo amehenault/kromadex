@@ -6,7 +6,6 @@ import ListeAventures from './liste';
 
 export const dynamic = 'force-dynamic';
 
-// Aventures : expéditions, épopées et prophéties
 export default async function AventuresPage() {
   if (!(await getUser())) redirect('/login');
   return (

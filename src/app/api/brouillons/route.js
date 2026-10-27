@@ -4,7 +4,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Brouillons de création (bingo, épreuve, aventure, missive), enregistrés automatiquement pendant la saisie
 const CLES = ['bingo', 'epreuve', 'aventure', 'missive'];
 const cleValide = (c) => (CLES.includes(String(c)) ? String(c) : null);
 

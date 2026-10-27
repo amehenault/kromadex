@@ -1,6 +1,3 @@
-// Recopie dans db/tomes.json les nombres de pages changés dans l'Espace de l'Invocatrice (onglet Tomes et livres).
-//   npm run tomes:recuperer
-// Facultatif : l'appli fonctionne sans. Sert seulement à garder db/tomes.json à jour (lecture seule dans la base).
 import { neon } from '@neondatabase/serverless';
 import { readFileSync, writeFileSync } from 'node:fs';
 const sql = neon(process.env.DATABASE_URL);

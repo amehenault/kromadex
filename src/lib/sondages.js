@@ -1,4 +1,3 @@
-// Sondages des missives (utilisable dans le navigateur et sur le serveur)
 export const MIN_REPONSES = 2;
 export const MAX_REPONSES = 8;
 export const DUREES_SONDAGE = [
@@ -10,7 +9,6 @@ export const DUREES_SONDAGE = [
 ];
 export const DUREE_PAR_DEFAUT = 48;
 
-// Sondage reçu d'un formulaire : null s'il n'y en a pas, { erreur } s'il est invalide
 export function lireSondage(s) {
   if (!s || typeof s !== 'object') return null;
   const options = (Array.isArray(s.options) ? s.options : []).map((o) => String(o || '').trim().slice(0, 100)).filter(Boolean);

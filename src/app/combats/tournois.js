@@ -10,6 +10,7 @@ import Verdict from '@/components/Verdict';
 import { CATEGORIES_DEFI, nomCategorie } from '@/lib/defis';
 import { TOURNOIS, XP_TOURNOI, GENRES_TOURNOI } from '@/lib/activites';
 import TexteErreur from '@/components/TexteErreur';
+import Deroulant from '@/components/Deroulant';
 
 const nomGenre = (v) => GENRES_TOURNOI.find((g) => g.valeur === v)?.label || '';
 const nomRonde = (ronde, taille) => {
@@ -18,12 +19,11 @@ const nomRonde = (ronde, taille) => {
 };
 const INFO = `La période d’inscription est de ${TOURNOIS.joursInscription} jours. Pour chaque ronde, les participantes ont ${TOURNOIS.joursSoumission} jours pour soumettre leur coloriage, puis l’Assemblée a ${TOURNOIS.joursVerdict} jours pour rendre son verdict. Un tournoi dure en moyenne entre 31 et 39 jours et demande un nouveau coloriage à chaque ronde.`;
 
-// Tournoi du royaume : 8 ou 16 coloristes, duos au hasard, élimination ronde après ronde jusqu'à la finale
 export default function Tournois() {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
+  const acc = useAccord();
   const [donnees, setDonnees] = useState(null);
   const [form, setForm] = useState(null);
-  const [choix, setChoix] = useState(null); // { tournoi, match }
+  const [choix, setChoix] = useState(null);
   const [verdict, setVerdict] = useState(null);
   const [erreur, setErreur] = useState('');
   const fuseau = useFuseau();
@@ -139,9 +139,8 @@ export default function Tournois() {
       {form && (
         <Feuille titre="Nouveau tournoi du royaume" onFermer={() => setForm(null)}>
           <label style={champ}>Type de tournoi
-            <select value={form.genre} onChange={(e) => setForm({ ...form, genre: e.target.value })}>
-              {GENRES_TOURNOI.map((g) => <option key={g.valeur} value={g.valeur}>{g.label} : {g.aide}</option>)}
-            </select>
+            <Deroulant titre="Type de tournoi" value={form.genre} onChange={(v) => setForm({ ...form, genre: v })}
+              options={GENRES_TOURNOI.map((g) => ({ valeur: g.valeur, label: g.label, aide: g.aide }))} />
           </label>
           <label style={champ}>Nom du tournoi
             <input value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} maxLength={100} placeholder="ex. Le tournoi des braises" />
@@ -150,9 +149,8 @@ export default function Tournois() {
             <textarea rows={2} value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} maxLength={200} />
           </label>
           <label style={champ}>Type de coloriage
-            <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
-              {CATEGORIES_DEFI.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
-            </select>
+            <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
+              options={CATEGORIES_DEFI.map((c) => ({ valeur: c.valeur, label: c.label }))} />
           </label>
           <small style={{ color: 'var(--texte-secondaire)' }}>{INFO} Un tournoi par mois au maximum, et 72 h d’attente après la fin du précédent.</small>
           <button type="button" className="btn" disabled={!form.titre.trim()} onClick={() => action({ action: 'creer', ...form })} style={{ minHeight: '48px', fontWeight: 700 }}>Ouvrir les inscriptions</button>

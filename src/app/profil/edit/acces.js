@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 
-// Changer son courriel et/ou son mot de passe (mot de passe actuel exigé)
 export default function Acces() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

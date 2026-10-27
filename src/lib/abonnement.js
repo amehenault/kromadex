@@ -2,21 +2,15 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { premierDuMoisQuebec, jourQuebec } from '@/lib/temps';
 
-// Kromadex+ : tout ce qui touche à l'abonnement est réglé ici (prix affichés, liens ThriveCart, limites)
 
-// Prix affichés dans l'appli ; le vrai prix et les taxes sont ceux de la page de paiement ThriveCart
 export const PRIX_PLUS = { mensuel: '3,79 $', annuel: '40,99 $' };
 
-// Page de paiement ThriveCart et espace client (gérer la carte, annuler) du compte amelacoloree
 export const PAIEMENT_PLUS = 'https://amelacoloree.thrivecart.com/kromadex-abonnement/';
 export const GESTION_PLUS = 'https://amelacoloree.thrivecart.com/updateinfo/';
 
-// Lien de paiement : ThriveCart renvoie user_id dans son avis de paiement (passthrough), et le courriel est prérempli
 export const lienPaiement = (userId, email) =>
   `${PAIEMENT_PLUS}?passthrough[user_id]=${encodeURIComponent(userId)}&passthrough[customer_email]=${encodeURIComponent(email || '')}`;
 
-// Limites de la version gratuite, puis de Kromadex+ (null = illimité, 0 = réservé à Kromadex+).
-// periode : par mois ou par année civile (heure du Québec)
 export const LIMITES = {
   combats: { gratuit: 3, plus: null, periode: 'mois', un: 'combat', plusieurs: 'combats' },
   duels: { gratuit: 0, plus: null, periode: 'mois', un: 'duel', plusieurs: 'duels' },
@@ -28,10 +22,8 @@ export const LIMITES = {
   propheties: { gratuit: 0, plus: null, periode: 'annee', un: 'prophétie', plusieurs: 'prophéties', f: true },
 };
 
-// Statistiques : la version gratuite voit les 30 derniers jours, Kromadex+ tout l'historique
 export const JOURS_STATS_GRATUIT = 30;
 
-// Ce qu'apporte chaque version (page Kromadex+)
 export const AVANTAGES = {
   gratuit: [
     'Publier tes coloriages, commenter, aimer et suivre',
@@ -58,11 +50,8 @@ export const AVANTAGES = {
 
 const actif = (date) => Boolean(date && new Date(date) > new Date());
 
-// Kromadex+ offert par l'Invocatrice : actif sans date limite, ou jusqu'à la date choisie
 export const offertActif = (u) => Boolean(u?.plus_offert && (!u.plus_offert_jusqu || new Date(u.plus_offert_jusqu) > new Date()));
 
-// Une personne est Kromadex+ si elle est l'Invocatrice, si l'Invocatrice le lui offre (avec ou sans date limite),
-// ou si sa période payée n'est pas finie (même après une annulation)
 export function estPlus(u) {
   if (!u) return false;
   if (u.role === 'admin' || offertActif(u)) return true;
@@ -74,7 +63,6 @@ export async function abonnementDe(userId) {
   return u ? { ...u, plus: estPlus(u) } : null;
 }
 
-// Kromadex+ : un Parchemin du Destin par mois, déposé automatiquement dans l'inventaire (une seule fois par mois)
 export async function parcheminDuMois(userId) {
   const abo = await abonnementDe(userId);
   if (!abo?.plus) return;
@@ -86,7 +74,6 @@ export async function parcheminDuMois(userId) {
 
 const debutPeriode = (periode) => (periode === 'annee' ? `${jourQuebec().slice(0, 4)}-01-01` : premierDuMoisQuebec());
 
-// Utilisation de la période en cours pour une limite (sans compter l'activité en cours : contexte)
 async function utilisation(userId, cle, contexte = {}) {
   const debut = debutPeriode(LIMITES[cle].periode);
   if (cle === 'combats' || cle === 'duels') {
@@ -103,7 +90,6 @@ async function utilisation(userId, cle, contexte = {}) {
     return n;
   }
   if (cle === 'bingos') {
-    // Bingos du mois auxquels la personne est inscrite, sans compter celui-ci
     const [{ n }] = await sql`
       SELECT count(*)::int AS n FROM bingo_inscriptions c JOIN bingos b ON b.id = c.bingo_id
       WHERE c.user_id = ${userId} AND b.id <> ${contexte.bingoId ?? -1}
@@ -111,7 +97,6 @@ async function utilisation(userId, cle, contexte = {}) {
     return n;
   }
   if (cle === 'expeditions' || cle === 'propheties' || cle === 'epopees') {
-    // Aventures de l'année auxquelles la personne a participé (soumission, ou inscription pour une épopée)
     const genre = { expeditions: 'expedition', propheties: 'prophetie', epopees: 'epopee' }[cle];
     const [{ n }] = await sql`
       SELECT count(*)::int AS n FROM aventures a
@@ -123,7 +108,6 @@ async function utilisation(userId, cle, contexte = {}) {
   return 0;
 }
 
-// Vérifie une limite avant une action. Renvoie null si c'est permis, sinon une réponse 402 à renvoyer telle quelle.
 export async function verifierLimite(userId, cle, contexte) {
   const limite = LIMITES[cle];
   const abo = await abonnementDe(userId);

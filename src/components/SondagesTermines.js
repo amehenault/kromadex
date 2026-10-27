@@ -5,8 +5,6 @@ import { usePathname } from 'next/navigation';
 import Feuille from './Feuille';
 import Sondage from './Sondage';
 
-// Pop-up « Sondage terminé » : s'ouvre pour chaque sondage terminé auquel j'ai voté (ou que j'ai écrit)
-// tant que je n'ai pas vu son résultat final. Le fermer retire aussi la pastille des missives.
 export default function SondagesTermines() {
   const chemin = usePathname() || '/';
   const [sondages, setSondages] = useState([]);

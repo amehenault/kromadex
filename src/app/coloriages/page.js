@@ -8,12 +8,10 @@ import Library from '@/components/Library';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Mes coloriages (bibliothèque personnelle), avec l’accès à la Roue du Destin
 export default async function MesColoriages() {
   const user = await getUser();
   if (!user) redirect('/login');
 
-  // Mots-clefs de chaque coloriage pour la recherche : les siens (tome perso) et ceux partagés de sa page dans le tome
   const pages = await sql`
     SELECT p.id, p.title, p.tome, p.page_no, p.memo, p.codes, p.image_type IS NOT NULL AS has_image, OCTET_LENGTH(p.image_b64) AS img_size,
            p.mots_cles || ARRAY(

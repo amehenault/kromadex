@@ -4,23 +4,14 @@ import { Tags, Plus, X, Trash2 } from 'lucide-react';
 import { cleMot } from '@/lib/cleMot';
 import { debutDoublePage } from '@/lib/doublePage';
 
-// Mots-clefs d'un de mes coloriages, affichés directement sur le coloriage (pas besoin d'ouvrir la fenêtre).
-// L'image reste visible en haut pendant l'ajout.
-//  - Tome du catalogue : mots-clefs partagés de cette page du tome, ajoutés par tous les membres ; tout le monde les voit.
-//    Un même mot n'existe qu'une fois par page, peu importe qui l'ajoute (Lapin = lapin = Lapins, lib/cleMot.js).
-//  - Tome perso (hors catalogue) : mots-clefs gardés sur le coloriage lui-même
-// tome : { id, nom } du catalogue, ou null
-// Nouveau coloriage (pas encore enregistré) : enAttente + onAttente, les mots-clefs sont gardés ici et enregistrés
-// avec le coloriage ; tomeNom permet de montrer déjà ceux des autres membres pour cette page.
 export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom, pageNo, image, enAttente, onAttente }) {
   const attente = Boolean(onAttente);
   const [ouvert, setOuvert] = useState(false);
-  const [partages, setPartages] = useState([]); // mots-clefs de la page, de tous les membres : [{ id, mot, page_no, moi }]
-  const [perso, setPerso] = useState([]); // mots-clefs gardés sur le coloriage (tome hors catalogue)
-  const [tomeTrouve, setTomeTrouve] = useState(null); // nouveau coloriage : tome du catalogue retrouvé par son nom
+  const [partages, setPartages] = useState([]);
+  const [perso, setPerso] = useState([]);
+  const [tomeTrouve, setTomeTrouve] = useState(null);
   const [mot, setMot] = useState('');
   const [message, setMessage] = useState('');
-  // Double page « 28-29 » : on montre les mots-clefs des deux pages, et on ajoute ceux de la première
   const debutDouble = debutDoublePage(pageNo);
   const page = debutDouble ? String(debutDouble) : String(pageNo || '').trim();
   const pagesVues = debutDouble ? [page, String(debutDouble + 1)] : [page];
@@ -30,7 +21,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
 
   async function charger() {
     if (attente) {
-      // Mots-clefs déjà mis par les autres membres sur cette page du tome choisi
       if (!tomeNom) { setTomeTrouve(null); setPartages([]); return; }
       const r = await fetch(`/api/mots-cles?nom=${encodeURIComponent(tomeNom)}`);
       const d = r.ok ? await r.json() : {};
@@ -40,18 +30,15 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
     }
     if (partage) {
       const r = await fetch(`/api/mots-cles?tome=${tome.id}`);
-      // Mots-clefs de cette page (ou de tout le livre si le coloriage n'a pas de numéro de page), de tous les membres
       if (r.ok) setPartages(((await r.json()).mots || []).filter(dePage));
     } else if (pageId) {
       const r = await fetch(`/api/pages/${pageId}/mots-cles`);
       if (r.ok) setPerso((await r.json()).mots || []);
     }
   }
-  // Chargés dès l'ouverture du coloriage, et rechargés quand on change de tome ou de page (nouveau coloriage)
   useEffect(() => { charger(); }, [pageId, tomeCatalogue?.id, tomeNom, page]);
   useEffect(() => { if (ouvert) setMessage(''); }, [ouvert]);
 
-  // Tous les mots-clefs à afficher : partagés (de tous), perso, et ceux en attente d'un nouveau coloriage
   const mots = [
     ...partages,
     ...perso.map((m) => ({ mot: m, moi: true })),
@@ -61,7 +48,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
   async function ajouter(e) {
     e.preventDefault();
     const m = mot.trim().replace(/\s+/g, ' ').slice(0, 40);
-    // Même mot déjà là, peu importe qui l'a mis et comment il est écrit
     const existant = mots.find((x) => cleMot(x.mot) === cleMot(m));
     if (existant) { setMessage(`« ${existant.mot} » est déjà un mot-clef de ce coloriage`); return; }
     if (attente) {
@@ -88,7 +74,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
 
   const carre = { minWidth: '44px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' };
 
-  // Un mot-clef : seulement le mot (personne ne voit qui l'a mis, sauf l'Invocatrice dans son Espace), et la poubelle pour les siens
   const pastille = (m, petit) => (
     <span key={m.id || `${m.enAttente ? 'a' : 'p'}-${m.mot}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', paddingLeft: '12px', paddingRight: m.moi && !petit ? 0 : '12px', minHeight: petit ? '32px' : undefined, borderRadius: '999px', border: '1px solid var(--bordure-carte)', background: 'var(--accent-doux)', maxWidth: '100%' }}>
       <span style={{ overflowWrap: 'anywhere', fontWeight: 600, fontSize: petit ? '0.85rem' : undefined }}>{m.mot}</span>
@@ -107,7 +92,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
         style={{ width: '100%', minHeight: '46px', margin: 'var(--espace-2) 0', fontWeight: 700 }}>
         <Tags size={18} aria-hidden="true" /> Ajouter des mots-clefs
       </button>
-      {/* Mots-clefs visibles directement sur le coloriage, ceux de tous les membres compris */}
       {mots.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: 'var(--espace-2)' }} aria-label="Mots-clefs de ce coloriage">
           {mots.map((m) => pastille(m, true))}
@@ -117,7 +101,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
       {ouvert && (
         <div className="fond-feuille" onClick={() => setOuvert(false)}>
           <div className="feuille" role="dialog" aria-modal="true" aria-label="Mots-clefs" onClick={(e) => e.stopPropagation()}>
-            {/* Image du coloriage, toujours visible en haut */}
             <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--fond-carte)', padding: 'var(--espace-3) var(--espace-4) var(--espace-2)', borderBottom: '1px solid var(--bordure-carte)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <b style={{ minWidth: 0, overflowWrap: 'anywhere' }}>Mots-clefs{tome ? ` · ${tome.nom}${page ? `, page ${page}` : ''}` : ''}</b>
@@ -146,7 +129,6 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
               </form>
               {message && <small role="status" style={{ fontWeight: 700 }}>{message}</small>}
 
-              {/* Tous les mots-clefs de cette page, ajoutés par tous les membres */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {mots.map((m) => pastille(m, false))}
                 {!mots.length && <small style={{ color: 'var(--texte-secondaire)' }}>Aucun mot-clef pour l’instant.</small>}

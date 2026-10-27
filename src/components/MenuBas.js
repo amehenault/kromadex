@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Trophy, Plus, User } from 'lucide-react';
 
-// Menu du bas (icônes seules) : Épreuves à gauche, + au centre (ajouter un coloriage), Profil à droite.
-// Une pastille sur le profil signale tout ce qui attend (lib/notifications.js : missives, réponses, invitations, Espace…).
 export default function MenuBas({ avatar }) {
   const chemin = usePathname() || '/';
   const surDefis = chemin === '/' || chemin.startsWith('/defis') || chemin.startsWith('/communaute');

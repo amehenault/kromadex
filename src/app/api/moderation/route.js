@@ -3,11 +3,8 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { exigerPoste } from '@/lib/roles';
 
-// 36500 jours = bannissement (définitif, mais réversible avec « Lever la suspension »)
 const DUREES = [0, 1, 3, 7, 30, 36500];
 
-// Modo et admin : membres, avertissements et suspensions en cours.
-// Tout le monde : ?miens=1 renvoie mes avertissements non lus (pour l'accueil)
 export async function GET(req) {
   if (new URL(req.url).searchParams.get('miens')) {
     const user = await getUser();
@@ -28,16 +25,12 @@ export async function GET(req) {
         FROM avertissements a JOIN users u ON u.id = a.user_id LEFT JOIN users p ON p.id = a.par
         ORDER BY a.cree_le DESC LIMIT 100`,
   ]);
-  // Les courriels ne sont jamais envoyés à l'espace admin
   return NextResponse.json({ membres, avertissements });
 }
 
-// Donner un avertissement, avec ou sans suspension temporaire.
-// La modo ne peut viser ni l'admin ni une autre modo.
 export async function POST(req) {
   const corps = await req.json().catch(() => ({}));
 
-  // Le membre marque ses avertissements comme lus
   if (corps.lus) {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -53,7 +46,6 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Tu ne peux pas avertir ce membre' }, { status: 403 });
   }
 
-  // Lever une suspension
   if (corps.lever) {
     await sql`UPDATE users SET suspendu_jusqu = NULL WHERE id = ${cible.id}`;
     return NextResponse.json({ ok: true });

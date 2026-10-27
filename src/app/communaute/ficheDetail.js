@@ -8,7 +8,6 @@ import CommentairesFiche from './commentairesFiche';
 import Pseudo from '@/components/Pseudo';
 import BoutonSignaler from '@/components/BoutonSignaler';
 
-// Codes couleurs en lecture seule : sous-catégories, puis symbole + code de chaque couleur
 export function CodesLecture({ codes }) {
   const groupes = (Array.isArray(codes) ? codes : []).filter((g) => (g.rows || []).some((r) => r.num || r.label));
   if (!groupes.length) return <small style={{ color: 'var(--texte-secondaire)' }}>Aucun code couleur noté.</small>;
@@ -37,7 +36,6 @@ export function CodesLecture({ codes }) {
   );
 }
 
-// « Inspiré de la palette de couleurs » : bandes, codes des crayons et packs utilisés
 function PaletteInspiration({ palette }) {
   return (
     <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -62,7 +60,6 @@ function PaletteInspiration({ palette }) {
   );
 }
 
-// Feuille plein écran : grande photo, infos, J'aime et codes couleurs
 export default function FicheDetail({ id, onFermer, onLike }) {
   const [fiche, setFiche] = useState(null);
 

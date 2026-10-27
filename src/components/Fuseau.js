@@ -3,15 +3,12 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { FUSEAU_REF, texteTempsRestant, formaterInstant } from '@/lib/temps';
 
-// Fuseau horaire de la personne (selon le pays de son profil), disponible dans tous les écrans
 const ContexteFuseau = createContext(FUSEAU_REF);
 export function FuseauProvider({ fuseau, children }) {
   return <ContexteFuseau.Provider value={fuseau || FUSEAU_REF}>{children}</ContexteFuseau.Provider>;
 }
 export const useFuseau = () => useContext(ContexteFuseau);
 
-// Temps restant avant la fin (jours, puis heures et minutes sous 24 h), mis à jour chaque minute,
-// avec la date et l'heure de fin dans le fuseau de la personne
 export function TempsRestant({ fin, style }) {
   const fuseau = useFuseau();
   const [maintenant, setMaintenant] = useState(null);

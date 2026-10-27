@@ -5,7 +5,6 @@ import { prevenir } from '@/lib/push';
 import { isId } from '@/lib/pages';
 import { GENRES_SIGNALEMENT, RAISONS_SIGNALEMENT } from '@/lib/signalements';
 
-// Auteur·e d'un contenu signalable (ou rien s'il n'existe pas / n'est plus visible)
 async function auteurDe(genre, cible) {
   if (genre === 'coloriage') {
     if (!isId(cible)) return null;
@@ -30,8 +29,6 @@ async function auteurDe(genre, cible) {
   return null;
 }
 
-// Admin et Sentinelles : contenus signalés pas encore traités, regroupés par contenu, avec un aperçu.
-// Les courriels ne sont jamais envoyés.
 export async function GET() {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
@@ -72,7 +69,6 @@ export async function GET() {
   return NextResponse.json({ signalements: liste });
 }
 
-// Tout membre : signaler un contenu ({ genre, cible, raison, details })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -88,7 +84,6 @@ export async function POST(req) {
   if (!auteur) return NextResponse.json({ error: 'Ce contenu n’existe plus' }, { status: 404 });
   if (String(auteur.user_id) === String(profil.id)) return NextResponse.json({ error: 'Tu ne peux pas signaler ton propre contenu' }, { status: 400 });
 
-  // Un seul signalement par personne et par contenu : le refaire met à jour la raison
   await sql`INSERT INTO signalements (genre, cible, user_id, raison, details) VALUES (${genre}, ${cible}, ${profil.id}, ${corps.raison}, ${details})
     ON CONFLICT (genre, cible, user_id) DO UPDATE SET raison = EXCLUDED.raison, details = EXCLUDED.details, cree_le = now(), traite = false`;
   prevenir('signalements', { postes: ['admin', 'modo'] },
@@ -96,9 +91,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Admin et Sentinelles : traiter un contenu signalé ({ genre, cible, action: 'retirer' | 'ignorer' }).
-// Retirer : le coloriage n'est plus publié, la publication ou le commentaire est supprimé. Un profil ne se retire pas (on sanctionne la personne).
-// Une Sentinelle ne peut pas retirer le contenu de l'Invocatrice ou d'une autre Sentinelle.
 export async function PUT(req) {
   const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;

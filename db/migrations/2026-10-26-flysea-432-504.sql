@@ -1,7 +1,3 @@
--- Coffrets Flysea 432 (pointe Brush) et 72 pointe fine 0,7 mm : le set de 504 = 432 + 72 pointe fine.
--- Codes lus sur la fiche du fabricant (image du 2026-10-26). 70 des 72 pointes fines y figurent.
--- Couleurs : celles déjà en base pour les mêmes codes, sinon mesurées sur la fiche et corrigées vers le rendu des fiches 120, 168 et 240.
--- Rejouable : un coffret déjà présent n'est pas recréé.
 
 INSERT INTO marker_brands (brand_name, range_name, category, sub_type, created_by)
 SELECT 'Flysea', 'Set de 432', 'feutre', 'Acrylique Brush', NULL

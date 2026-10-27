@@ -4,13 +4,10 @@ import { exigerPoste } from '@/lib/roles';
 import { TYPES_DEMANDE, groupeDuType, nomType, STATUTS_ARCHIVES, JOURS_ARCHIVES } from '@/lib/demandes';
 import { prevenir } from '@/lib/push';
 
-// Mes demandes, ou toutes les demandes pour l'admin (?tout=1)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   if (new URL(req.url).searchParams.get('tout') && profil.role === 'admin') {
-    // Les demandes archivées (résolues, ajoutées, refusées) sont supprimées 30 jours après leur fermeture
-    // (aussi chaque jour par le nettoyage automatique, lib/nettoyage.js)
     await sql`DELETE FROM demandes WHERE ferme_le < now() - make_interval(days => ${JOURS_ARCHIVES})`;
     const demandes = await sql`
       SELECT d.id, d.type, d.message, d.reponse, d.statut, d.cree_le, u.pseudo, u.name, u.role
@@ -24,7 +21,6 @@ export async function GET(req) {
   return NextResponse.json({ demandes });
 }
 
-// Envoyer une demande, ou ({ vues: true }) marquer les réponses reçues comme vues
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -37,7 +33,6 @@ export async function POST(req) {
   if (!TYPES_DEMANDE.some((t) => t.valeur === type)) return NextResponse.json({ error: 'Choisis un type de demande' }, { status: 400 });
   if (texte.length < 3) return NextResponse.json({ error: 'Écris ton message' }, { status: 400 });
 
-  // Limite anti-abus : 10 demandes par jour
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM demandes WHERE user_id = ${profil.id} AND cree_le > now() - interval '1 day'`;
   if (n >= 10) return NextResponse.json({ error: 'Tu as déjà envoyé 10 demandes aujourd’hui, réessaie demain.' }, { status: 429 });
 
@@ -46,12 +41,10 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Invocatrice : changer le statut et répondre (résolue, ajoutée et refusée = archivée, supprimée 30 jours plus tard)
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const { id, statut, reponse } = await req.json().catch(() => ({}));
-  // Le statut doit exister pour la catégorie de la demande (ex. « Résolue » pour un bug, « Ajoutée » pour un tome)
   const [d] = await sql`SELECT type, user_id, reponse FROM demandes WHERE id = ${Number(id)}`;
   if (!d) return NextResponse.json({ error: 'Demande introuvable' }, { status: 404 });
   if (!groupeDuType(d.type).statuts.includes(statut)) return NextResponse.json({ error: 'Statut invalide pour cette demande' }, { status: 400 });
@@ -59,7 +52,6 @@ export async function PUT(req) {
   await sql`
     UPDATE demandes
     SET statut = ${statut}, reponse = ${texte}, maj_le = now(),
-        -- Fermée : on garde la première date de fermeture ; rouverte : la date est effacée (plus de suppression prévue)
         ferme_le = CASE WHEN ${STATUTS_ARCHIVES.includes(statut)} THEN COALESCE(ferme_le, now()) ELSE NULL END,
         reponse_vue = CASE WHEN reponse IS DISTINCT FROM ${texte} AND ${texte} <> '' THEN false ELSE reponse_vue END
     WHERE id = ${Number(id)}`;

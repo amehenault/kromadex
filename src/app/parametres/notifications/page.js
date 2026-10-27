@@ -7,7 +7,6 @@ import { PageParametres, Notifications } from '../parametres';
 
 export const dynamic = 'force-dynamic';
 
-// Paramètres > Notifications : activer sur cet appareil, puis choisir chaque type
 export default async function NotificationsPage() {
   const user = await getUser();
   if (!user) redirect('/login');

@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 const numeroCase = (v) => { const n = parseInt(v, 10); return n >= 0 && n < NB_CASES ? n : null; };
 
-// Image de fond d'une case de bingo (?id=&case=), visible par les membres connectés
 export async function GET(req) {
   const user = await getUser();
   if (!user) return new NextResponse('Non autorisé', { status: 401 });
@@ -23,8 +22,6 @@ export async function GET(req) {
   });
 }
 
-// Invocatrice ou ménestrelle (pour ses bingos) : poser l'image de fond d'une case (formulaire : bingoId, case, image).
-// L'image est vérifiée, réduite à 600 pixels et réencodée en WebP.
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
@@ -47,7 +44,6 @@ export async function POST(req) {
   }
 }
 
-// Invocatrice ou ménestrelle (pour ses bingos) : retirer l'image de fond d'une case
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;

@@ -8,7 +8,6 @@ import { accord } from '@/lib/genre';
 
 export const dynamic = 'force-dynamic';
 
-// Espace de gestion : admin (tout), modo (membres), cheffe (défi du mois prochain)
 export default async function AdminPage() {
   const user = await getUser();
   if (!user) redirect('/login');

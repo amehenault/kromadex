@@ -3,7 +3,6 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { bingoTermine, recompenserBingo } from '@/lib/clotures';
 
-// Cases de bingo à valider (admin et sentinelles) : le coloriage correspond-il à la case ?
 export async function GET() {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
@@ -17,7 +16,6 @@ export async function GET() {
   return NextResponse.json({ cases });
 }
 
-// Valider ou refuser une case ({ bingoId, userId, case, valide })
 export async function PUT(req) {
   const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
@@ -26,7 +24,6 @@ export async function PUT(req) {
     UPDATE bingo_cases SET valide = ${valide === true}, valide_par = ${profil.id}
     WHERE bingo_id = ${Number(bingoId)} AND user_id = ${userId} AND case_no = ${Number(no)} RETURNING 1`;
   if (!maj.length) return NextResponse.json({ error: 'Case introuvable' }, { status: 404 });
-  // Bingo déjà terminé : les XP de la case validée sont versés tout de suite
   if (valide === true && (await bingoTermine(Number(bingoId)))) await recompenserBingo(Number(bingoId), userId);
   return NextResponse.json({ ok: true });
 }

@@ -4,12 +4,11 @@ import { Trash2, Check } from 'lucide-react';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
 import Pseudo from '@/components/Pseudo';
+import Deroulant from '@/components/Deroulant';
 
 const image = (s) => `/api/pages/${s.page_id}/image?s=${s.img_size || 0}`;
 const SANCTIONS = [[0, 'Avertir'], [7, 'Suspendre 7 jours'], [30, 'Suspendre 30 jours'], [36500, 'Bannir']];
 
-// Coloriages d'épreuve signalés : on retire le coloriage (la personne perd le double des points gagnés avec),
-// on ignore le signalement, et on peut aussi sanctionner la personne.
 export default function SignalementsEpreuves() {
   const [liste, setListe] = useState(null);
   const [message, setMessage] = useState('');
@@ -56,10 +55,8 @@ export default function SignalementsEpreuves() {
           </div>
           {!['admin', 'modo'].includes(s.role_auteur) && (
             <label style={champ}>Sanctionner la personne
-              <select value="" onChange={(e) => e.target.value !== '' && sanctionner(s, Number(e.target.value))}>
-                <option value="">Choisir une sanction</option>
-                {SANCTIONS.map(([j, l]) => <option key={j} value={j}>{l}</option>)}
-              </select>
+              <Deroulant titre="Sanctionner la personne" placeholder="Choisir une sanction" value="" onChange={(v) => sanctionner(s, Number(v))}
+                options={SANCTIONS.map(([j, l]) => ({ valeur: j, label: l }))} />
             </label>
           )}
         </div>

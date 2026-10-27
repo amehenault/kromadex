@@ -4,11 +4,11 @@ import { Plus } from 'lucide-react';
 import { CATEGORIES_DEFI } from '@/lib/defis';
 import CarteDefi from './carteDefi';
 import TexteErreur from '@/components/TexteErreur';
+import Deroulant from '@/components/Deroulant';
 
 const dansJours = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
 const vide = () => ({ id: null, titre: '', description: '', categorie: 'tous', debut: dansJours(0), fin: dansJours(30), objectif: '', multiple: false });
 
-// Défis de groupe : créés par les membres, chacun peut s'y joindre
 export default function DefisGroupe({ defis, monId, onChange }) {
   const [form, setForm] = useState(null);
   const [erreur, setErreur] = useState('');
@@ -39,9 +39,8 @@ export default function DefisGroupe({ defis, monId, onChange }) {
             <input value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} maxLength={100} placeholder="ex. Un tome Disney en entier" />
           </label>
           <label style={champ}>Catégorie
-            <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
-              {CATEGORIES_DEFI.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
-            </select>
+            <Deroulant titre="Catégorie" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
+              options={CATEGORIES_DEFI.map((c) => ({ valeur: c.valeur, label: c.label }))} />
           </label>
           <label style={champ}>Règles et détails
             <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} />

@@ -12,6 +12,7 @@ import { COMBATS, XP_COMBATS, THEMES_DUEL, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUT
 import Tournois from './tournois';
 import Pseudo from '@/components/Pseudo';
 import TexteErreur from '@/components/TexteErreur';
+import Deroulant from '@/components/Deroulant';
 
 const nomType = (v) => TYPES_COLORIAGE.find((t) => t.valeur === v)?.label || '';
 const nomTheme = (v) => THEMES_DUEL.find((t) => t.valeur === v)?.label || '';
@@ -20,14 +21,12 @@ const STATUT = {
   verdict: 'Verdict de l’Assemblée', termine: 'Terminé', refuse: 'Refusé', annule: 'Annulé',
 };
 
-// Combats : duels chromatiques et joutes ouvertes. Les coloriages restent anonymes pendant le verdict.
-// integre : affiché dans l'onglet Combats des Épreuves (sans titre ni marge de page)
 export default function Combats({ inviter, integre }) {
   const [onglet, setOnglet] = useState('combats');
   const [combats, setCombats] = useState(null);
   const [abonnements, setAbonnements] = useState([]);
   const [form, setForm] = useState(inviter ? { genre: 'duel', categorie: 'mystere', themeType: 'couleur', theme: '', inviteId: inviter } : null);
-  const [choix, setChoix] = useState(null); // { combat } : choisir le coloriage à soumettre
+  const [choix, setChoix] = useState(null);
   const [verdict, setVerdict] = useState(null);
   const [erreur, setErreur] = useState('');
 
@@ -47,7 +46,6 @@ export default function Combats({ inviter, integre }) {
     setChoix(null); setForm(null); charger();
     return true;
   }
-  // Duel : on invite d'abord ; joute : on lance l'appel, le coloriage se soumet ensuite (même délai pour tout le monde)
   function creer() {
     action({ action: 'creer', ...form });
   }
@@ -73,7 +71,6 @@ export default function Combats({ inviter, integre }) {
         <small style={{ color: 'var(--texte-secondaire)' }}>
           {STATUT[c.statut]} · {c.coloriages} coloriage{c.coloriages > 1 ? 's' : ''}{c.genre === 'joute' ? ` · ${c.participants} / ${c.places || COMBATS.maxJoute} coloristes` : ''}
         </small>
-        {/* Joute : anonyme pour tout le monde, chaque personne est « Coloriste N » */}
         {c.coloristes?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
             {c.coloristes.map((x) => (
@@ -84,7 +81,6 @@ export default function Combats({ inviter, integre }) {
             ))}
           </div>
         )}
-        {/* Duel : les deux personnes se connaissent ; les autres membres ne voient jamais qui participe */}
         {c.genre === 'duel' && c.adversaires?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {c.adversaires.map((u) => (
@@ -203,14 +199,12 @@ export default function Combats({ inviter, integre }) {
               : `Tu lances un appel : les coloristes acceptent la joute, puis chaque personne, toi comprise ou compris, a ${COMBATS.joursSoumission} jours pour soumettre un coloriage sur le même thème. Tout est anonyme, et le verdict commence dès que tous les coloriages sont là.`}
           </small>
           <label style={champ}>Type de coloriage
-            <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
-              {TYPES_COLORIAGE.map((t) => <option key={t.valeur} value={t.valeur}>{t.label}</option>)}
-            </select>
+            <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
+              options={TYPES_COLORIAGE.map((t) => ({ valeur: t.valeur, label: t.label }))} />
           </label>
           <label style={champ}>Thème
-            <select value={form.themeType} onChange={(e) => setForm({ ...form, themeType: e.target.value })}>
-              {THEMES_DUEL.map((t) => <option key={t.valeur} value={t.valeur}>{t.label}</option>)}
-            </select>
+            <Deroulant titre="Thème" value={form.themeType} onChange={(v) => setForm({ ...form, themeType: v })}
+              options={THEMES_DUEL.map((t) => ({ valeur: t.valeur, label: t.label }))} />
           </label>
           <label style={champ}>{nomTheme(form.themeType)} choisi.e
             <input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} maxLength={80}
@@ -218,18 +212,17 @@ export default function Combats({ inviter, integre }) {
           </label>
           {form.genre === 'joute' && (
             <label style={champ}>Nombre de coloristes (toi comprise ou compris)
-              <select value={form.places || 4} onChange={(e) => setForm({ ...form, places: Number(e.target.value) })}>
-                {[2, 3, 4].map((n) => <option key={n} value={n}>{n} coloristes</option>)}
-              </select>
+              <Deroulant titre="Nombre de coloristes" value={form.places || 4} onChange={(v) => setForm({ ...form, places: Number(v) })}
+                options={[2, 3, 4].map((n) => ({ valeur: n, label: `${n} coloristes` }))} />
             </label>
           )}
           {form.genre === 'duel' && (
             <label style={champ}>Adversaire
-              <select value={form.inviteId} onChange={(e) => setForm({ ...form, inviteId: e.target.value })}>
-                <option value="">Choisir une personne</option>
-                {inviter && !abonnements.some((a) => String(a.user_id) === inviter) && <option value={inviter}>Membre invité depuis son profil</option>}
-                {abonnements.map((a) => <option key={a.user_id} value={a.user_id}>{nomAuteur(a)}</option>)}
-              </select>
+              <Deroulant titre="Adversaire" placeholder="Choisir une personne" value={form.inviteId} onChange={(v) => setForm({ ...form, inviteId: String(v) })}
+                options={[
+                  ...(inviter && !abonnements.some((a) => String(a.user_id) === inviter) ? [{ valeur: inviter, label: 'Membre invité depuis son profil' }] : []),
+                  ...abonnements.map((a) => ({ valeur: String(a.user_id), label: nomAuteur(a) })),
+                ]} />
               <small style={{ color: 'var(--texte-secondaire)', fontWeight: 400 }}>Vous devez vous suivre mutuellement.</small>
             </label>
           )}

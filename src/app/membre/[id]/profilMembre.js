@@ -17,14 +17,13 @@ import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
 
-// Le poste n'est affiché que pour l'équipe (pas pour les coloristes)
 
 export default function ProfilMembre({ membre, fiches: initiales, recompenses = [], moi }) {
   const router = useRouter();
   const [m, setM] = useState(membre);
   const [fiches, setFiches] = useState(initiales);
   const [ouverte, setOuverte] = useState(null);
-  const [liste, setListe] = useState(null); // { titre, membres }
+  const [liste, setListe] = useState(null);
 
   async function suivre() {
     setM((x) => ({ ...x, abonne: !x.abonne, abonnes: x.abonnes + (x.abonne ? -1 : 1) }));
@@ -55,10 +54,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
 
       <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: 'var(--espace-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Cadre de profil choisi parmi ceux débloqués (relique complétée, Pionnière ou Pionnier) */}
           <PhotoCadre cadre={cadre} taille={60}>{(t) => <Avatar x={m} taille={t} />}</PhotoCadre>
           <div style={{ minWidth: 0, flex: 1 }}>
-            {/* Pseudo sur une seule ligne (plus petit s'il est long) ; le nom seulement s'il est différent du pseudo */}
             <b style={{ display: 'block' }}><TexteAjuste taille={1.05}><Pseudo x={m} /></TexteAjuste></b>
             {m.pseudo && m.name && !memeQuePseudo(m.name, m.pseudo) && <small style={{ display: 'block', color: 'var(--texte-secondaire)' }}>{m.name}</small>}
             <small style={{ display: 'block', fontWeight: 700 }}>
@@ -100,7 +97,6 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
             </Link>
           </div>
         )}
-        {/* Profil qui contrevient aux règles (pseudo, photo, présentation) */}
         {!moi && <div style={{ display: 'flex', justifyContent: 'flex-end' }}><BoutonSignaler genre="membre" cible={m.id} petit /></div>}
       </div>
 

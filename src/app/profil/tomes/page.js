@@ -21,7 +21,6 @@ export default function CatalogueTomesPage() {
   const [chargement, setChargement] = useState(true);
   const [enCours, setEnCours] = useState(null);
   const [progression, setProgression] = useState({});
-  // Types visibles selon les préférences : tomes (mystère), livres (Cozy) ou les deux
   const [visibles, setVisibles] = useState(VALEURS_TYPES);
 
   useEffect(() => {
@@ -32,7 +31,6 @@ export default function CatalogueTomesPage() {
           const p = await pref.json();
           const v = p.typesVisibles || VALEURS_TYPES;
           setVisibles(v);
-          // Onglet de départ : le premier type que la personne voit
           const premier = TYPES.find((t) => v.includes(t.valeur));
           if (premier) setType(premier.valeur);
         }
@@ -56,10 +54,8 @@ export default function CatalogueTomesPage() {
   async function basculer(tome) {
     const id = Number(tome.id);
     const possede = possedes.has(id);
-    // Mise à jour immédiate, annulée si la requête échoue
     const maj = new Set(possedes);
     if (possede) maj.delete(id); else maj.add(id);
-    // Livre Cozy colo ajouté : rappel que son nombre de pages peut être faux, avec un lien vers Aide déjà rempli
     if (!possede && tome.type === 'cozy') setAjoutCozy(tome.nom);
     setPossedes(maj);
     setEnCours(id);
@@ -77,14 +73,12 @@ export default function CatalogueTomesPage() {
     }
   }
 
-  // Collections disponibles pour le type choisi (Disney, Hors Disney, Coco Wyo...)
   const collections = useMemo(
     () => [...new Set(tomes.filter((t) => t.type === type).map((t) => t.collection).filter(Boolean))].sort(),
     [tomes, type]
   );
 
   const q = recherche.trim().toLowerCase();
-  // Tomes trouvés par mot-clef (ex. « stitch » trouve les livres où Stitch apparaît)
   const [parMotCle, setParMotCle] = useState(new Set());
   useEffect(() => {
     if (q.length < 2) { setParMotCle(new Set()); return; }
@@ -126,10 +120,8 @@ export default function CatalogueTomesPage() {
   return (
     <div className="contenu" style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
 
-      {/* Collections : onglet Tomes et livres, sous-onglet Tomes et livres à ajouter */}
       <OngletsCollections actif="ajouter" visibles={visibles} />
 
-      {/* Filtres collants en haut de l'écran */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 5, background: 'var(--fond-page)',
         paddingBottom: 'var(--espace-2)', marginBottom: 'var(--espace-2)',
@@ -169,11 +161,9 @@ export default function CatalogueTomesPage() {
             <button key={c} type="button" style={puce(collection === c)} onClick={() => setCollection(c)}>{c}</button>
           ))}
         </div>
-        {/* Livre Cozy colo qu'on vient d'ajouter : rappel visible même plus bas dans la liste */}
         {ajoutCozy && <AvisPagesCozy tome={ajoutCozy} onFermer={() => setAjoutCozy('')} />}
       </div>
 
-      {/* Livres Cozy colo : le nombre de pages peut être différent du nombre de coloriages */}
       {type === 'cozy' && !ajoutCozy && <AvisPagesCozy />}
 
       {tomesAffiches.length === 0 && (

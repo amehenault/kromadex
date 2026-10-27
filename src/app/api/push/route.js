@@ -3,7 +3,6 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { pushActif, notifier } from '@/lib/push';
 
-// Activer les notifications sur cet appareil ({ endpoint, keys }), ou envoyer un essai ({ essai: true })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -21,7 +20,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Désactiver les notifications sur cet appareil ({ endpoint })
 export async function DELETE(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

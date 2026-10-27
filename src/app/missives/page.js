@@ -6,7 +6,6 @@ import MissivesEpinglees from '@/app/communaute/missivesEpinglees';
 
 export const dynamic = 'force-dynamic';
 
-// Toutes les missives publiées : les épinglées d'abord, puis les plus récentes
 export default async function MissivesPage() {
   const user = await getUser();
   if (!user) redirect('/login');

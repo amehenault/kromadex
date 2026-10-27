@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 
-// Mes coloriages, pour en choisir un à soumettre à une activité.
-// Le type d'un coloriage sans type est celui de son tome dans le catalogue.
-// ?type=mystere|cozy|autre : seulement ce type · ?tomes=1 : seulement ceux de ma section Tomes / Livres · ?publiees=1 : seulement ceux publiés
-// ?nonpubliees=1 : seulement ceux pas encore publiés (Communauté, Coloriages terminés)
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

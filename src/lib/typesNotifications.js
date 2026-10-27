@@ -1,5 +1,3 @@
-// Types de notifications push, réglables un par un dans Paramètres.
-// postes : seulement proposé à ces postes (absent = tout le monde)
 export const TYPES_NOTIFS = [
   { cle: 'missives', label: 'Nouvelles missives' },
   { cle: 'reponses', label: 'Réponses à mes demandes d’aide' },

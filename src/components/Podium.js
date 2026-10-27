@@ -9,7 +9,6 @@ import Pseudo from '@/components/Pseudo';
 
 const COULEURS_RANG = ['#d4a017', '#9aa3ad', '#b87333'];
 
-// Podium de l'Assemblée : les gagnant.es des 30 derniers jours, selon les XP gagnés, avec leurs récompenses
 export default function Podium() {
   const [gagnants, setGagnants] = useState(null);
   const [tous, setTous] = useState(false);

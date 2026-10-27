@@ -3,7 +3,6 @@ import { exigerPoste } from '@/lib/roles';
 import { activitesAVenir, texteRappel } from '@/lib/planification';
 import { pushActif } from '@/lib/push';
 
-// Activités à venir et rappels des activités à planifier (Invocatrice)
 export async function GET() {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

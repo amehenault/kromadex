@@ -8,9 +8,6 @@ const envoyer = (method, corps) => fetch('/api/crayons-unite', {
   method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
 }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
 
-// Crayons à l'unité, dans Collection de crayons : on entre la marque et le code à la main,
-// et on choisit la couleur de la pastille (nuance au doigt ou code hex).
-// Ils apparaissent ensuite dans « Crayons à l'unité » quand on choisit un code couleur dans ses packs.
 export default function CrayonsUnite() {
   const [crayons, setCrayons] = useState([]);
   const [form, setForm] = useState({ marque: '', code: '', hex: '#CCCCCC' });
@@ -29,7 +26,6 @@ export default function CrayonsUnite() {
     setOccupe(false);
     if (!r.ok) { setErreur(r.error || 'Erreur, réessaie.'); return; }
     setCrayons((l) => [...l, r.crayon].sort((a, b) => a.marque.localeCompare(b.marque, 'fr') || String(a.code).localeCompare(String(b.code), 'fr', { numeric: true })));
-    // On garde la marque pour enchaîner plusieurs crayons de la même marque
     setForm((f) => ({ ...f, code: '' }));
   }
   async function retirer(c) {

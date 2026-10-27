@@ -11,7 +11,6 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const name = searchParams.get('name');
-    // format=img : renvoie l'image elle-même (pour <img src>), sinon du JSON
     const enImage = searchParams.get('format') === 'img';
     const user = await getUser();
 
@@ -24,7 +23,6 @@ export async function GET(req) {
       `;
 
       if (r.length && r[0].image_b64) {
-        // Type déduit du contenu réel : un ancien fichier qui n'est pas une vraie image n'est jamais servi
         const contenu = Buffer.from(r[0].image_b64, 'base64');
         const format = formatReel(contenu);
         if (format) {
@@ -33,7 +31,6 @@ export async function GET(req) {
         }
       }
 
-      // Pas de couverture personnelle : celle du catalogue si le nom correspond à un tome connu
       const c = await sql`SELECT couverture FROM tome_catalog WHERE lower(nom) = lower(${name}) LIMIT 1`;
       if (c.length && c[0].couverture) {
         if (enImage) return NextResponse.redirect(new URL(c[0].couverture, req.url));
@@ -55,7 +52,6 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const tomeName = String(formData.get('tome') || '').trim().slice(0, 120);
-    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
     const image = await imageDuFormulaire(formData.get('image'), { coteMax: COTE.couverture });
     if (!tomeName || !image) return NextResponse.json({ error: 'Fichier invalide' }, { status: 400 });
     const base64 = image.b64;

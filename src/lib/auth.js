@@ -24,7 +24,6 @@ export async function createSession(userId) {
 export async function getUser() {
   const t = (await cookies()).get(COOKIE)?.value;
   if (!t) return null;
-  // Un compte suspendu est traité comme déconnecté jusqu'à la fin de la suspension
   const r = await sql`select u.id, u.email from sessions s join users u on u.id = s.user_id
     where s.token_hash = ${sha(t)} and s.expires_at > now() and (u.suspendu_jusqu is null or u.suspendu_jusqu <= now())`;
   return r[0] || null;

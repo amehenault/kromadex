@@ -6,8 +6,6 @@ import { Dices, Pencil, Trash2 } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import { XP_QUETE_DESTIN } from '@/lib/destin';
 
-// Quêtes du Destin en cours : pages tirées par la Roue du Destin, à colorier dans les 14 jours (10 XP).
-// Une quête accomplie disparaît de la liste ; on peut aussi abandonner une quête.
 export default function QuetesDuDestin({ quetes: initiales, titre = 'Quêtes du Destin' }) {
   const router = useRouter();
   const [quetes, setQuetes] = useState(initiales);

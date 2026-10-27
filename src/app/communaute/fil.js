@@ -7,7 +7,6 @@ import FicheDetail from './ficheDetail';
 import useTypesVisibles from '@/components/useTypesVisibles';
 import Pseudo from '@/components/Pseudo';
 
-// Fil des coloriages publiés, 2 colonnes, filtrable par type
 export default function Fil() {
   const [type, setType] = useState('');
   const visibles = useTypesVisibles();
@@ -19,7 +18,6 @@ export default function Fil() {
   async function charger(reinit) {
     setCharge(true);
     const avant = !reinit && fiches.length ? `&avant=${encodeURIComponent(fiches.at(-1).publiee_le)}` : '';
-    // type : '' (mes types), 'suivis' (membres que je suis) ou un type de coloriage
     const filtre = type === 'suivis' ? '&suivis=1' : type ? `&type=${type}` : '';
     const r = await fetch(`/api/communaute?vue=fil${filtre}${avant}`);
     const d = r.ok ? (await r.json()).fiches || [] : [];

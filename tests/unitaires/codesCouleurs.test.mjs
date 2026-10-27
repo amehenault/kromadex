@@ -48,6 +48,6 @@ test('nouvelle ligne ou nouveau symbole : le code déjà choisi pour ce symbole 
   const g = coloriage();
   assert.deepEqual(codeDuSymbole(g, '2'), { num: '45 Prisma', hex: '' });
   assert.equal(codeDuSymbole(g, '3'), null);
-  assert.equal(codeDuSymbole(g, '2', 'd'), null); // la ligne elle-même ne compte pas
+  assert.equal(codeDuSymbole(g, '2', 'd'), null);
   assert.equal(codeDuSymbole(g, ''), null);
 });

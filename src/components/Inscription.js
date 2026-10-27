@@ -6,16 +6,15 @@ import { GENRES } from '@/lib/titres';
 import { PAYS } from '@/lib/pays';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { AGE_MINIMUM, CONDITIONS_UTILISATION, POLITIQUE_CONFIDENTIALITE } from '@/lib/pagesLegales';
+import Deroulant from './Deroulant';
 
-// Inscription en 2 étapes : le compte (courriel, mot de passe confirmé), puis le profil
-// (pseudo, nom, genre, pays, types de coloriage). Photo et biographie s'ajoutent ensuite dans Paramètres.
 export default function Inscription({ onConnexion }) {
   const router = useRouter();
   const [etape, setEtape] = useState(1);
   const [f, setF] = useState({
     email: '', password: '', confirmation: '', pseudo: '', name: '', genre: '', pays: '', typesPratiques: [], typesVus: [],
   });
-  const [pseudoEtat, setPseudoEtat] = useState(null); // { libre, erreur }
+  const [pseudoEtat, setPseudoEtat] = useState(null);
   const [message, setMessage] = useState('');
   const [occupe, setOccupe] = useState(false);
   const set = (k, v) => { setF((x) => ({ ...x, [k]: v })); setMessage(''); };
@@ -24,7 +23,6 @@ export default function Inscription({ onConnexion }) {
   const differents = f.confirmation && f.password !== f.confirmation;
   const etape1Ok = /^\S+@\S+\.\S+$/.test(f.email) && f.password.length >= 8 && f.password === f.confirmation;
 
-  // Pseudo libre ? Vérifié 400 ms après la dernière frappe
   useEffect(() => {
     const p = f.pseudo.trim().replace(/^@/, '');
     if (!p) { setPseudoEtat(null); return; }
@@ -50,7 +48,6 @@ export default function Inscription({ onConnexion }) {
     if (res.ok) { router.replace('/'); router.refresh(); return; }
     const d = await res.json().catch(() => ({}));
     setMessage(d.error || 'Une erreur est survenue.');
-    // Un problème de courriel ou de mot de passe se corrige à l'étape 1
     if (/courriel|mot de passe/i.test(d.error || '')) setEtape(1);
     setOccupe(false);
   }
@@ -85,7 +82,6 @@ export default function Inscription({ onConnexion }) {
             {differents && <small style={{ color: 'var(--danger)' }}>Les deux mots de passe ne sont pas identiques.</small>}
             {etape1Ok && <small style={{ color: 'var(--accent-primaire)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Check size={14} aria-hidden="true" /> Les mots de passe sont identiques.</small>}
           </label>
-          {/* Âge minimum et pages légales, avant de créer le compte */}
           <small style={aide}>
             Kromadex est réservé aux personnes de {AGE_MINIMUM} ans et plus. En créant ton compte, tu acceptes les{' '}
             <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>conditions d’utilisation</a>
@@ -113,19 +109,15 @@ export default function Inscription({ onConnexion }) {
             <small style={aide}>Ton prénom ou ton nom, affiché sur ton profil au-dessus de ton pseudo. Il ne change pas quand tu changes de pseudo.</small>
           </label>
           <label style={champ}>Genre
-            <select value={f.genre} onChange={(e) => set('genre', e.target.value)} required>
-              <option value="">Choisir</option>
-              {GENRES.map((g) => <option key={g.valeur} value={g.valeur}>{g.label}</option>)}
-            </select>
+            <Deroulant titre="Genre" value={f.genre} onChange={(v) => set('genre', v)}
+              options={GENRES.map((g) => ({ valeur: g.valeur, label: g.label }))} />
             <small style={aide}>
               Sert seulement à accorder ton titre et ton rôle (ex. Gribouilleuse ou Gribouilleur, Cheffe ou Chef des coloristes).
             </small>
           </label>
           <label style={champ}>Pays ou région
-            <select value={f.pays} onChange={(e) => set('pays', e.target.value)} required>
-              <option value="">Choisir</option>
-              {PAYS.map((p) => <option key={p.valeur} value={p.valeur}>{p.label}</option>)}
-            </select>
+            <Deroulant titre="Pays ou région" value={f.pays} onChange={(v) => set('pays', v)}
+              options={PAYS.map((p) => ({ valeur: p.valeur, label: p.label }))} />
             <small style={aide}>Sert à afficher les heures dans ton fuseau horaire (fin des épreuves, des bingos, des combats…).</small>
           </label>
           <div style={champ}>

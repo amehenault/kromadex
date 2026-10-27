@@ -3,7 +3,6 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 
-// Liste des abonnés (?id=&liste=abonnes) ou des abonnements (?id=&liste=abonnements) d'un membre
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -18,7 +17,6 @@ export async function GET(req) {
   return NextResponse.json({ membres });
 }
 
-// S'abonner ou se désabonner ({ id })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

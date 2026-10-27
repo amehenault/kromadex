@@ -33,7 +33,6 @@ export async function POST(req) {
       }
     }
 
-    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
     const image = await imageDuFormulaire(file, { coteMax: COTE.coloriage });
     const base64 = image?.b64 ?? null;
     const imageType = image?.type ?? null;
@@ -45,19 +44,14 @@ export async function POST(req) {
       RETURNING id
     `;
 
-    // Les XP du coloriage sont donnés seulement avec une image (une fiche sans image reste un brouillon)
     if (image) await accorderXPColoriage(user.id, nouvelle.id).catch(() => {});
 
-    // Un tome masqué redevient visible dès qu'on y enregistre une fiche
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
-    // Série de coloriage : bonus d'XP à chaque tranche de 7 jours consécutifs
     await accorderSerie(user.id, 'coloriage').catch(() => {});
-    // Mots-clefs ajoutés avant le premier enregistrement
     let attente = [];
     try { attente = JSON.parse(String(formData.get('mots_cles_attente') || '[]')); } catch {}
     await enregistrerMotsEnAttente(user.id, { id: nouvelle.id, tome, page_no }, attente).catch(() => {});
     revalidatePath('/');
-    // L'identifiant permet de rester sur le coloriage après l'enregistrement
     return NextResponse.json({ success: true, id: nouvelle.id });
   } catch (err) {
     if (err instanceof ErreurImage) return reponseErreurImage(err);

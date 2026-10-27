@@ -8,7 +8,6 @@ import { TempsRestant } from './Fuseau';
 const image = (f) => `/api/pages/${f.id}/image?s=${f.img_size || 0}`;
 const CONFIRMATION = (acc) => `Es-tu ${acc('sûre', 'sûr')} de vouloir changer le résultat de ton verdict ? Ce choix sera définitif.`;
 
-// Rond corail numéroté qui remplace la photo et le pseudo dans les combats (anonymat)
 export function PastilleColoriste({ n, taille = 28 }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
@@ -21,11 +20,8 @@ export function PastilleColoriste({ n, taille = 28 }) {
   );
 }
 
-// Verdict de l'Assemblée : coloriages anonymes, un verdict par personne (modifiable une seule fois).
-// On ne voit ni l'autrice ou l'auteur des coloriages, ni le nombre de verdicts reçus par chacun.
-// signalerDefi : id de l'épreuve, pour signaler un coloriage qui ne correspond pas à ce qui est demandé.
 export default function Verdict({ activite, signalerDefi, onVote }) {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
+  const acc = useAccord();
   const [vue, setVue] = useState(null);
   const [ouverte, setOuverte] = useState(null);
   const [message, setMessage] = useState('');
@@ -71,7 +67,6 @@ export default function Verdict({ activite, signalerDefi, onVote }) {
       )}
       {!vue.peutVoter && vue.raison && <small style={{ color: 'var(--texte-secondaire)' }}>{vue.raison}</small>}
       {!vue.fiches.length && <small style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage pour l’instant.</small>}
-      {/* Combats : 2 images par ligne, « Coloriste N » et un bouton de vote sous chaque image */}
       {vue.numerote && vue.fiches.length > 0 && (
         <>
           <small style={{ color: 'var(--texte-secondaire)' }}>Clique sur une image pour la voir en grand.</small>

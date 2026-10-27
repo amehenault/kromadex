@@ -7,7 +7,6 @@ import { TempsRestant } from '@/components/Fuseau';
 const json = (url) => fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 const poster = (url, corps) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
 
-// Accueil : avertissements, réponses aux demandes d'aide, défi du mois et missives non lues
 export default function Annonces() {
   const [missives, setMissives] = useState([]);
   const [defi, setDefi] = useState(null);
@@ -78,7 +77,6 @@ export default function Annonces() {
           </div>
         </Link>
       )}
-      {/* Missives non lues non épinglées (les épinglées s'affichent en entier sur l'accueil) : on les lit dans Missives */}
       {missives.length > 0 && (
         <Link href={`/missives#missive-${missives[0].id}`} style={{ ...carte, textDecoration: 'none', color: 'inherit', border: '2px solid var(--btn)' }}>
           <Mail size={20} style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />

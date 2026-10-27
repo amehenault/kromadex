@@ -10,8 +10,6 @@ const nomPays = (v) => PAYS.find((p) => p.valeur === v)?.label || '';
 const nomTypes = (l) => (l || []).map((v) => TYPES_COLORIAGE.find((t) => t.valeur === v)?.label).filter(Boolean).join(', ');
 const quand = (iso) => new Date(iso).toLocaleString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-// Lancement : les personnes inscrites (les plus récentes en premier), les totaux,
-// et une case pour recevoir ou non une notification à chaque nouvelle inscription
 export default function Lancement() {
   const [donnees, setDonnees] = useState(null);
   const [recherche, setRecherche] = useState('');

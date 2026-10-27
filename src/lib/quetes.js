@@ -1,7 +1,6 @@
 import { sql } from '@/lib/db';
 import { accorderXP, joursConnectes, meilleureSerie } from '@/lib/series';
 
-// Catégories des quêtes globales (icônes lucide-react, choisies dans l'écran)
 export const CATEGORIES_QUETES = [
   { cle: 'communaute', label: 'Découvrir la communauté', icone: 'Compass' },
   { cle: 'publier', label: 'Publier ses coloriages', icone: 'Palette' },
@@ -11,7 +10,6 @@ export const CATEGORIES_QUETES = [
   { cle: 'regularite', label: 'Régularité et épreuves', icone: 'Flame' },
 ];
 
-// [id, catégorie, titre, description, compteur, objectif, XP]
 const Q = [
   ['abo-1', 'communaute', 'Premier abonnement', 'Suivre 1 personne', 'suivis', 1, 25],
   ['abo-3', 'communaute', 'Petit cercle créatif', 'Suivre 3 personnes', 'suivis', 3, 50],
@@ -80,7 +78,6 @@ const Q = [
   ['legende', 'regularite', 'Légende de Kromadex', 'Terminer 10 épreuves, publier 50 coloriages et commenter 100 créations', 'legende', 1, 400],
 ];
 
-// Forme masculine des titres qui s'accordent (genre « masculin » au profil) ; sinon le titre est au féminin
 const TITRES_MASCULINS = {
   'abo-10': 'Explorateur de talents', 'pub-50': 'Coloriste passionné', 'like-10': 'Amateur de couleurs',
   'com-50': 'Ambassadeur de la bienveillance', 'tome-25': 'Collectionneur passionné', organise: 'Bien organisé',
@@ -89,7 +86,6 @@ const TITRES_MASCULINS = {
 
 export const QUETES = Q.map(([id, categorie, titre, description, compteur, objectif, xp]) => ({ id, categorie, titre, description, compteur, objectif, xp }));
 
-// Tous les compteurs d'une personne en une requête
 export async function compteurs(userId) {
   const uid = userId;
   const uidTexte = String(userId);
@@ -137,7 +133,6 @@ export async function compteurs(userId) {
   };
 }
 
-// Progression de chaque quête ; les quêtes terminées donnent leurs XP une seule fois
 export async function verifierQuetes(userId) {
   const c = await compteurs(userId);
   const [u] = await sql`SELECT genre FROM users WHERE id = ${userId}`;

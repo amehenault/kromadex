@@ -9,8 +9,6 @@ const enregistrer = (corps) => fetch('/api/user/parametres', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
 }).then((r) => r.ok);
 
-// Cadre autour de la photo de profil (Paramètres et photo du profil) : tous les cadres sont montrés ;
-// ceux pas encore débloqués sont grisés, avec un cadenas et la seule condition pour les obtenir
 export default function ChoixCadre({ cadres, cadre: cadreInitial, genre }) {
   const router = useRouter();
   const [cadre, setCadre] = useState(cadreInitial || cadres[0] || 'aucun');

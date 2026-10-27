@@ -5,17 +5,13 @@ import { prevenir } from '@/lib/push';
 import { lireSondage } from '@/lib/sondages';
 
 
-// Date d'échéance de l'épinglage (AAAA-MM-JJ) ou null
 const dateEpingle = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null);
 
-// Missives : messages à toute la communauté. Une missive peut être épinglée sur l'accueil jusqu'à une date.
-// L'admin publie directement, une missive de modo attend l'approbation de l'admin.
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   const params = new URL(req.url).searchParams;
 
-  // ?sondage=12 : résultats à jour d'un sondage (rafraîchis en direct pendant qu'il est ouvert)
   if (params.get('sondage')) {
     const [m] = await sql`
       SELECT json_build_object(
@@ -33,7 +29,6 @@ export async function GET(req) {
     return NextResponse.json(m);
   }
 
-  // ?termines=1 : sondages terminés dont je n'ai pas encore vu le résultat final (j'ai voté ou je l'ai écrit)
   if (params.get('termines')) {
     const sondages = await sql`
       SELECT m.id, m.titre,
@@ -52,11 +47,9 @@ export async function GET(req) {
     return NextResponse.json({ sondages });
   }
 
-  // ?gestion=1 : l'admin voit tout, la modo voit les siennes et celles publiées
   if (params.get('gestion') &&['admin', 'modo'].includes(profil.role)) {
     const missives = await sql`
       SELECT m.id, m.titre, m.contenu, m.cree_le, m.statut, to_char(m.epinglee_jusqu, 'YYYY-MM-DD') AS epinglee_jusqu, u.pseudo AS auteur, u.role AS role_auteur,
-             -- Sondage : réponses, résultats, mes votes, encore ouvert ou non
              CASE WHEN cardinality(m.sondage_options) > 0 THEN json_build_object(
                'options', m.sondage_options, 'multiple', m.sondage_multiple, 'heures', m.sondage_heures, 'fin', m.sondage_fin,
                'ouvert', m.sondage_fin IS NULL OR m.sondage_fin > now(),
@@ -78,7 +71,6 @@ export async function GET(req) {
            (SELECT count(*)::int FROM missive_likes k WHERE k.missive_id = m.id) AS likes,
            EXISTS (SELECT 1 FROM missive_likes k WHERE k.missive_id = m.id AND k.user_id = ${profil.id}) AS aime,
            (SELECT count(*)::int FROM missive_commentaires c WHERE c.missive_id = m.id) AS nb_commentaires,
-           -- Sondage : réponses, résultats, mes votes, encore ouvert ou non
              CASE WHEN cardinality(m.sondage_options) > 0 THEN json_build_object(
                'options', m.sondage_options, 'multiple', m.sondage_multiple, 'heures', m.sondage_heures, 'fin', m.sondage_fin,
                'ouvert', m.sondage_fin IS NULL OR m.sondage_fin > now(),
@@ -93,8 +85,6 @@ export async function GET(req) {
   return NextResponse.json({ missives });
 }
 
-// Admin ou modo : écrire une missive. Tout le monde : marquer une missive comme lue ({ lue: id })
-// ou l'aimer / ne plus l'aimer ({ like: id })
 export async function POST(req) {
   const corps = await req.json();
   if (corps.like) {
@@ -108,7 +98,6 @@ export async function POST(req) {
     const [{ n }] = await sql`SELECT count(*)::int AS n FROM missive_likes WHERE missive_id = ${id}`;
     return NextResponse.json({ aime: !retire.length, likes: n });
   }
-  // Voter à un sondage ({ vote: missiveId, options: [numéros] }) : remplace les votes précédents
   if (corps.vote) {
     const { profil, erreur } = await exigerPoste();
     if (erreur) return erreur;
@@ -123,11 +112,9 @@ export async function POST(req) {
     if (!m.sondage_multiple && choix.length > 1) return NextResponse.json({ error: 'Une seule réponse est permise' }, { status: 400 });
     await sql`DELETE FROM missive_votes WHERE missive_id = ${id} AND user_id = ${profil.id}`;
     for (const n of choix) await sql`INSERT INTO missive_votes (missive_id, user_id, option_no) VALUES (${id}, ${profil.id}, ${n}) ON CONFLICT DO NOTHING`;
-    // Voter compte comme avoir lu la missive
     await sql`INSERT INTO missives_lues (user_id, missive_id) VALUES (${profil.id}, ${id}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true });
   }
-  // Résultat final d'un sondage terminé vu ({ sondageVu: id }) : retire le pop-up et la pastille
   if (corps.sondageVu) {
     const { profil, erreur } = await exigerPoste();
     if (erreur) return erreur;
@@ -147,7 +134,6 @@ export async function POST(req) {
   const titre = String(corps.titre || '').trim().slice(0, 120);
   if (!titre) return NextResponse.json({ error: 'Titre requis' }, { status: 400 });
   const statut = profil.role === 'admin' ? 'publiee' : 'en_attente';
-  // Sondage facultatif : sa durée commence à la publication (tout de suite pour l'admin, à l'approbation sinon)
   const sondage = lireSondage(corps.sondage);
   if (sondage?.erreur) return NextResponse.json({ error: sondage.erreur }, { status: 400 });
   await sql`INSERT INTO missives (titre, contenu, auteur, statut, commentaires, epinglee_jusqu, sondage_options, sondage_multiple, sondage_heures, sondage_fin)
@@ -159,12 +145,10 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, statut });
 }
 
-// Admin : approuver ou refuser une missive en attente, changer son épinglage ({ id, epingleeJusqu }) ou la modifier ({ id, titre, contenu })
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const { id, statut, ...corps } = await req.json();
-  // Modifier le titre et le texte d'une missive ({ id, titre, contenu })
   if ('titre' in corps) {
     const titre = String(corps.titre || '').trim().slice(0, 120);
     if (!titre) return NextResponse.json({ error: 'Titre requis' }, { status: 400 });
@@ -176,8 +160,6 @@ export async function PUT(req) {
     return NextResponse.json({ ok: true });
   }
   if (!['publiee', 'refusee'].includes(statut)) return NextResponse.json({ error: 'Statut invalide' }, { status: 400 });
-  // Une missive approuvée prend la date d'approbation pour apparaître en haut de l'accueil
-  // Le sondage d'une missive approuvée commence au moment de l'approbation
   const [m] = await sql`UPDATE missives SET statut = ${statut}, cree_le = CASE WHEN ${statut} = 'publiee' THEN now() ELSE cree_le END,
       sondage_fin = CASE WHEN ${statut} = 'publiee' AND sondage_heures IS NOT NULL THEN now() + make_interval(hours => sondage_heures) ELSE sondage_fin END
     WHERE id = ${Number(id)} RETURNING titre`;
@@ -185,7 +167,6 @@ export async function PUT(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Admin : supprimer n'importe quelle missive. Modo : retirer sa missive tant qu'elle n'est pas publiée
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;

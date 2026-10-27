@@ -8,11 +8,9 @@ import { CodesLecture } from './ficheDetail';
 import useTypesVisibles from '@/components/useTypesVisibles';
 import Pseudo from '@/components/Pseudo';
 
-// Codes couleurs des autres : type de coloriage, puis tome, puis numéro de page
 export default function CodesCouleurs() {
   const [type, setType] = useState('mystere');
   const typesVus = useTypesVisibles();
-  // Si le type affiché n'est pas visible pour la personne, on passe au premier type visible
   useEffect(() => { if (!typesVus.includes(type)) setType(typesVus[0]); }, [typesVus]);
   const [tomes, setTomes] = useState(null);
   const [recherche, setRecherche] = useState('');
@@ -51,7 +49,6 @@ export default function CodesCouleurs() {
     </button>
   );
 
-  // Étape 3 : les coloriages publiés de cette page, avec leurs codes
   if (tome && page) {
     return (
       <>
@@ -79,7 +76,6 @@ export default function CodesCouleurs() {
     );
   }
 
-  // Étape 2 : les numéros de page qui ont des codes partagés
   if (tome) {
     return (
       <>
@@ -104,7 +100,6 @@ export default function CodesCouleurs() {
     );
   }
 
-  // Étape 1 : type de coloriage, puis les tomes
   const visibles = (tomes || []).filter((t) => t.tome.toLowerCase().includes(recherche.toLowerCase().trim()));
   return (
     <>

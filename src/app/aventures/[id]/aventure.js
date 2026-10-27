@@ -16,7 +16,6 @@ const image = (s) => `/api/pages/${s.page_id}/image?s=${s.img_size || 0}`;
 const xpDe = (a, cle, defaut) => (Number.isFinite(Number(a.xp?.[cle])) ? Number(a.xp[cle]) : defaut);
 const ETIQUETTE = { obligatoire: 'Obligatoire', secondaire: 'Secondaire' };
 
-// Soumettre un coloriage à une étape : choisir le coloriage (section Tomes / Livres), puis cocher les contraintes respectées
 function Soumission({ a, etape, attaque, onFini, onFermer }) {
   const [page, setPage] = useState(null);
   const [cochees, setCochees] = useState([]);
@@ -107,7 +106,7 @@ export default function Aventure({ id }) {
   const router = useRouter();
   const [a, setA] = useState(null);
   const [erreur, setErreur] = useState('');
-  const [soumission, setSoumission] = useState(null); // { etape, attaque }
+  const [soumission, setSoumission] = useState(null);
   const [message, setMessage] = useState('');
   const [reponse, setReponse] = useState('');
 
@@ -151,7 +150,6 @@ export default function Aventure({ id }) {
     </div>
   );
 
-  // Récompenses annoncées
   let gains = '';
   if (a.genre === 'expedition') {
     const base = a.etapes[0]?.xp || 0;
@@ -190,7 +188,6 @@ export default function Aventure({ id }) {
       </div>
       {message && <p className="carte" style={{ margin: '0 0 var(--espace-3)', fontWeight: 700 }}><TexteErreur texte={message} /></p>}
 
-      {/* Expédition et prophétie : on s'inscrit avant de soumettre (l'épopée a sa propre inscription plus bas) */}
       {a.genre !== 'epopee' && !a.inscrit && !terminee && (
         <div className="carte" style={carteEtape}>
           <b>S’inscrire à {a.genre === 'expedition' ? 'l’expédition' : 'la prophétie'}</b>
@@ -200,7 +197,6 @@ export default function Aventure({ id }) {
         </div>
       )}
 
-      {/* Expédition : un seul coloriage */}
       {a.genre === 'expedition' && a.etapes.map((e) => (
         <div key={e.id} className="carte" style={carteEtape}>
           <b>{e.nom}</b>
@@ -213,7 +209,6 @@ export default function Aventure({ id }) {
         </div>
       ))}
 
-      {/* Épopée : inscription, énigme, phase 1, puis le dragon */}
       {a.genre === 'epopee' && (
         <>
           {!a.inscrit ? (
@@ -285,7 +280,6 @@ export default function Aventure({ id }) {
         </>
       )}
 
-      {/* Prophétie : étapes révélées au fil des semaines */}
       {a.genre === 'prophetie' && a.etapes.map((e) => (
         <div key={e.id} className="carte" style={{ ...carteEtape, opacity: e.cache ? 0.75 : 1 }}>
           <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{e.cache && <Lock size={16} aria-hidden="true" />} {e.nom}</b>

@@ -7,8 +7,6 @@ import { TOURNOIS, GENRES_TOURNOI } from '@/lib/activites';
 import { avancerTournois, demarrerTournoi, peutCreerTournoi } from '@/lib/tournois';
 import { verifierLimite } from '@/lib/abonnement';
 
-// Tournois en inscription, en cours, et terminés depuis moins de 30 jours.
-// Pour chaque tournoi : ma participation et mon duo de la ronde en cours (sans le nom de l'adversaire).
 export async function GET() {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -37,7 +35,6 @@ export async function GET() {
   return NextResponse.json({ tournois, creation });
 }
 
-// Actions : creer (sentinelles et admin), annuler, inscrire, desinscrire, soumettre
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -76,7 +73,6 @@ export async function POST(req) {
     const [{ n }] = await sql`SELECT count(*)::int AS n FROM tournoi_inscrits WHERE tournoi_id = ${t.id}`;
     if (n >= TOURNOIS.tailles.at(-1)) return non('Le tournoi est complet', 409);
     await sql`INSERT INTO tournoi_inscrits (tournoi_id, user_id) VALUES (${t.id}, ${moi}) ON CONFLICT DO NOTHING`;
-    // Complet : le tournoi commence tout de suite
     if (n + 1 >= TOURNOIS.tailles.at(-1)) await demarrerTournoi(t.id);
     return NextResponse.json({ ok: true });
   }

@@ -5,10 +5,6 @@ import { estHex, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
 import { ajouterCodes } from '@/lib/palettesServeur';
 import { cleValide } from '@/lib/themesPalettes';
 
-// ?vue=crayons : mes crayons avec leur couleur et leur pack (sets possédés et crayons à l'unité), et la liste de mes packs
-// ?vue=mes : mes palettes
-// ?vue=communaute : palettes partagées par la communauté, les plus aimées en premier
-// Chaque palette donne ses packs de crayons (noms) et les coloriages publiés qui s'en inspirent.
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -49,7 +45,6 @@ export async function GET(req) {
   return NextResponse.json({ palettes: await ajouterCodes(palettes) });
 }
 
-// Couleurs, packs, ambiance et fête d'une palette, vérifiés
 function lirePalette(b) {
   const couleurs = (Array.isArray(b.couleurs) ? b.couleurs : []).filter(estHex).map((c) => c.toUpperCase());
   const packs = [...new Set((Array.isArray(b.packs) ? b.packs : []).map(Number).filter((n) => n > 0))].slice(0, 20);
@@ -59,7 +54,6 @@ function lirePalette(b) {
   };
 }
 
-// Créer une palette ({ nom, couleurs, packs, ambiance, fete, partagee }) ou aimer une palette partagée ({ like: id })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -78,7 +72,6 @@ export async function POST(req) {
   if (couleurs.length < MIN_COULEURS || couleurs.length > MAX_COULEURS) {
     return NextResponse.json({ error: `Une palette a de ${MIN_COULEURS} à ${MAX_COULEURS} couleurs` }, { status: 400 });
   }
-  // Pas deux fois la même palette (mêmes couleurs, dans le même ordre)
   const [deja] = await sql`SELECT 1 FROM palettes WHERE user_id = ${profil.id} AND couleurs = ${couleurs}::text[]`;
   if (deja) return NextResponse.json({ error: 'Tu as déjà enregistré cette palette' }, { status: 409 });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM palettes WHERE user_id = ${profil.id}`;
@@ -88,7 +81,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, id: p.id });
 }
 
-// Modifier une de mes palettes : titre, couleurs, packs, ambiance, fête, partage ({ id, nom?, couleurs?, packs?, ambiance?, fete?, partagee? })
 export async function PUT(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -108,7 +100,6 @@ export async function PUT(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Supprimer une de mes palettes (l'admin et les sentinelles peuvent retirer une palette partagée)
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

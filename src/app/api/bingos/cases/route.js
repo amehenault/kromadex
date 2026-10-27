@@ -4,8 +4,6 @@ import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { prevenir } from '@/lib/push';
 
-// Ajouter un coloriage à une case de bingo ({ bingoId, case, pageId }), ou le retirer ({ bingoId, case } sans coloriage).
-// La case attend ensuite la validation de l'admin ou d'une sentinelle.
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -25,7 +23,6 @@ export async function POST(req) {
   if (!isId(String(pageId))) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
   const [p] = await sql`SELECT 1 FROM pages WHERE id = ${pageId} AND user_id = ${user.id} AND image_b64 IS NOT NULL`;
   if (!p) return NextResponse.json({ error: 'Coloriage introuvable' }, { status: 404 });
-  // Il faut d'abord s'inscrire au bingo (c'est là que la limite de la version gratuite s'applique)
   const [inscrit] = await sql`SELECT 1 FROM bingo_inscriptions WHERE bingo_id = ${b.id} AND user_id = ${user.id}`;
   if (!inscrit) return NextResponse.json({ error: 'Inscris-toi d’abord à ce bingo' }, { status: 403 });
   await sql`INSERT INTO bingo_cases (bingo_id, user_id, case_no, page_id) VALUES (${b.id}, ${user.id}, ${n}, ${pageId})

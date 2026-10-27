@@ -4,14 +4,13 @@ import { Search } from 'lucide-react';
 import Feuille from '@/components/Feuille';
 import IMAGES from '@/lib/manifesteRecompenses.json';
 import { colonne, champ, aide } from './outils';
+import Deroulant from '@/components/Deroulant';
 
-// Types de récompenses (filtre), dans l'ordre d'affichage ; un type sans image l'indique
 const TYPES = [
   'Épreuve mensuelle', 'Épreuve des Sentinelles', 'Épreuve des cheffes', 'Épreuve de groupe', 'Bingo',
   'Duel', 'Joute', 'Tournoi du royaume', 'Combat', 'Expédition', 'Épopée', 'Prophétie',
   'Pionnières', 'Inventaire', 'Autres',
 ];
-// Tailles où les icônes sont affichées dans l'application
 const TAILLES = [
   { px: 40, label: 'Liste (40)' },
   { px: 56, label: 'Profil (56)' },
@@ -20,13 +19,11 @@ const TAILLES = [
 ];
 const ko = (octets) => `${Math.max(1, Math.round(octets / 1024))} Ko`;
 
-// Récompenses : toutes les icônes du jeu (dossiers public/recompenses-activites, pionniers, inventaire),
-// triées par type, avec recherche et filtre, pour vérifier ce qui existe et la taille de chaque icône
 export default function Recompenses() {
   const [recherche, setRecherche] = useState('');
   const [filtre, setFiltre] = useState('');
   const [taille, setTaille] = useState(72);
-  const [ouverte, setOuverte] = useState(null); // image affichée en grand, par-dessus la galerie
+  const [ouverte, setOuverte] = useState(null);
 
   const groupes = useMemo(() => {
     const q = recherche.trim().toLowerCase();
@@ -46,10 +43,8 @@ export default function Recompenses() {
             aria-label="Rechercher une récompense" style={{ margin: 0, flex: 1, minWidth: 0 }} />
         </label>
         <label style={champ}>Type
-          <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
-            <option value="">Tous les types</option>
-            {TYPES.map((t) => <option key={t} value={t}>{t} ({IMAGES.filter((i) => i.type === t).length})</option>)}
-          </select>
+          <Deroulant titre="Type" value={filtre} onChange={(v) => setFiltre(v)}
+            options={[{ valeur: '', label: 'Tous les types' }, ...TYPES.map((t) => ({ valeur: t, label: `${t} (${IMAGES.filter((i) => i.type === t).length})` }))]} />
         </label>
         <div role="group" aria-label="Taille d’affichage" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px' }}>
           {TAILLES.map((t) => (
@@ -73,8 +68,6 @@ export default function Recompenses() {
               {g.images.map((i) => (
                 <button key={i.chemin} type="button" onClick={() => setOuverte(i)} aria-label={`Voir ${i.fichier}`}
                   style={{ all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', minWidth: 0, textAlign: 'center' }}>
-                  {/* Cadre carré de la taille choisie (jamais plus large que la colonne) : l'image y est contenue
-                      sans pouvoir déborder sur le nom du fichier, quelle que soit sa taille d'origine */}
                   <span style={{
                     position: 'relative', display: 'block', flex: '0 0 auto', width: `min(${taille}px, 100%)`, aspectRatio: '1 / 1',
                     overflow: 'hidden', outline: '1px dashed var(--btn-secondaire-bordure)',
@@ -94,7 +87,6 @@ export default function Recompenses() {
       ))}
       {!groupes.length && <p style={aide}>Aucune récompense ne correspond à cette recherche.</p>}
 
-      {/* Image en grand, dans une fenêtre qu'on ferme pour revenir à la galerie (pas de nouvelle page) */}
       {ouverte && (
         <Feuille titre={ouverte.fichier} onFermer={() => setOuverte(null)}>
           <span style={{ position: 'relative', display: 'block', width: 'min(240px, 100%)', aspectRatio: '1 / 1', margin: '0 auto', overflow: 'hidden', outline: '1px dashed var(--btn-secondaire-bordure)' }}>
@@ -104,7 +96,6 @@ export default function Recompenses() {
             {ouverte.type}{ouverte.largeur && ouverte.hauteur ? ` · ${ouverte.largeur} × ${ouverte.hauteur}` : ''} · {ko(ouverte.octets)}
           </small>
           <small style={{ ...aide, overflowWrap: 'anywhere' }}>public{ouverte.chemin}</small>
-          {/* Aperçu aux tailles utilisées dans l'application */}
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
             {TAILLES.map((t) => (
               <span key={t.px} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>

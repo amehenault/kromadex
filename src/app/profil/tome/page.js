@@ -10,7 +10,6 @@ import MotsCles from './motsCles';
 
 export const dynamic = 'force-dynamic';
 
-// Grille d'un tome : une case par coloriage, avec la photo quand la page est faite
 export default async function TomePage({ searchParams }) {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -27,20 +26,17 @@ export default async function TomePage({ searchParams }) {
   ]);
 
   const titre = cat?.nom || nom;
-  // On ne peut ajouter des mots-clefs qu'aux tomes du catalogue qu'on possède
   const possede = cat ? (await sql`SELECT 1 FROM user_tomes WHERE user_id = ${uid} AND tome_id = ${cat.id}`).length > 0 : false;
   const couverture = couv
     ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(couv.updated_at).getTime()}`
     : cat?.couverture || null;
 
-  // Fiche la plus récente pour chaque numéro de page (une double page « 28-29 » occupe les deux cases)
   const parPage = new Map();
   for (const p of pages) {
     for (const n of pagesDuNumero(p.page_no)) if (!parPage.has(n)) parPage.set(n, p);
   }
   const faites = pagesFaites(pages).size;
   const total = cat ? cat.nb_pages : perso?.nb_pages ?? null;
-  // Sans total connu : on affiche jusqu'à la plus grande page faite, arrondi à une rangée complète
   const maxFaite = Math.max(0, ...parPage.keys());
   const nbCases = total || Math.max(20, Math.ceil((maxFaite + 4) / 4) * 4);
   const pct = total ? Math.min(100, Math.round((faites / total) * 100)) : 0;
@@ -55,7 +51,6 @@ export default async function TomePage({ searchParams }) {
         <h2 style={{ margin: 0, fontSize: '1.15rem' }}>{titre}</h2>
       </div>
 
-      {/* En-tête : couverture et progression */}
       <div className="carte" style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: 'var(--espace-3)' }}>
         <div style={{ width: '84px', flex: '0 0 auto', aspectRatio: '3 / 4', borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--carte)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {couverture ? <img src={couverture} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <BookOpen size={28} />}
@@ -77,12 +72,10 @@ export default async function TomePage({ searchParams }) {
         </div>
       </div>
 
-      {/* Grille des pages */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>
         {Array.from({ length: nbCases }, (_, i) => i + 1).map((n) => {
           const p = parPage.get(n);
           const fond = p?.has_image ? `url(/api/pages/${p.id}/image?s=${p.img_size || 0})` : null;
-          // Double page : « 28-29 » écrit sur les deux cases, la photo partagée entre elles (moitié gauche, moitié droite)
           const debut = p ? debutDoublePage(p.page_no) : null;
           const etiquette = debut ? p.page_no.trim() : n;
           const posFond = debut ? `${n === debut ? 'left' : 'right'} center / 200% auto` : 'center / cover';

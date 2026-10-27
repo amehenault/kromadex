@@ -8,9 +8,7 @@ import { cloturerEpreuves } from '@/lib/clotures';
 import { ajouterJours } from '@/lib/temps';
 import { verifierLimite } from '@/lib/abonnement';
 
-// Une épreuve dure un mois moins un jour : les gagnant.es sont annoncé.es le dernier jour du mois
 const veilleFinDuMois = (iso) => ajouterJours(finDuMois(iso), -1);
-// Réglages de la récompense : titre exclusif, image du badge, sceau de la cheffe (1 à 6)
 const reglages = (c) => ({
   titreGagnant: String(c.titre_gagnant || '').trim().slice(0, 60),
   image: String(c.image || '').trim().slice(0, 120),
@@ -20,7 +18,6 @@ const reglages = (c) => ({
 const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
 const aujourdhui = () => jourQuebec();
 
-// Délai de la cheffe : 7 jours après sa nomination pour créer son épreuve (une seule par mandat)
 async function delaiCheffe(userId) {
   const [u] = await sql`
     SELECT COALESCE(cheffe_depuis, cheffe_expires_at - interval '1 month') AS depuis,
@@ -32,14 +29,11 @@ async function delaiCheffe(userId) {
   return { ouvert: Date.now() <= limite.getTime(), deja: !!d, limite: limite.toISOString(), finMandat: u.fin_mandat };
 }
 
-// Épreuves en cours (les épreuves programmées n'apparaissent qu'à leur date de début).
-// ?gestion=1 : toutes les épreuves officielles, de modo et de cheffe (espace admin)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   const gestion = new URL(req.url).searchParams.get('gestion') === '1';
   await cloturerEpreuves();
-  // Les épreuves d'un type que la personne ne fait pas ou ne veut pas voir sont cachées
   const visibles = await mesTypesVisibles(profil.id);
   const defis = await sql`
     SELECT d.id, d.genre, d.categorie, to_char(d.mois, 'YYYY-MM-DD') AS mois, d.titre, d.description,
@@ -72,12 +66,6 @@ export async function GET(req) {
   return NextResponse.json({ defis, moisActuel: premierDuMois(0), moisProchain: premierDuMois(1), aujourdhui: aujourdhui(), cheffe });
 }
 
-// Créer ou modifier une épreuve.
-//  officiel : l'admin seulement, programmable (dates de début et de fin libres), une par mois
-//  modo : une par modo et par mois ; commence le 1er du mois prochain,
-//         ou aujourd'hui si on est dans les 7 premiers jours du mois et qu'on le demande (depart: 'maintenant')
-//  cheffe : une par mandat, dans les 7 jours qui suivent la nomination ; commence le jour même
-//  groupe : n'importe quel membre, une par mois ; commence le jour même
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -93,7 +81,6 @@ export async function POST(req) {
   if (genre === 'groupe') {
     const fin = date(c.fin);
     if (!fin || fin < ajd) return NextResponse.json({ error: 'Choisis une date de fin à partir d’aujourd’hui' }, { status: 400 });
-    // Objectif : nombre de coloriages pour réussir l'épreuve à 100 %
     const objectif = parseInt(c.objectif, 10);
     if (!(objectif >= 1 && objectif <= 10000)) return NextResponse.json({ error: 'Indique l’objectif : combien de coloriages en tout pour réussir l’épreuve' }, { status: 400 });
     const multiple = c.multiple === true;
@@ -109,12 +96,10 @@ export async function POST(req) {
     const cree = await sql`INSERT INTO defis (genre, mois, titre, description, categorie, debut, fin, choisi_par, objectif, multiple)
       VALUES ('groupe', date_trunc('month', ${ajd}::date), ${titre}, ${description}, ${categorie}, ${ajd}, ${fin}, ${profil.id}, ${objectif}, ${multiple})
       RETURNING id`;
-    // La personne qui crée l'épreuve y participe d'office
     await sql`INSERT INTO defi_participations (defi_id, user_id) VALUES (${cree[0].id}, ${profil.id}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true, id: cree[0].id });
   }
 
-  // Sentinelle et ménestrelle : une épreuve par mois chacune, même fonctionnement
   if (genre === 'modo' || genre === 'menestrel') {
     if (profil.role !== genre) return NextResponse.json({ error: genre === 'modo' ? 'Réservé aux sentinelles' : 'Réservé aux ménestrelles' }, { status: 403 });
     const premiersJours = Number(ajd.slice(8, 10)) <= 7;
@@ -135,8 +120,6 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, debut });
   }
 
-  // Épreuve de cheffe : une par mandat, à créer dans les 7 jours qui suivent la nomination
-  // (sinon le privilège est perdu). Elle commence le jour même et dure jusqu'à la fin du mandat.
   if (genre === 'cheffe') {
     if (profil.role !== 'cheffe') return NextResponse.json({ error: 'Réservé aux cheffes' }, { status: 403 });
     const delai = await delaiCheffe(profil.id);
@@ -158,7 +141,6 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, debut: ajd });
   }
 
-  // Épreuve officielle : l'admin choisit les dates (programmable)
   if (profil.role !== 'admin') return NextResponse.json({ error: 'Réservé à l’admin' }, { status: 403 });
   const debut = date(c.debut);
   if (!debut) return NextResponse.json({ error: 'Choisis la date de début' }, { status: 400 });
@@ -180,7 +162,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Supprimer : l'admin peut tout supprimer, chacun peut supprimer son épreuve de modo, de cheffe ou de groupe
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

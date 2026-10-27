@@ -4,12 +4,8 @@ import { BarChart3, Check } from 'lucide-react';
 import { TempsRestant } from './Fuseau';
 import TexteErreur from './TexteErreur';
 
-// Résultats rafraîchis toutes les 15 secondes tant que le sondage est ouvert
 const RAFRAICHIR_MS = 15000;
 
-// Sondage d'une missive : les résultats (nombre de votes et pourcentage de chaque réponse) se voient en direct,
-// même avant de voter et avant la fin. On peut changer son vote tant que le sondage est ouvert.
-// lectureSeule : résultats seulement (Espace de l'Invocatrice).
 export default function Sondage({ missiveId, sondage: initial, lectureSeule = false, onVote }) {
   const [sondage, setSondage] = useState(initial);
   const [choix, setChoix] = useState(initial.mes_votes || []);
@@ -20,11 +16,9 @@ export default function Sondage({ missiveId, sondage: initial, lectureSeule = fa
   const aVote = (sondage.mes_votes || []).length > 0;
   const peutVoter = !lectureSeule && sondage.ouvert && (!aVote || modifier);
   const nombre = (i) => (sondage.votes || []).find((v) => v.option === i)?.n || 0;
-  // Pourcentage des personnes qui ont voté (avec plusieurs réponses permises, le total peut dépasser 100 %)
   const votants = sondage.votants || 0;
   const pourcent = (i) => (votants ? Math.round((nombre(i) / votants) * 100) : 0);
 
-  // Résultats en direct : on recharge le sondage tant qu'il est ouvert et que la page est visible
   useEffect(() => {
     if (!sondage.ouvert) return;
     const recharger = () => {
@@ -33,7 +27,6 @@ export default function Sondage({ missiveId, sondage: initial, lectureSeule = fa
         .then((d) => d?.sondage && setSondage(d.sondage)).catch(() => {});
     };
     const minuterie = setInterval(recharger, RAFRAICHIR_MS);
-    // À la fin prévue, on recharge tout de suite pour afficher « sondage terminé »
     const reste = sondage.fin ? new Date(sondage.fin).getTime() - Date.now() : null;
     const fin = reste !== null && reste < 2147483647 ? setTimeout(recharger, Math.max(reste, 0) + 1000) : null;
     return () => { clearInterval(minuterie); if (fin) clearTimeout(fin); };
@@ -49,7 +42,6 @@ export default function Sondage({ missiveId, sondage: initial, lectureSeule = fa
     const r = await fetch('/api/missives', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vote: missiveId, options: choix }) });
     setEnvoi(false);
     if (!r.ok) { setErreur((await r.json().catch(() => ({}))).error || 'Erreur, réessaie.'); return; }
-    // Résultats mis à jour sur place : on retire mes anciens votes et on ajoute les nouveaux
     const anciens = new Set(sondage.mes_votes || []);
     const votes = sondage.options.map((_, i) => ({ option: i, n: nombre(i) - (anciens.has(i) ? 1 : 0) + (choix.includes(i) ? 1 : 0) })).filter((v) => v.n > 0);
     setSondage({ ...sondage, votes, mes_votes: [...choix], votants: votants + (aVote ? 0 : 1) });
@@ -70,7 +62,6 @@ export default function Sondage({ missiveId, sondage: initial, lectureSeule = fa
         const n = nombre(i);
         const mien = (sondage.mes_votes || []).includes(i);
         const coche = choix.includes(i);
-        // Barre de résultat derrière chaque réponse, qu'on puisse voter ou non
         const barre = <span aria-hidden="true" style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: 'var(--btn-secondaire-bordure)', opacity: 0.55 }} />;
         const resultat = (
           <span style={{ flex: '0 0 auto', textAlign: 'right', lineHeight: 1.15 }}>

@@ -8,8 +8,6 @@ import MesTomes from '../mesTomes';
 
 export const dynamic = 'force-dynamic';
 
-// Collections > Tomes et livres > Ma collection : tomes (coloriage mystère) et livres (Cozy colo) séparés, commencés puis non commencés.
-// Un tome perso ou d'un autre type va avec les tomes, sauf pour une personne qui ne voit que le Cozy colo.
 export default async function ProgressionPage() {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -29,7 +27,6 @@ export default async function ProgressionPage() {
 
   return (
     <div className="contenu">
-      {/* Collections : onglet Tomes et livres, sous-onglet Ma collection */}
       <OngletsCollections actif="collection" visibles={visibles} />
       {groupes.length ? groupes.map((g) => (
         <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>

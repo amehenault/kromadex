@@ -1,4 +1,3 @@
--- Contenu signalé par un membre (règles d'utilisation) : coloriage publié, commentaire, commentaire de missive ou profil
 create table if not exists signalements (
   id serial primary key,
   genre text not null check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre')),

@@ -6,14 +6,13 @@ export async function readForm(req) {
   const f = await req.formData();
   let groupes = [];
   try { groupes = JSON.parse(f.get('codes') || '[]'); } catch {}
-  // codes = liste de sous-catégories, chacune avec ses lignes (symbole + numéro de crayon)
   groupes = (Array.isArray(groupes) ? groupes : []).slice(0, 40).map((g) => ({
     id: txt(g.id, 40), 
     name: txt(g.name, 60),
     rows: (Array.isArray(g.rows) ? g.rows : []).slice(0, 80).map((r) => ({ 
       id: txt(r.id, 40), 
       sym: txt(r.sym, 30), 
-      num: txt(r.num, 60) // <-- Porté de 10 à 60 caractères
+      num: txt(r.num, 60)
     })),
   }));
   const data = {
@@ -35,7 +34,6 @@ export async function readForm(req) {
   return { data, image };
 }
 
-// Publication dans la communauté : publiee ('1' ou '0') et type de coloriage
 const TYPES = ['mystere', 'cozy', 'autre'];
 export function lirePublication(f) {
   const type = String(f.get('type_coloriage') || '');
@@ -43,7 +41,6 @@ export function lirePublication(f) {
   return { publiee, type: TYPES.includes(type) ? type : '' };
 }
 
-// Palette dont s'inspire un coloriage (palette_id) : la sienne ou une palette partagée, sinon aucune
 export async function lirePalette(f, userId) {
   const { sql } = await import('@/lib/db');
   const id = parseInt(f.get('palette_id'), 10);

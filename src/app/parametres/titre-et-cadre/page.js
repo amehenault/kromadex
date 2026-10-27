@@ -8,7 +8,6 @@ import { PageParametres, TitreEtCadre } from '../parametres';
 
 export const dynamic = 'force-dynamic';
 
-// Paramètres > Titre et cadre affichés : un titre de niveau déjà atteint (du premier à l'actuel) ou un titre spécial
 export default async function TitreEtCadrePage() {
   const user = await getUser();
   if (!user) redirect('/login');

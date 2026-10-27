@@ -4,7 +4,6 @@ import { getUser, hashPassword, verifyPassword } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Changer son courriel et/ou son mot de passe (mot de passe actuel exigé)
 export async function POST(req) {
   try {
     const user = await getUser();

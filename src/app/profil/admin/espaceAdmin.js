@@ -18,7 +18,6 @@ import KromadexPlus from './kromadexPlus';
 import Lancement from './lancement';
 import Recompenses from './recompenses';
 
-// Ordre d'affichage : de gauche à droite, puis de haut en bas (3 par rangée)
 const ONGLETS = [
   { cle: 'demandes', label: 'Demandes', icone: Inbox, roles: ['admin'] },
   { cle: 'signalements', label: 'Contenu signalé', icone: Flag, roles: ['admin', 'modo'] },
@@ -41,16 +40,12 @@ export default function EspaceAdmin({ role, monId }) {
   const onglets = ONGLETS.filter((o) => o.roles.includes(role));
   const [actif, setActif] = useState(onglets[0]?.cle);
 
-  // L'espace s'ouvre toujours en haut de la page (et non à la hauteur où on était dans le profil)
-  // Lien direct vers un onglet (ex. depuis Activités à venir : /profil/admin?onglet=aventures)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const o = new URLSearchParams(window.location.search).get('onglet');
     if (onglets.some((x) => x.cle === o)) setActif(o);
   }, []);
 
-  // Points rouges des onglets : demandes nouvelles, contenus et mots-clefs signalés, cases de bingo à valider,
-  // missives à approuver et nouvelles inscriptions (rechargés après chaque action qui envoie l'événement « kromadex-lu »)
   const [aTraiter, setATraiter] = useState({});
   useEffect(() => {
     const verifier = () => fetch('/api/notifications').then((r) => (r.ok ? r.json() : null))
@@ -65,7 +60,6 @@ export default function EspaceAdmin({ role, monId }) {
 
   return (
     <>
-      {/* Onglets : tous visibles d'un coup, 3 par rangée ; les mots passent à la ligne entiers, jamais coupés */}
       {onglets.length > 1 && (
         <div style={{
           display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, onglets.length)}, minmax(0, 1fr))`, gap: '6px',

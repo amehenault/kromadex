@@ -6,7 +6,6 @@ import { PageParametres } from './parametres';
 
 export const dynamic = 'force-dynamic';
 
-// Paramètres : un menu simple, chaque entrée ouvre sa propre page
 const ENTREES = [
   { href: '/parametres/notifications', label: 'Notifications', icone: Bell },
   { href: '/parametres/titre-et-cadre', label: 'Titre et cadre affichés', icone: Frame },

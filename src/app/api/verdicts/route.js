@@ -6,7 +6,6 @@ import { avancerCombats } from '@/lib/combats';
 import { avancerTournois } from '@/lib/tournois';
 import { verdictsARendre } from '@/lib/verdictsARendre';
 
-// Met l'activité à jour avant de la montrer (fin du verdict, clôture)
 async function avancer(activite) {
   const a = lireActivite(activite);
   if (a?.genre === 'epreuve') await cloturerEpreuves();
@@ -14,12 +13,10 @@ async function avancer(activite) {
   else if (a?.genre === 'match') await avancerTournois();
 }
 
-// ?activite=epreuve:12 : coloriages en lice (anonymes), mon verdict et le nombre de membres qui ont voté
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const q = new URL(req.url).searchParams;
-  // ?a_rendre=1 : toutes les activités où je peux rendre un verdict (écran « Verdicts à rendre »)
   if (q.get('a_rendre')) return NextResponse.json({ activites: await verdictsARendre(user.id) });
   const activite = q.get('activite');
   await avancer(activite);
@@ -28,7 +25,6 @@ export async function GET(req) {
   return NextResponse.json(vue);
 }
 
-// Rendre son verdict ({ activite, pageId }), ou le changer une seule fois
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

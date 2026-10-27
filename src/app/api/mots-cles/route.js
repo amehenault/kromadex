@@ -8,9 +8,6 @@ import { cleMot } from '@/lib/cleMot';
 const RAISONS = ['repetition', 'faux', 'inapproprie'];
 const propre = (m) => String(m || '').trim().replace(/\s+/g, ' ').slice(0, 40);
 
-// ?tome=id : mots-clefs d'un tome (sans dire qui les a ajoutés : seule l'Invocatrice le voit, dans ?gestion=1)
-// ?q=texte : recherche de tomes et livres par nom ou par mot-clef (barre de recherche)
-// ?gestion=1 : tous les mots-clefs, les plus signalés en premier (admin et sentinelles)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -27,7 +24,6 @@ export async function GET(req) {
     return NextResponse.json({ mots });
   }
 
-  // ?nom=Nom du tome : ses mots-clefs partagés, retrouvés par le nom (nouveau coloriage pas encore enregistré)
   if (p.get('nom')) {
     const [t] = await sql`SELECT id FROM tome_catalog WHERE lower(nom) = lower(${String(p.get('nom')).slice(0, 120)}) LIMIT 1`;
     if (!t) return NextResponse.json({ tome: null, mots: [] });
@@ -63,7 +59,6 @@ export async function GET(req) {
   return NextResponse.json({ resultats });
 }
 
-// Ajouter un mot-clef à un tome qu'on possède ({ tomeId, mot, pageNo? }), ou signaler un mot-clef ({ signaler, raison })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -81,7 +76,6 @@ export async function POST(req) {
   if (mot.length < 2) return NextResponse.json({ error: 'Le mot-clef doit contenir au moins 2 caractères' }, { status: 400 });
   const pageNo = String(b.pageNo || '').trim().slice(0, 10);
   if (pageNo && !/^\d+$/.test(pageNo)) return NextResponse.json({ error: 'Le numéro de page doit être un nombre' }, { status: 400 });
-  // Permis si on possède le tome, ou si on a déjà un coloriage de ce tome
   const [possede] = await sql`
     SELECT 1 FROM user_tomes WHERE user_id = ${String(profil.id)} AND tome_id = ${Number(b.tomeId)}
     UNION SELECT 1 FROM pages p JOIN tome_catalog c ON lower(c.nom) = lower(p.tome)
@@ -89,7 +83,6 @@ export async function POST(req) {
   if (!possede) return NextResponse.json({ error: 'Tu peux ajouter des mots-clefs aux tomes que tu possèdes ou que tu as déjà coloriés' }, { status: 403 });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM mots_cles WHERE user_id = ${profil.id} AND cree_le > now() - interval '1 day'`;
   if (n >= 50) return NextResponse.json({ error: 'Tu as déjà ajouté 50 mots-clefs aujourd’hui' }, { status: 429 });
-  // Même mot déjà sur cette page, ajouté par n'importe qui (Lapin = lapin = Lapins) : on garde le premier
   const cle = cleMot(mot);
   const [existant] = await sql`SELECT mot FROM mots_cles WHERE tome_id = ${Number(b.tomeId)} AND page_no = ${pageNo} AND cle = ${cle}`;
   if (existant) return NextResponse.json({ error: `« ${existant.mot} » est déjà un mot-clef de cette page` }, { status: 409 });
@@ -99,29 +92,24 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Admin et sentinelles : modifier un mot-clef ({ id, mot })
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
   const { id, mot, garder } = await req.json().catch(() => ({}));
-  // Mot-clef signalé mais correct ({ id, garder: true }) : ses signalements sont effacés (le point rouge disparaît)
   if (garder) {
     await sql`DELETE FROM mot_cle_signalements WHERE mot_cle_id = ${Number(id)}`;
     return NextResponse.json({ ok: true });
   }
   const m = propre(mot);
   if (m.length < 2) return NextResponse.json({ error: 'Mot-clef trop court' }, { status: 400 });
-  // La nouvelle écriture ne doit pas devenir le doublon d'un autre mot-clef de la même page
   const dejaLa = await sql`SELECT 1 FROM mots_cles a JOIN mots_cles b ON b.tome_id = a.tome_id AND b.page_no = a.page_no AND b.id <> a.id
     WHERE a.id = ${Number(id)} AND b.cle = ${cleMot(m)}`;
   if (dejaLa.length) return NextResponse.json({ error: 'Ce mot-clef existe déjà pour cette page' }, { status: 409 });
   await sql`UPDATE mots_cles SET mot = ${m}, cle = ${cleMot(m)} WHERE id = ${Number(id)}`;
-  // Les signalements portaient sur l'ancien mot : on repart de zéro
   await sql`DELETE FROM mot_cle_signalements WHERE mot_cle_id = ${Number(id)}`;
   return NextResponse.json({ ok: true });
 }
 
-// Supprimer : son propre mot-clef, ou n'importe lequel pour l'admin et les sentinelles
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

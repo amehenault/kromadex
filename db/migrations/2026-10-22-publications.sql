@@ -1,4 +1,3 @@
--- Communauté : publications « Question » (texte et images) et « Coloriage en cours » (photo du téléphone ou coloriage existant)
 create table if not exists publications (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
@@ -8,7 +7,6 @@ create table if not exists publications (
   cree_le timestamptz not null default now()
 );
 create index if not exists publications_genre_date on publications (genre, cree_le desc);
--- Images d'une publication (jusqu'à 4), vérifiées et réencodées
 create table if not exists publication_images (
   publication_id int not null references publications(id) on delete cascade,
   no int not null,
@@ -30,7 +28,6 @@ create table if not exists publication_commentaires (
   cree_le timestamptz not null default now()
 );
 create index if not exists publication_commentaires_pub on publication_commentaires (publication_id);
--- Signalements : publications et leurs commentaires aussi
 alter table signalements drop constraint if exists signalements_genre_check;
 alter table signalements add constraint signalements_genre_check
   check (genre in ('coloriage', 'commentaire', 'commentaire_missive', 'membre', 'publication', 'commentaire_publication'))

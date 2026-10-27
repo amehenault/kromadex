@@ -5,13 +5,10 @@ import { RECOMPENSES, imageRecompense, nomRecompense } from '@/lib/recompenses';
 
 const ICONES = { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText };
 
-// Image d'une récompense (dossier public/recompenses-activites), ou son icône tant que l'image n'existe pas
-// carre : icône carrée seule, sans rond, sans contour ni fond (objets de l'inventaire)
 export function IconeRecompense({ r, taille = 40, carre = false }) {
   const [rate, setRate] = useState(false);
   const img = useRef(null);
   const src = imageRecompense(r);
-  // L'image peut avoir échoué avant que la page soit interactive : on vérifie au montage
   useEffect(() => { const i = img.current; if (i && i.complete && !i.naturalWidth) setRate(true); }, [src]);
   const Icone = ICONES[RECOMPENSES[r.genre]?.icone] || Gift;
   return (
@@ -26,7 +23,6 @@ export function IconeRecompense({ r, taille = 40, carre = false }) {
   );
 }
 
-// Icône d'une récompense avec la quantité gagnée dans un rond corail (même 1) ; jamais pour le badge de Pionnière
 export function IconeQuantite({ r, nombre = 1, taille = 40 }) {
   return (
     <span style={{ position: 'relative', display: 'inline-flex', flex: '0 0 auto' }}>
@@ -42,7 +38,6 @@ export function IconeQuantite({ r, nombre = 1, taille = 40 }) {
   );
 }
 
-// Une récompense avec son nom (« 2 sceaux de @marie »)
 export function LigneRecompense({ r, nombre = 1, taille = 40 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>

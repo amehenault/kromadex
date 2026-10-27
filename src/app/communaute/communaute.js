@@ -7,8 +7,6 @@ import Publications from './publications';
 import Termines from './termines';
 import CodesCouleurs from './codesCouleurs';
 
-// Communauté en 4 sections (fil d'actualités, questions, coloriages en cours, coloriages terminés),
-// plus la recherche de codes couleurs. On publie directement depuis chaque section (les missives ont leur page).
 const ONGLETS = [
   ['fil', 'Fil d’actualités', Newspaper],
   ['questions', 'Questions', HelpCircle],
@@ -31,7 +29,6 @@ export default function Communaute({ monId, integre }) {
         </div>
       )}
 
-      {/* Sections : 3 par rangée, les mots passent à la ligne entiers */}
       <div role="tablist" aria-label="Communauté" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px', marginBottom: 'var(--espace-3)' }}>
         {ONGLETS.map(([cle, label, Icone]) => (
           <button key={cle} type="button" role="tab" aria-selected={onglet === cle} onClick={() => setOnglet(cle)} className={onglet === cle ? 'btn' : 'btn alt'}

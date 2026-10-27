@@ -2,12 +2,10 @@
 import { useState } from 'react';
 import { LETTRES, CHIFFRES, SYMBOLES } from '@/lib/symboles';
 
-// Affiche une lettre, un chiffre ou un symbole (les symboles sont enregistrés sous la forme s:identifiant)
 export function Glyph({ v }) {
   if (!v) return <span className="glyphe vide">?</span>;
   if (v.startsWith('s:')) {
     const s = SYMBOLES.find((x) => x.id === v.slice(2));
-    // Affiche le texte directement dans un span au lieu du SVG
     return s ? <span className="glyphe symbole" aria-label={s.nom}>{s.d}</span> : null;
   }
   return <span className="glyphe">{v}</span>;

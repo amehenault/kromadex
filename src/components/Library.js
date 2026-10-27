@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { compresserImage } from '@/lib/compressionImage';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ImagePlus, BookOpen, ArrowLeft, StickyNote } from 'lucide-react';
+import Deroulant from './Deroulant';
 
 export default function Library({ pages = [] }) {
   const [q, setQ] = useState('');
@@ -58,7 +59,6 @@ export default function Library({ pages = [] }) {
       const titreMatch = (p.title || p.titre || '').toString().toLowerCase().includes(terme);
       if (titreMatch) return true;
       if ((p.memo || '').toLowerCase().includes(terme)) return true;
-      // Mots-clefs du coloriage (perso et partagés) et nom du tome
       if ((p.mots || []).some((m) => m.toLowerCase().includes(terme))) return true;
       if ((p.tome || '').toLowerCase().includes(terme)) return true;
 
@@ -81,7 +81,6 @@ export default function Library({ pages = [] }) {
 
     const fd = new FormData();
     fd.append('tome', tomeEnEdition);
-    // Photo réduite dans le navigateur avant l'envoi (le serveur revérifie et limite de son côté)
     fd.append('image', await compresserImage(file, 1200), 'couverture.jpg');
 
     const res = await fetch('/api/tomes/cover', {
@@ -118,17 +117,9 @@ export default function Library({ pages = [] }) {
           style={{ flex: 1, minWidth: '220px' }}
         />
 
-        <select 
-          value={modeVue} 
-          onChange={(e) => {
-            setModeVue(e.target.value);
-            setTomeSelectionne(null);
-          }}
-          style={{ padding: '8px 12px', borderRadius: '8px', cursor: 'pointer' }}
-        >
-          <option value="toutes">Voir toutes les pages</option>
-          <option value="tomes">Voir les tomes</option>
-        </select>
+        <Deroulant titre="Affichage" value={modeVue} onChange={(v) => { setModeVue(v); setTomeSelectionne(null); }}
+          style={{ flex: '1 1 200px', width: 'auto', margin: 0 }}
+          options={[{ valeur: 'toutes', label: 'Voir toutes les pages' }, { valeur: 'tomes', label: 'Voir les tomes' }]} />
       </div>
 
       {modeVue === 'tomes' && !tomeSelectionne && (
@@ -272,7 +263,6 @@ export default function Library({ pages = [] }) {
         </p>
       )}
 
-      {/* L'ajout d'un coloriage se fait avec le bouton + du menu du bas */}
     </>
   );
 }

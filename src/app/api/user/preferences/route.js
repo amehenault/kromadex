@@ -5,7 +5,6 @@ import { VALEURS_TYPES, typesVisibles } from '@/lib/typesColoriage';
 
 export const dynamic = 'force-dynamic';
 
-// « Je fais du… » (types_pratiques) et « Je veux voir les… » (types_vus)
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

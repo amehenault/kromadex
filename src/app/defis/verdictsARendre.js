@@ -10,8 +10,6 @@ const NOMS_EPREUVES = { officiel: 'Épreuve du mois', modo: 'Épreuve des Sentin
 const nom = (a) => a.genre === 'epreuve' ? NOMS_EPREUVES[a.sorte] || 'Épreuve'
   : a.genre === 'combat' ? (a.sorte === 'duel' ? 'Duel' : 'Joute') : `Tournoi · ${a.sorte}`;
 
-// Verdicts à rendre : tous les coloriages qui attendent le verdict de l'Assemblée (épreuves, combats, tournois).
-// Une fois le verdict rendu, l'activité quitte « À voter » ; le filtre permet de revoir les verdicts donnés.
 export default function VerdictsARendre({ onNombre }) {
   const [activites, setActivites] = useState(null);
   const [filtre, setFiltre] = useState('a_voter');

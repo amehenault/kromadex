@@ -1,8 +1,6 @@
 'use client';
 import { useLayoutEffect, useRef, useState } from 'react';
 
-// Texte toujours sur une seule ligne : la taille diminue (jusqu'à min) pour qu'il tienne dans la largeur disponible,
-// au lieu de passer à la ligne. Recalculé quand le texte ou la largeur change (rotation du téléphone, etc.).
 export default function TexteAjuste({ children, taille = 1, min = 0.6, style }) {
   const boite = useRef(null);
   const [rem, setRem] = useState(taille);

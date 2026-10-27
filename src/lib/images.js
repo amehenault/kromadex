@@ -1,13 +1,9 @@
 import sharp from 'sharp';
 
-// Images envoyées par les membres (coloriages, couvertures de tomes, photos de profil).
-// Le contenu réel est vérifié (premiers octets, puis décodage complet), jamais l'extension ni le type annoncé.
-// Toute image acceptée est décodée puis réencodée en WebP : un fichier piégé (HTML, SVG, script caché)
-// ne survit pas au réencodage, et les métadonnées (position GPS des photos) sont retirées.
 
-export const POIDS_MAX = 4 * 1024 * 1024;   // 4 Mo reçus au maximum (l'interface compresse avant l'envoi)
-export const COTE_MAX_ENTREE = 10000;        // largeur ou hauteur maximale de l'image reçue
-export const PIXELS_MAX = 40_000_000;        // 40 mégapixels : au-delà, le décodage coûte trop cher (bombe de décompression)
+export const POIDS_MAX = 4 * 1024 * 1024;
+export const COTE_MAX_ENTREE = 10000;
+export const PIXELS_MAX = 40_000_000;
 
 export const COTE = { coloriage: 2400, couverture: 1200, avatar: 512 };
 
@@ -15,7 +11,6 @@ export class ErreurImage extends Error {
   constructor(message, status = 400) { super(message); this.status = status; }
 }
 
-// Format réel d'après les premiers octets : jpeg, png, webp, sinon null
 export function formatReel(buf) {
   if (!buf || buf.length < 12) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpeg';
@@ -24,8 +19,6 @@ export function formatReel(buf) {
   return null;
 }
 
-// Vérifie, décode et réencode une image ; renvoie { buffer, b64, type }.
-// Lance une ErreurImage (avec son code HTTP) si l'image est refusée.
 export async function traiterImage(buf, { coteMax = COTE.coloriage, qualite = 82 } = {}) {
   if (!buf?.length) throw new ErreurImage('Image vide.');
   if (buf.length > POIDS_MAX) throw new ErreurImage('Image trop lourde : 4 Mo maximum.', 413);
@@ -45,7 +38,7 @@ export async function traiterImage(buf, { coteMax = COTE.coloriage, qualite = 82
   let sortie;
   try {
     sortie = await sharp(buf, options)
-      .rotate() // applique l'orientation de l'appareil photo avant de retirer les métadonnées
+      .rotate()
       .resize({ width: coteMax, height: coteMax, fit: 'inside', withoutEnlargement: true })
       .webp({ quality: qualite })
       .toBuffer();
@@ -55,16 +48,12 @@ export async function traiterImage(buf, { coteMax = COTE.coloriage, qualite = 82
   return { buffer: sortie, b64: sortie.toString('base64'), type: 'image/webp' };
 }
 
-// Lit le fichier d'un formulaire et le traite ; null si aucun fichier n'est envoyé
 export async function imageDuFormulaire(fichier, options) {
   if (!fichier || typeof fichier !== 'object' || !fichier.size) return null;
   if (fichier.size > POIDS_MAX) throw new ErreurImage('Image trop lourde : 4 Mo maximum.', 413);
   return traiterImage(Buffer.from(await fichier.arrayBuffer()), options);
 }
 
-// En-têtes pour servir une image enregistrée. Le type vient du contenu réel, jamais de la base :
-// un fichier ancien qui n'est pas une vraie image n'est pas servi (null).
-// Le CSP « sandbox » empêche tout script même si le fichier était ouvert directement.
 export function enTetesImage(buf, cache) {
   const format = formatReel(buf);
   if (!format) return null;
@@ -77,5 +66,4 @@ export function enTetesImage(buf, cache) {
   };
 }
 
-// Réponse d'erreur pour une image refusée
 export const reponseErreurImage = (e) => Response.json({ error: e.message }, { status: e.status || 400 });

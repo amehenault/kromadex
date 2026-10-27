@@ -57,26 +57,18 @@ export default async function ProfilPage() {
 
   if (!authUser) redirect('/login');
 
-  // Quêtes : les XP des quêtes terminées sont donnés ici aussi (avant de lire le profil),
-  // puis on garde les 2 quêtes non terminées les plus avancées (en pourcentage, puis le moins de reste)
   const { liste: quetes } = await verifierQuetes(authUser.id);
-  // Quêtes du Destin (Roue du Destin) en cours
   const destin = await quetesDestin(authUser.id);
 
   const profile = await getUserProfile(authUser.id);
-  // Pastilles : missives non lues, sondages terminés pas encore vus et réponses de l'Invocatrice pas encore vues
   const nonLus = await aLire(authUser.id);
 
-  // Récompenses des activités ; une relique complète donne un cadre de profil exclusif
   await parcheminDuMois(authUser.id);
   const recompenses = await recompensesDe(authUser.id);
-  // Cadre de profil : celui choisi dans Paramètres parmi ceux débloqués (relique complétée, Pionnière ou Pionnier)
   const debloques = cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: profile?.pionnier, role: profile?.role });
   const cadre = cadreAffiche(profile?.cadre, debloques);
-  // Invocatrice : activités à planifier (le rappel revient chaque jour tant qu'elles ne le sont pas)
   const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
-  // Nombre de tomes et livres (la progression détaillée est dans la page Ma progression)
   const mesTomes = await listerMesTomes(authUser.id);
   const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
   const voitMystere = visibles.includes('mystere');
@@ -88,7 +80,6 @@ export default async function ProfilPage() {
 
   const xpActuel = profile?.xp || 0;
   const niv = progressionNiveau(xpActuel);
-  // Nom affiché : seulement celui choisi par la personne (le pseudo s'affiche à part, juste en dessous)
   const nomAffiche = profile?.name || '';
   const pseudoAffiche = profile?.pseudo;
   const role = profile?.role || 'coloriste';
@@ -150,7 +141,6 @@ export default async function ProfilPage() {
         </Link>
       </div>
 
-      {/* Mémo de l'Invocatrice : activités à planifier */}
       {rappels.length > 0 && (
         <Link href="/activites-a-venir" className="carte"
           style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: 'var(--espace-3)', border: '2px solid var(--danger)', color: 'inherit', textDecoration: 'none' }}>
@@ -162,20 +152,17 @@ export default async function ProfilPage() {
         </Link>
       )}
 
-      {/* En-tête : nom et pseudo en entier au-dessus, puis la photo avec le titre et le lien du profil à sa droite */}
       <div
         className="carte profil-identite"
         style={{ marginBottom: 'var(--espace-3)' }}
       >
         <div style={{ minWidth: 0, marginBottom: '6px' }}>
-          {/* Nom au-dessus du pseudo, sur une seule ligne ; caché s'il est identique au pseudo (pas de doublon) */}
           {nomAffiche && !memeQuePseudo(nomAffiche, pseudoAffiche) && (
             <b style={{ display: 'block' }}>
               <TexteAjuste taille={1.15}>{nomAffiche}</TexteAjuste>
             </b>
           )}
 
-          {/* Pseudo dans la couleur du poste, modifiable à tout moment */}
           <ModifierPseudo pseudo={pseudoAffiche || ''} role={role} />
         </div>
 
@@ -186,7 +173,6 @@ export default async function ProfilPage() {
             flex: '0 0 auto',
           }}
         >
-          {/* Photo dans son cadre (anneau ou cadre illustré de Pionnière et Pionnier) ; la toucher permet de changer la photo et le cadre */}
           <PhotoEtCadre cadres={debloques} cadre={profile?.cadre} genre={profile?.genre}>
           <PhotoCadre cadre={cadre} taille={72}>
             {(t) => (
@@ -226,7 +212,6 @@ export default async function ProfilPage() {
           <span
             style={{
               position: 'absolute',
-              // Sous un cadre illustré, la pastille descend sous le cadre pour ne pas cacher l'ornement du bas
               bottom: CADRES[cadre]?.image ? '-14px' : '-6px',
               left: '50%',
               transform: 'translateX(-50%)',
@@ -244,7 +229,6 @@ export default async function ProfilPage() {
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
-          {/* Rôle dans la couleur du poste, affiché pour tout le monde (coloristes compris) */}
           <small
             style={{
               display: 'flex',
@@ -256,13 +240,12 @@ export default async function ProfilPage() {
           >
             <BadgeCheck size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
             <span style={{ minWidth: 0 }}>
-              Rôle : {/* Pionnière ou Pionnier s'ajoute au poste (l'Invocatrice garde seulement son titre) */}
+              Rôle :
               {profile?.pionnier && role !== 'admin' && <>{nomPionnier(profile?.genre)} · </>}
               {nomPoste(role, profile?.genre)}
             </span>
           </small>
 
-          {/* Titre du niveau, accordé selon le genre ; on le touche pour voir tous les titres */}
           <Link
             href="/titres"
             style={{
@@ -280,11 +263,9 @@ export default async function ProfilPage() {
               aria-hidden="true"
               style={{ flexShrink: 0 }}
             />
-            {/* Un seul titre : celui choisi dans Paramètres (titre spécial ou d'un niveau atteint), sinon celui du niveau */}
             {titreAffiche(profile?.title, niv.niveau, profile?.genre)}
           </Link>
 
-          {/* Kromadex+ offert par l'Invocatrice : jusqu'à quand */}
           {role !== 'admin' && offertActif(profile) && (
             <small style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px', fontWeight: 600 }}>
               <img src="/kromadex-plus.svg" alt="Kromadex+" style={{ height: '14px', width: 'auto' }} />
@@ -296,7 +277,6 @@ export default async function ProfilPage() {
             </small>
           )}
 
-          {/* Profil public (abonnés, coloriages publiés) */}
           <Link href={`/membre/${authUser.id}`} className="btn alt"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', marginTop: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
             <Eye size={16} aria-hidden="true" /> Voir mon profil
@@ -305,7 +285,6 @@ export default async function ProfilPage() {
         </div>
       </div>
 
-      {/* Niveau et statistiques */}
       <div
         className="carte profil-niveau"
         style={{ marginBottom: 'var(--espace-3)' }}
@@ -409,7 +388,6 @@ export default async function ProfilPage() {
 
       <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} />
 
-      {/* Les 2 quêtes les plus proches d'être réussies */}
       {prochesQuetes.length > 0 && (
         <div className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -437,13 +415,9 @@ export default async function ProfilPage() {
         </div>
       )}
 
-      {/* Pages choisies par la Roue du Destin, à colorier */}
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
 
-      {/* Accès rapides : bouton spécial (Espace ou épreuve de cheffe) et Activités à venir en tête, sur toute la largeur.
-          Libellés sans « Mes / Ma / Mon » ; chaque page ouverte porte exactement le même nom que son bouton. */}
       <div className="profil-acces">
-        {/* Bouton spécial en tête, long et corail : Espace de l'Invocatrice, Espace sentinelle ou épreuve de cheffe */}
 
         {['admin', 'modo', 'menestrel'].includes(role) && (
           <Link
@@ -455,8 +429,6 @@ export default async function ProfilPage() {
               {role === 'admin' ? 'Espace de l’Invocatrice' : role === 'modo' ? 'Espace sentinelle' : `Espace ${accord(profile?.genre, 'ménestrelle', 'ménestrel')}`}
               {nonLus.espace > 0 && ` · ${nonLus.espace} notification${nonLus.espace > 1 ? 's' : ''}`}
             </span>
-            {/* Point rouge : tout ce qui se traite dans les onglets de l'Espace (demandes, signalements, validation des bingos,
-                missives à approuver, inscriptions), et les sondages terminés de l'Invocatrice */}
             {(nonLus.espace > 0 || (role === 'admin' && nonLus.sondages > 0)) && <span className="pastille" aria-hidden="true" />}
           </Link>
         )}
@@ -486,9 +458,7 @@ export default async function ProfilPage() {
           </Link>
         )}
 
-        {/* Puis, dans l'ordre : Kromadex+, Aide, Statistiques, Missives, Collections, Coloriages, Quêtes, Aventures, Combats */}
 
-        {/* Kromadex+ : s'abonner, ou gérer son abonnement (carte, annulation) ; l'Invocatrice a déjà tout */}
         {role !== 'admin' && <Link
           href="/kromadex-plus"
           className="btn profil-acces-lien profil-acces-plus"
@@ -514,7 +484,6 @@ export default async function ProfilPage() {
           <span>Statistiques</span>
         </Link>
 
-        {/* Invocatrice : Quêtes juste à droite de Statistiques */}
         {role === 'admin' && (
           <Link href="/quetes" className="btn profil-acces-lien">
             <Map size={22} aria-hidden="true" />
@@ -522,7 +491,6 @@ export default async function ProfilPage() {
           </Link>
         )}
 
-        {/* Missives : pour les membres seulement (l'Invocatrice les gère dans son Espace), à droite de Statistiques */}
         {role !== 'admin' && <Link
           href="/missives"
           className="btn profil-acces-lien"
@@ -533,7 +501,6 @@ export default async function ProfilPage() {
           {nonLus.missives + nonLus.sondages > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>}
 
-        {/* Un long bouton pour toutes les collections : onglets Crayons (par défaut) et Tomes et livres */}
         <Link href="/profil/collection" className="btn profil-acces-lien profil-acces-long">
           <span className="profil-acces-icones" aria-hidden="true">
             <BookOpen size={22} />
@@ -565,7 +532,6 @@ export default async function ProfilPage() {
           {nonLus.invitations > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>
 
-        {/* Suggestions de palettes : seulement pour les personnes qui font du Cozy colo (ou un autre coloriage) */}
         {faitCozy(profile?.types_pratiques) && (
           <Link href="/palettes" className="btn profil-acces-lien">
             <Paintbrush size={22} aria-hidden="true" />
@@ -574,7 +540,6 @@ export default async function ProfilPage() {
         )}
       </div>
 
-      {/* Déconnexion : bouton corail pleine largeur, tout en bas du profil */}
       <BoutonDeconnexion />
     </div>
   );

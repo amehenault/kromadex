@@ -7,14 +7,11 @@ import { cloturerBingos } from '@/lib/clotures';
 
 const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : null);
 
-// Bingos en cours (avec mes cases cochées), ou tous les bingos pour l'admin (?gestion=1).
-// Un bingo programmé n'apparaît aux membres qu'à partir de sa date de début.
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
   const demandeGestion = new URL(req.url).searchParams.get('gestion') === '1';
   const gestion = demandeGestion && profil.role === 'admin';
-  // Ménestrelle : seulement ses propres bingos dans son Espace
   const gestionMenestrel = demandeGestion && profil.role === 'menestrel';
   const categories = categoriesBingoVisibles(await mesTypesVisibles(profil.id));
   await cloturerBingos();
@@ -38,15 +35,11 @@ export async function GET(req) {
   return NextResponse.json({ bingos });
 }
 
-// Admin ou ménestrelle : créer, modifier ou programmer un bingo (9 cases, chacune avec sa condition).
-// Admin : deux bingos au maximum par mois (selon la date de début). Ménestrelle : un par mois, et seulement les siens. Sans date de fin : la veille du dernier jour du mois,
-// pour que les XP soient versés le dernier jour.
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
   const menestrel = profil.role === 'menestrel';
   const { id, titre, cases, conditions, categorie, debut, fin, styles } = await req.json();
-  // Apparence de chaque case : couleur de fond et de texte (codes hex), vide = apparence normale
   const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c.toUpperCase() : '');
   const apparences = Array.from({ length: NB_CASES }, (_, i) => {
     const x = Array.isArray(styles) ? styles[i] || {} : {};
@@ -68,13 +61,11 @@ export async function POST(req) {
     if (!mien) return NextResponse.json({ error: 'Tu ne peux modifier que tes bingos' }, { status: 403 });
   }
   if (menestrel) {
-    // Un bingo par mois pour chaque ménestrelle
     const [{ n }] = await sql`
       SELECT count(*)::int AS n FROM bingos
       WHERE createur = ${profil.id} AND date_trunc('month', debut) = date_trunc('month', ${d}::date) AND id <> ${Number(id) || 0}`;
     if (n >= 1) return NextResponse.json({ error: 'Tu as déjà créé ton bingo pour ce mois-là' }, { status: 409 });
   } else {
-    // Les bingos des ménestrelles ne comptent pas dans les 2 bingos par mois de l'Invocatrice
     const [{ n }] = await sql`
       SELECT count(*)::int AS n FROM bingos b
       WHERE date_trunc('month', b.debut) = date_trunc('month', ${d}::date) AND b.id <> ${Number(id) || 0}
@@ -91,11 +82,9 @@ export async function POST(req) {
   }
   const [b] = await sql`INSERT INTO bingos (titre, cases, conditions, categorie, debut, fin, styles, createur)
     VALUES (${t}, ${liste}, ${conds}, ${cat}, ${d}, ${f}, ${JSON.stringify(apparences)}::jsonb, ${profil.id}) RETURNING id`;
-  // L'id sert à envoyer ensuite les images de fond des cases
   return NextResponse.json({ ok: true, id: b.id });
 }
 
-// Supprimer : l'admin, tous les bingos ; la ménestrelle, seulement les siens
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;

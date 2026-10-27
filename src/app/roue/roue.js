@@ -2,24 +2,25 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Dices, Compass, BookOpen, Pencil, Map, Check } from 'lucide-react';
+import { ArrowLeft, Dices, Compass, BookOpen, Pencil, Map, Check, Search, ChevronRight } from 'lucide-react';
 import AvisPagesCozy from '@/components/AvisPagesCozy';
+import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 
 const auHasard = (liste) => liste[Math.floor(Math.random() * liste.length)];
-// Pages encore à faire d'un tome (le nombre total doit être connu)
 const pagesLibres = (t) => {
   if (!t.total) return [];
   const faites = new Set(t.faites);
   return Array.from({ length: t.total }, (_, i) => i + 1).filter((n) => !faites.has(n));
 };
 
-// Mode libre : un tome au hasard puis une page non faite. Mode guidé : on choisit le tome.
 export default function Roue({ tomes }) {
   const router = useRouter();
-  const [tirage, setTirage] = useState(null); // id du tirage noté
+  const [tirage, setTirage] = useState(null);
   const [enQuete, setEnQuete] = useState(false);
   const [mode, setMode] = useState('libre');
   const [tomeChoisi, setTomeChoisi] = useState('');
+  const [typeChoisi, setTypeChoisi] = useState('');
+  const [recherche, setRecherche] = useState('');
   const [angle, setAngle] = useState(0);
   const [tourne, setTourne] = useState(false);
   const [resultat, setResultat] = useState(null);
@@ -40,7 +41,7 @@ export default function Roue({ tomes }) {
       tome = auHasard(admissibles);
     } else {
       tome = tomes.find((t) => t.nom === tomeChoisi);
-      if (!tome) { setMessage('Choisis un tome.'); return; }
+      if (!tome) { setMessage(typeChoisi === 'cozy' ? 'Choisis un livre.' : 'Choisis un tome.'); return; }
       if (!tome.total) { setMessage("Le nombre de coloriages de ce tome est inconnu : la Roue ne peut pas choisir de page."); return; }
       if (!pagesLibres(tome).length) { setMessage('Toutes les pages de ce tome sont déjà faites. Bravo !'); return; }
     }
@@ -49,24 +50,49 @@ export default function Roue({ tomes }) {
     setAngle((a) => a + 1440 + Math.floor(Math.random() * 360));
     setTimeout(() => {
       setTourne(false); setResultat({ tome, page });
-      // Le tirage est gardé (résumé des participations, quêtes du Destin)
       fetch('/api/roue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tome: tome.nom, page }) })
         .then((r) => r.json()).then((d) => d?.id && setTirage(d.id)).catch(() => {});
     }, 2200);
   }
 
-  // Ajouter le tirage aux quêtes (14 jours pour le colorier et gagner 10 XP)
   async function ajouterQuete() {
     if (!tirage) return false;
     const r = await fetch('/api/roue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quete: tirage }) });
     if (r.ok) setEnQuete(true);
     return r.ok;
   }
-  // Commencer : la page s'ajoute aussi aux quêtes, puis on ouvre un nouveau coloriage prérempli
   async function commencer() {
     await ajouterQuete();
     router.push(`/pages/new?tome=${encodeURIComponent(resultat.tome.nom)}&page=${resultat.page}`);
   }
+
+  const typesPresents = TYPES_COLORIAGE.filter((t) => tomes.some((x) => (x.type || 'autre') === t.valeur));
+  const tome = tomes.find((t) => t.nom === tomeChoisi);
+  const motTome = typeChoisi === 'cozy' ? 'livre' : 'tome';
+  const q = recherche.trim().toLowerCase();
+  const listeTomes = tomes
+    .filter((t) => (t.type || 'autre') === typeChoisi && (!q || t.nom.toLowerCase().includes(q)))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr', { numeric: true }));
+  const libres = (t) => {
+    if (!t.total) return 'Nombre de coloriages inconnu';
+    const n = pagesLibres(t).length;
+    return n ? `${n} page${n > 1 ? 's' : ''} libre${n > 1 ? 's' : ''}` : 'Toutes les pages sont faites';
+  };
+  const CarteTome = ({ t, actif }) => (
+    <button type="button" className={actif ? 'deroulant-choix actif' : 'deroulant-choix'} aria-pressed={Boolean(actif)}
+      onClick={() => { setTomeChoisi(t.nom); setResultat(null); setMessage(''); }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+        <span style={{ width: '36px', flex: '0 0 auto', aspectRatio: '3 / 4', borderRadius: '6px', overflow: 'hidden', background: 'var(--carte)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {t.couverture ? <img src={t.couverture} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <BookOpen size={18} aria-hidden="true" />}
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{t.nom}</b>
+          <small style={{ color: 'var(--texte-secondaire)' }}>{libres(t)}</small>
+        </span>
+      </span>
+      {actif ? <Check size={20} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)' }} /> : <ChevronRight size={20} aria-hidden="true" style={{ flex: '0 0 auto' }} />}
+    </button>
+  );
 
   const onglet = (cle, label, Icone) => (
     <button type="button" onClick={() => { setMode(cle); setResultat(null); setMessage(''); }} className={mode === cle ? 'btn' : 'btn alt'}
@@ -95,20 +121,40 @@ export default function Roue({ tomes }) {
       </p>
 
       {mode === 'guide' && (
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontWeight: 600, marginBottom: 'var(--espace-3)' }}>Tome
-          <select value={tomeChoisi} onChange={(e) => { setTomeChoisi(e.target.value); setResultat(null); setMessage(''); }}>
-            <option value="">Choisir un tome</option>
-            {tomes.map((t) => (
-              <option key={t.nom} value={t.nom}>
-                {t.nom}{t.total ? ` (${pagesLibres(t).length} page${pagesLibres(t).length > 1 ? 's' : ''} libre${pagesLibres(t).length > 1 ? 's' : ''})` : ' (nombre inconnu)'}
-              </option>
+        <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 var(--espace-3)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${typesPresents.length || 1}, minmax(0, 1fr))`, gap: '6px' }}>
+            {typesPresents.map((t) => (
+              <button key={t.valeur} type="button" className={typeChoisi === t.valeur ? 'btn' : 'btn alt'} aria-pressed={typeChoisi === t.valeur}
+                onClick={() => { setTypeChoisi(t.valeur); setTomeChoisi(''); setRecherche(''); setResultat(null); setMessage(''); }}
+                style={{ minHeight: '48px', fontSize: '0.88rem', minWidth: 0 }}>
+                {t.label}
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+          {!typesPresents.length && <p style={{ margin: 0, color: 'var(--texte-secondaire)' }}>Ajoute d'abord des tomes à ton profil pour que la Roue puisse choisir.</p>}
+          {typeChoisi && tome && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <CarteTome t={tome} actif />
+              <button type="button" className="btn alt" onClick={() => { setTomeChoisi(''); setResultat(null); setMessage(''); }} style={{ minHeight: '44px' }}>
+                Changer de {motTome}
+              </button>
+            </div>
+          )}
+          {typeChoisi && !tome && (
+            <>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={16} aria-hidden="true" style={{ position: 'absolute', left: '10px', color: 'var(--texte-secondaire)' }} />
+                <input type="search" placeholder={`Rechercher un ${motTome}…`} value={recherche} onChange={(e) => setRecherche(e.target.value)}
+                  style={{ width: '100%', margin: 0, paddingLeft: '34px' }} />
+              </div>
+              {!listeTomes.length && <p style={{ margin: 0, color: 'var(--texte-secondaire)' }}>Aucun {motTome} trouvé.</p>}
+              {listeTomes.map((t) => <CarteTome key={t.nom} t={t} />)}
+            </>
+          )}
+        </div>
       )}
       {mode === 'guide' && !resultat && tomes.find((t) => t.nom === tomeChoisi)?.type === 'cozy' && <AvisPagesCozy tome={tomeChoisi} />}
 
-      {/* La roue */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', margin: '10px 0 20px' }}>
         <div style={{ position: 'relative', width: 'min(70vw, 240px)', aspectRatio: '1 / 1' }}>
           <span aria-hidden="true" style={{
@@ -117,7 +163,7 @@ export default function Roue({ tomes }) {
           }} />
           <div aria-hidden="true" style={{
             width: '100%', height: '100%', borderRadius: '50%', border: '4px solid var(--texte-principal)',
-            background: 'conic-gradient(var(--btn) 0 45deg, var(--fond-carte) 45deg 90deg, var(--btn) 90deg 135deg, var(--fond-carte) 135deg 180deg, var(--btn) 180deg 225deg, var(--fond-carte) 225deg 270deg, var(--btn) 270deg 315deg, var(--fond-carte) 315deg 360deg)',
+            background: `conic-gradient(${Array.from({ length: 8 }, (_, i) => `var(--roue-${i + 1}) ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`,
             transform: `rotate(${angle}deg)`, transition: 'transform 2.2s cubic-bezier(0.17, 0.67, 0.21, 1)',
           }} />
         </div>
@@ -127,7 +173,6 @@ export default function Roue({ tomes }) {
         </button>
       </div>
 
-      {/* Rappel du fonctionnement des quêtes du Destin */}
       <p style={{ margin: '0 0 var(--espace-3)', fontSize: '0.88rem', color: 'var(--texte-secondaire)', background: 'var(--accent-doux)', borderRadius: 'var(--rayon-m)', padding: '10px 12px' }}>
         Tu as 14 jours pour réaliser la page choisie par le Destin et gagner 10 XP, sinon cette quête disparaîtra.
         Tu peux consulter le résultat de la Roue du Destin via ton Profil, dans la section Quêtes.
@@ -162,7 +207,6 @@ export default function Roue({ tomes }) {
         </div>
       )}
 
-      {/* Livre Cozy colo tiré : le nombre de pages connu peut être différent du nombre de coloriages */}
       {resultat?.tome.type === 'cozy' && <div style={{ marginTop: 'var(--espace-3)' }}><AvisPagesCozy tome={resultat.tome.nom} /></div>}
     </div>
   );

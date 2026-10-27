@@ -1,8 +1,3 @@
-// Test du nettoyage automatique des données, contre un serveur LOCAL branché sur la branche Neon de TEST.
-// Le serveur doit être lancé avec le nettoyage actif et un secret :
-//   CRON_SECRET=secret-test-nettoyage NETTOYAGE_AUTO=actif npm run start:test
-//   CRON_SECRET=secret-test-nettoyage node --env-file=.env.test.local tests/integration/nettoyage.mjs
-// Crée de vieilles et de récentes lignes marquées, vérifie que seules les vieilles disparaissent, puis efface tout.
 import { neon } from '@neondatabase/serverless';
 import { randomBytes } from 'node:crypto';
 
@@ -27,7 +22,6 @@ const jeton = () => `${marque}-${randomBytes(8).toString('hex')}`;
 const [u] = await sql`SELECT id FROM users WHERE email = 'test1@kromadex.test'`;
 const j = { vieux: [], recents: [] };
 try {
-  // Demandes : fermée il y a 31 jours (supprimée), fermée il y a 29 jours (gardée), rouverte (gardée même si vieille)
   const [d1] = await sql`INSERT INTO demandes (user_id, type, message, statut, ferme_le, maj_le) VALUES (${u.id}, 'bug', ${marque}, 'resolue', now() - interval '31 days', now() - interval '31 days') RETURNING id`;
   const [d2] = await sql`INSERT INTO demandes (user_id, type, message, statut, ferme_le) VALUES (${u.id}, 'bug', ${marque}, 'resolue', now() - interval '29 days') RETURNING id`;
   const [d3] = await sql`INSERT INTO demandes (user_id, type, message, statut, ferme_le, maj_le) VALUES (${u.id}, 'bug', ${marque}, 'en_cours', NULL, now() - interval '90 days') RETURNING id`;

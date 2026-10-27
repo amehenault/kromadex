@@ -6,7 +6,6 @@ import Communaute from '@/app/communaute/communaute';
 import RechercheAccueil from './RechercheAccueil';
 import Podium from './Podium';
 
-// Onglets de l'accueil : Épreuves et Communauté (le dernier onglet choisi est retenu sur l'appareil)
 export default function AccueilOnglets({ monId }) {
   const [onglet, setOnglet] = useState('defis');
 

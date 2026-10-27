@@ -1,6 +1,3 @@
-// Serveur local branché sur la base de TEST : npm run start:test
-// NODE_ENV=test : Next ne lit PAS .env.local (clés de production : Resend, notifications, base de production),
-// seulement .env.test.local. Aucun courriel ni notification ne peut partir, et la base de production n'est pas touchée.
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { parseEnv } from 'node:util';

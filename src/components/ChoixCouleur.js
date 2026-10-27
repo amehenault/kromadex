@@ -4,7 +4,6 @@ import { Check } from 'lucide-react';
 import Feuille from './Feuille';
 import { estHex } from '@/lib/palettes';
 
-// Conversions HSV (teinte 0-360, saturation et valeur 0-1) et hex
 function hsvVersHex(h, s, v) {
   const f = (n) => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
   return '#' + [f(5), f(3), f(1)].map((x) => Math.round(x * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -19,9 +18,6 @@ function hexVersHsv(hex) {
   return { h: ((h * 60) + 360) % 360, s: max ? d / max : 0, v: max };
 }
 
-// Changer une couleur de palette.
-//  crayons : avec des coffrets choisis, on choisit parmi leurs crayons (comme dans Collection de crayons) ;
-//  sans coffret : palette libre, on choisit sa nuance au doigt ou on écrit un code hex.
 export default function ChoixCouleur({ valeur, crayons = [], packs = [], onChoisir, onFermer }) {
   const depart = estHex(valeur) ? valeur.toUpperCase() : '#CCCCCC';
   const [hsv, setHsv] = useState(() => hexVersHsv(depart));
@@ -81,7 +77,6 @@ export default function ChoixCouleur({ valeur, crayons = [], packs = [], onChois
 
   return (
     <Feuille titre="Choisir une couleur" onFermer={onFermer}>
-      {/* Nuance : saturation à l'horizontale, clarté à la verticale */}
       <div ref={zone} role="slider" tabIndex={0} aria-label="Nuance" aria-valuetext={hex}
         onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); toucher(e); }}
         onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') toucher(e); }}
@@ -102,7 +97,6 @@ export default function ChoixCouleur({ valeur, crayons = [], packs = [], onChois
         }} />
       </div>
 
-      {/* Teinte */}
       <input type="range" min={0} max={360} value={Math.round(hsv.h)} aria-label="Teinte"
         onChange={(e) => changerHsv({ ...hsv, h: Number(e.target.value) })}
         style={{ width: '100%', minHeight: '44px', accentColor: hex,

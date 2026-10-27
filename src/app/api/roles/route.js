@@ -3,7 +3,6 @@ import { sql } from '@/lib/db';
 import { exigerPoste, POSTES } from '@/lib/roles';
 import { nomPoste } from '@/lib/postes';
 
-// Liste des membres et des titres (admin et modo)
 export async function GET() {
   const { profil, erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
@@ -14,13 +13,11 @@ export async function GET() {
     FROM users
     ORDER BY (role = 'admin') DESC, lower(COALESCE(pseudo, name, '')) ASC
   `;
-  // Les courriels ne sont jamais envoyés à l'espace admin (ni à l'Invocatrice, ni aux Sentinelles)
   const titles = await sql`SELECT * FROM system_titles ORDER BY name ASC`;
 
   return NextResponse.json({ users, titles, userRole: profil.role });
 }
 
-// Attribuer un poste ou un titre (admin seulement)
 export async function PUT(req) {
   const { profil, erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
@@ -29,13 +26,11 @@ export async function PUT(req) {
   const [cible] = await sql`SELECT id, role, genre FROM users WHERE id = ${targetUserId}`;
   if (!cible) return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
 
-  // Pionnière ou Pionnier (bêta-testrices et bêta-testeurs) : s'ajoute au poste et débloque le cadre de Pionnière
   if (typeof pionnier === 'boolean') {
     await sql`UPDATE users SET pionnier = ${pionnier} WHERE id = ${targetUserId}`;
     return NextResponse.json({ success: true });
   }
 
-  // Garder la cheffe un mois de plus (sinon le poste est retiré automatiquement à l'échéance)
   if (prolonger) {
     if (cible.role !== 'cheffe') return NextResponse.json({ error: "Ce membre n'est pas cheffe" }, { status: 400 });
     await sql`UPDATE users SET cheffe_expires_at = GREATEST(COALESCE(cheffe_expires_at, now()), now()) + interval '1 month' WHERE id = ${targetUserId}`;
@@ -43,7 +38,6 @@ export async function PUT(req) {
   }
 
   if (role) {
-    // Le poste d'admin est unique : on ne peut ni le donner ni le retirer
     if (!POSTES.some((p) => p.valeur === role)) {
       return NextResponse.json({ error: 'Poste invalide' }, { status: 400 });
     }
@@ -56,10 +50,8 @@ export async function PUT(req) {
       d.setMonth(d.getMonth() + 1);
       expiresAt = d.toISOString();
     }
-    // La date de nomination sert au délai de 7 jours pour créer l'épreuve de cheffe
     await sql`UPDATE users SET role = ${role}, cheffe_expires_at = ${expiresAt},
       cheffe_depuis = ${role === 'cheffe' ? new Date().toISOString() : null} WHERE id = ${targetUserId}`;
-    // La cheffe reçoit aussi le titre qui va avec (Cheffe, Chef ou Chef.fe des coloristes selon son genre)
     const titreCheffe = nomPoste('cheffe', cible.genre);
     await sql`INSERT INTO system_titles (name, description) VALUES (${titreCheffe}, 'Titre de la personne gagnante de l’épreuve du mois') ON CONFLICT (name) DO NOTHING`;
     if (role === 'cheffe') {
@@ -83,7 +75,6 @@ export async function PUT(req) {
   return NextResponse.json({ success: true });
 }
 
-// Créer un titre (admin seulement)
 export async function POST(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

@@ -1,4 +1,3 @@
-// Service worker de Kromadex : affiche les notifications push et ouvre la bonne page quand on les touche
 self.addEventListener('push', (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch { d = { texte: event.data && event.data.text() }; }

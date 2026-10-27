@@ -5,6 +5,7 @@ import { CATEGORIES_DEFI } from '@/lib/defis';
 import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES } from '@/lib/activites';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
+import Deroulant from '@/components/Deroulant';
 
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 const iso = (a, m, j) => `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
@@ -19,7 +20,6 @@ const GENRES_CONTRAINTE = {
 };
 const contrainte = (genre, extra = {}) => ({ texte: '', genre, degats: DEGATS[genre] ? Math.round((DEGATS[genre].min + DEGATS[genre].max) / 2) : 0, xp: genre === 'secondaire' ? XP_SECONDAIRE : 0, ...extra });
 
-// Modèles de départ, que l'Invocatrice adapte librement
 function modele(genre) {
   const annee = new Date().getFullYear();
   if (genre === 'expedition') {
@@ -48,12 +48,10 @@ function modele(genre) {
   };
 }
 
-// Expéditions, épopées et prophéties : tout se configure (étapes, contraintes, XP, durées, dégâts)
 export default function Aventures() {
   const [aventures, setAventures] = useState([]);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
-  // Brouillon automatique dès qu'on commence à écrire l'aventure
   const brouillon = useBrouillon('aventure', form || {}, Boolean(form && (form.titre?.trim() || form.description?.trim() || form.etapes?.some((e) => e.instructions?.trim()))));
 
   async function charger() {
@@ -103,9 +101,8 @@ export default function Aventures() {
         <b>{form.id ? `Modifier : ${form.titre}` : `Nouvelle ${nom.singulier.toLowerCase()}`}</b>
         {form.genre === 'expedition' && (
           <label style={champ}>Fête
-            <select value={form.fete} onChange={(e) => choisirFete(e.target.value)}>
-              {FETES.map((f) => <option key={f.valeur} value={f.valeur}>{f.nom} ({f.occasion})</option>)}
-            </select>
+            <Deroulant titre="Fête" value={form.fete} onChange={(v) => choisirFete(v)}
+              options={FETES.map((f) => ({ valeur: f.valeur, label: f.nom, aide: f.occasion }))} />
           </label>
         )}
         <label style={champ}>Titre
@@ -115,9 +112,8 @@ export default function Aventures() {
           <textarea rows={4} value={form.description} onChange={(e) => maj({ description: e.target.value })} maxLength={2000} />
         </label>
         <label style={champ}>Type de coloriage
-          <select value={form.categorie} onChange={(e) => maj({ categorie: e.target.value })}>
-            {CATEGORIES_DEFI.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
-          </select>
+          <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => maj({ categorie: v })}
+            options={CATEGORIES_DEFI.map((c) => ({ valeur: c.valeur, label: c.label }))} />
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <label style={champ}>Début<input type="date" value={form.debut} onChange={(e) => maj({ debut: e.target.value })} style={dateStyle} /></label>
@@ -189,9 +185,8 @@ export default function Aventures() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '6px', alignItems: 'end' }}>
                   {GENRES_CONTRAINTE[genreContraintes(i)].length > 1 && (
                     <label style={champ}>Type
-                      <select value={c.genre} onChange={(x) => majContrainte(i, k, { genre: x.target.value, ...(DEGATS[x.target.value] ? { degats: Math.round((DEGATS[x.target.value].min + DEGATS[x.target.value].max) / 2) } : {}) })}>
-                        {GENRES_CONTRAINTE[genreContraintes(i)].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      </select>
+                      <Deroulant titre="Type de contrainte" value={c.genre} onChange={(v) => majContrainte(i, k, { genre: v, ...(DEGATS[v] ? { degats: Math.round((DEGATS[v].min + DEGATS[v].max) / 2) } : {}) })}
+                        options={GENRES_CONTRAINTE[genreContraintes(i)].map(([v, l]) => ({ valeur: v, label: l }))} />
                     </label>
                   )}
                   {form.genre === 'epopee' && i === 1 && nombre(`d${i}${k}`, 'Dégâts', c.degats, (v) => majContrainte(i, k, { degats: v }))}

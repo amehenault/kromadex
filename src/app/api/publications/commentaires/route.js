@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 
-// Commentaires d'une publication de la communauté (?publication=id), avec un niveau de réponses
-// (même forme que les commentaires des coloriages : le composant CommentairesFiche sert aux deux)
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -17,7 +15,6 @@ export async function GET(req) {
   return NextResponse.json({ commentaires });
 }
 
-// Commenter une publication, ou répondre à un commentaire ({ publicationId, texte, parentId? })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -28,7 +25,6 @@ export async function POST(req) {
   if (!(await sql`SELECT 1 FROM publications WHERE id = ${id}`).length) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   let parent = null;
   if (parentId) {
-    // On répond toujours au commentaire principal (un seul niveau de réponses)
     const [c] = await sql`SELECT id, parent_id FROM publication_commentaires WHERE id = ${Number(parentId)} AND publication_id = ${id}`;
     if (!c) return NextResponse.json({ error: 'Commentaire introuvable' }, { status: 404 });
     parent = c.parent_id || c.id;
@@ -37,7 +33,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Retirer un commentaire : le sien, ceux reçus sur sa publication, ou n'importe lequel pour l'admin et les Sentinelles
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

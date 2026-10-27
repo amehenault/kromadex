@@ -4,18 +4,17 @@ import { Trash2, Pencil, Flag, Check, X } from 'lucide-react';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
 import Pseudo from '@/components/Pseudo';
+import Deroulant from '@/components/Deroulant';
 
 const RAISONS = { repetition: 'Répétition', faux: 'Faux', inapproprie: 'Inapproprié' };
 const SANCTIONS = [[0, 'Avertir'], [7, 'Suspendre 7 jours'], [30, 'Suspendre 30 jours'], [36500, 'Bannir']];
 
-// Mots-clefs ajoutés par les membres, classés par tome puis par page (filtres : signalés ou tous, tome, page).
-// On peut modifier ou supprimer un mot-clef, et avertir, suspendre ou bannir la personne qui l'a créé.
 export default function MotsCles() {
   const [mots, setMots] = useState([]);
   const [filtre, setFiltre] = useState('signales');
-  const [tome, setTome] = useState(''); // '' = tous les tomes
-  const [page, setPage] = useState(''); // '' = toutes les pages, '-' = tout le livre
-  const [edition, setEdition] = useState(null); // { id, mot }
+  const [tome, setTome] = useState('');
+  const [page, setPage] = useState('');
+  const [edition, setEdition] = useState(null);
   const [message, setMessage] = useState('');
 
   async function charger() {
@@ -27,11 +26,9 @@ export default function MotsCles() {
   const visibles = mots.filter((m) => (filtre === 'tous' || m.signalements > 0)
     && (!tome || m.tome === tome)
     && (!page || (page === '-' ? !m.page_no : String(m.page_no) === page)));
-  // Menus de filtre : les tomes, puis les pages du tome choisi
   const tomes = useMemo(() => [...new Set(mots.map((m) => m.tome))].sort((a, b) => a.localeCompare(b, 'fr', { numeric: true })), [mots]);
   const pages = useMemo(() => [...new Set(mots.filter((m) => m.tome === tome).map((m) => String(m.page_no || '')))]
     .sort((a, b) => (Number(a) || 0) - (Number(b) || 0)), [mots, tome]);
-  // Classement : tome, puis page (« Tout le livre » en premier), puis mot-clef
   const classes = useMemo(() => {
     const parTome = new Map();
     for (const m of [...visibles].sort((a, b) => a.tome.localeCompare(b.tome, 'fr', { numeric: true })
@@ -50,7 +47,6 @@ export default function MotsCles() {
     setMessage(r.ok ? 'Mot-clef modifié' : r.error);
     if (r.ok) { setEdition(null); charger(); window.dispatchEvent(new Event('kromadex-lu')); }
   }
-  // Signalé à tort : on garde le mot-clef et ses signalements sont effacés
   async function garder(m) {
     const r = await envoyer('/api/mots-cles', 'PUT', { id: m.id, garder: true });
     setMessage(r.ok ? `« ${m.mot} » est gardé, signalements effacés` : r.error);
@@ -81,16 +77,12 @@ export default function MotsCles() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px' }}>
         <label style={champ}>Tome
-          <select value={tome} onChange={(e) => { setTome(e.target.value); setPage(''); }}>
-            <option value="">Tous les tomes</option>
-            {tomes.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <Deroulant titre="Tome" value={tome} onChange={(v) => { setTome(v); setPage(''); }}
+            options={[{ valeur: '', label: 'Tous les tomes' }, ...tomes.map((t) => ({ valeur: t, label: t }))]} />
         </label>
         <label style={champ}>Page
-          <select value={page} onChange={(e) => setPage(e.target.value)} disabled={!tome}>
-            <option value="">Toutes les pages</option>
-            {pages.map((p) => <option key={p || '-'} value={p || '-'}>{p ? `Page ${p}` : 'Tout le livre'}</option>)}
-          </select>
+          <Deroulant titre="Page" value={page} onChange={(v) => setPage(v)} disabled={!tome}
+            options={[{ valeur: '', label: 'Toutes les pages' }, ...pages.map((p) => ({ valeur: p || '-', label: p ? `Page ${p}` : 'Tout le livre' }))]} />
         </label>
       </div>
       {message && <small>{message}</small>}
@@ -133,10 +125,8 @@ export default function MotsCles() {
           </div>
           {m.auteur_id && !['admin', 'modo'].includes(m.role_auteur) && (
             <label style={champ}>Sanctionner la personne
-              <select value="" onChange={(e) => e.target.value !== '' && sanctionner(m, Number(e.target.value))}>
-                <option value="">Choisir une sanction</option>
-                {SANCTIONS.map(([j, l]) => <option key={j} value={j}>{l}</option>)}
-              </select>
+              <Deroulant titre="Sanctionner la personne" placeholder="Choisir une sanction" value="" onChange={(v) => sanctionner(m, Number(v))}
+                options={SANCTIONS.map(([j, l]) => ({ valeur: j, label: l }))} />
             </label>
           )}
         </div>

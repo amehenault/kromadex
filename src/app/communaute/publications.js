@@ -16,7 +16,6 @@ export const imagePublication = (p, no = 0) => `/api/publications/${p.id}/image?
 const ICONES = { question: HelpCircle, en_cours: Brush };
 const quand = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-// Carte d'une publication (question ou coloriage en cours) dans une liste
 export function CartePublication({ p, onOuvrir, onLike }) {
   const Icone = ICONES[p.genre] || HelpCircle;
   return (
@@ -55,14 +54,12 @@ export function CartePublication({ p, onOuvrir, onLike }) {
   );
 }
 
-// Aimer une publication : mise à jour immédiate, corrigée par la réponse du serveur
 export async function aimerPublication(p, maj) {
   maj(p.id, { aime: !p.aime, likes: p.likes + (p.aime ? -1 : 1) });
   const r = await fetch('/api/publications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ like: p.id }) });
   if (r.ok) maj(p.id, await r.json());
 }
 
-// Fenêtre d'une publication : texte complet, toutes les images, J'aime, commentaires, signaler ou retirer
 export function PublicationDetail({ id, onFermer, onMaj, onRetiree }) {
   const [p, setP] = useState(null);
   useEffect(() => {
@@ -108,10 +105,9 @@ export function PublicationDetail({ id, onFermer, onMaj, onRetiree }) {
   );
 }
 
-// Nouvelle publication : texte, photos du téléphone (jusqu'à 4) et, pour un coloriage en cours, un de ses coloriages
 export function NouvellePublication({ genre, onFermer, onPublie }) {
   const [texte, setTexte] = useState('');
-  const [photos, setPhotos] = useState([]); // { fichier, apercu }
+  const [photos, setPhotos] = useState([]);
   const [page, setPage] = useState(null);
   const [choix, setChoix] = useState(false);
   const [envoi, setEnvoi] = useState(false);
@@ -211,7 +207,6 @@ export function NouvellePublication({ genre, onFermer, onPublie }) {
   );
 }
 
-// Section Questions ou Coloriages en cours : bouton pour publier, puis les publications (20 à la fois)
 export default function Publications({ genre }) {
   const [liste, setListe] = useState([]);
   const [fin, setFin] = useState(false);

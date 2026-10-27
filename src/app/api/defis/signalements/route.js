@@ -5,7 +5,6 @@ import { isId } from '@/lib/pages';
 import { retirerXP, penaliserXP } from '@/lib/series';
 import { prevenir } from '@/lib/push';
 
-// Coloriages d'épreuve signalés parce qu'ils ne correspondent pas à ce qui est demandé (admin et sentinelles)
 export async function GET() {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;
@@ -20,7 +19,6 @@ export async function GET() {
   return NextResponse.json({ signalements });
 }
 
-// Signaler un coloriage d'épreuve ({ defiId, pageId })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -37,8 +35,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Traiter un signalement ({ defiId, pageId, action: 'retirer' | 'ignorer' }).
-// Retirer : le coloriage sort de l'épreuve et la personne perd le double des points gagnés avec.
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin', 'modo');
   if (erreur) return erreur;

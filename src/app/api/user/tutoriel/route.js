@@ -4,7 +4,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// La présentation de Kromadex a été vue (terminée ou passée) : elle ne s'ouvre plus toute seule
 export async function POST() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

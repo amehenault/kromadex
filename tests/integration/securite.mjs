@@ -1,27 +1,14 @@
-// Tests de non-régression de sécurité, contre un serveur LOCAL branché sur la branche Neon de TEST.
-// Jamais le site en ligne, jamais la base de production (le script refuse une base non marquée « test »).
-//
-//   1. npm run db:preparer-test   (une seule fois : catalogue et comptes de test dans la branche de test)
-//   2. npm run build
-//   3. npm run start:test         (serveur en mode test : .env.local et ses clés de production sont ignorés)
-//   4. npm run test:securite
-//
-// Utilise les comptes test1, test2 (Coloristes) et test3 (Sentinelle), mot de passe « mdp1234! ».
-// Tout ce que le test crée est effacé à la fin, et l'état des comptes de test est remis comme avant.
 import { neon } from '@neondatabase/serverless';
 import { createHash, randomUUID, randomBytes, scryptSync } from 'node:crypto';
 import sharp from 'sharp';
 
 const BASE = process.env.BASE || 'http://localhost:3123';
 if (!/^http:\/\/(localhost|127\.0\.0\.1)/.test(BASE)) { console.error('Ces tests ne visent que un serveur local.'); process.exit(1); }
-// Même secret fictif que le serveur de test (.env.test.local) ; les avis simulés sont en mode « live »,
-// donc THRIVECART_MODE doit valoir « live » pour que le serveur les accepte (et ignore ceux en mode « test »)
 const SECRET = process.env.THRIVECART_SECRET;
 if (!SECRET) { console.error('THRIVECART_SECRET manquant dans .env.test.local.'); process.exit(1); }
 if (process.env.THRIVECART_MODE !== 'live') { console.error('THRIVECART_MODE doit valoir « live » dans .env.test.local pour ces tests.'); process.exit(1); }
 const MDP = 'mdp1234!';
 const sql = neon(process.env.DATABASE_URL);
-// Garde-fou : seulement une base de test préparée par scripts/preparer-base-test.mjs
 const [estTest] = await sql`SELECT 1 FROM information_schema.tables WHERE table_name = 'environnement_test'`;
 if (!estTest) { console.error('REFUS : cette base n’est pas marquée comme base de test.'); process.exit(1); }
 const sha = (t) => createHash('sha256').update(String(t)).digest('hex');
@@ -34,7 +21,6 @@ function verifier(nom, condition, detail = '') {
   else { echecs++; console.log(`  ÉCHEC ${nom} ${detail}`); }
 }
 
-// Requête avec une adresse IP simulée (en local, personne d'autre ne fixe x-real-ip)
 async function appel(chemin, { methode = 'GET', corps, json, cookie, ip = '198.51.100.1', entetes = {} } = {}) {
   const h = { 'x-real-ip': ip, origin: BASE, ...entetes };
   if (cookie) h.cookie = cookie;
@@ -54,7 +40,6 @@ async function connexion(email, ip) {
 }
 
 const imagePng = () => sharp({ create: { width: 300, height: 200, channels: 3, background: '#4bbca1' } }).png().toBuffer();
-// Mêmes champs que ceux envoyés par l'éditeur de coloriage
 const formulaire = (champs, fichier, type = 'image/jpeg', nom = 'image.jpg') => {
   const fd = new FormData();
   for (const [k, v] of Object.entries({ tome: '', page_no: '', memo: '', codes: '[]', ...champs })) fd.append(k, v);
@@ -64,12 +49,11 @@ const formulaire = (champs, fichier, type = 'image/jpeg', nom = 'image.jpg') => 
 const HTML = Buffer.from('<html><body><script>fetch("/api/roles")</script></body></html>');
 const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
 
-// État de départ des comptes de test (remis à la fin)
 const comptes = Object.fromEntries((await sql`SELECT id, email, role, xp, level, plus_statut, plus_jusqu, plus_formule, avatar_b64, avatar_type, avatar_maj
   FROM users WHERE email IN ('test1@kromadex.test', 'test2@kromadex.test', 'test3@kromadex.test')`).map((u) => [u.email.split('@')[0], u]));
 if (Object.keys(comptes).length !== 3) { console.error('Comptes de test introuvables.'); process.exit(1); }
 
-let livreModifie = null; // tome dont le test change le nombre de pages (remis comme avant à la fin)
+let livreModifie = null;
 try {
   const s1 = (await connexion('test1@kromadex.test', '198.51.100.11')).session;
   const s2 = (await connexion('test2@kromadex.test', '198.51.100.12')).session;
@@ -83,7 +67,6 @@ try {
   const [{ n: crees }] = await sql`SELECT count(*)::int AS n FROM pages WHERE title LIKE ${marque + '-%'}`;
   verifier('aucune fiche créée pour les fichiers refusés', crees === 0, crees);
 
-  // Brouillon sans image : pas d'XP ; image ajoutée ensuite : XP une seule fois
   r = await appel('/api/pages', { methode: 'POST', cookie: s1, corps: formulaire({ title: `${marque}-brouillon` }) });
   verifier('fiche sans image (brouillon) enregistrée', r.status === 200, r.status);
   const [brouillon] = await sql`SELECT id FROM pages WHERE title = ${marque + '-brouillon'}`;
@@ -105,7 +88,6 @@ try {
   verifier('en-tête X-Content-Type-Options: nosniff', r.headers.get('x-content-type-options') === 'nosniff');
   verifier('en-tête CSP sandbox', /sandbox/.test(r.headers.get('content-security-policy') || ''));
 
-  // Ancien fichier piégé déjà en base (enregistré avant la correction) : jamais servi
   const [piege] = await sql`INSERT INTO pages (user_id, title, image_b64, image_type, publiee, type_coloriage, publiee_le)
     VALUES (${comptes.test1.id}, ${marque + '-ancien-piege'}, ${HTML.toString('base64')}, 'image/jpeg', true, 'cozy', now()) RETURNING id`;
   r = await appel(`/api/pages/${piege.id}/image`, { cookie: s2 });
@@ -192,18 +174,15 @@ try {
     && (await sql`SELECT count(*)::int AS n FROM appareils_connus WHERE jeton_hash = ${sha(appareil2.split('=')[1])}`)[0].n === 1);
   verifier('aucun jeton créé par un échec ou une inscription refusée', (await sql`SELECT count(*)::int AS n FROM appareils_connus`)[0].n === jetonsAvant.n);
 
-  // Essais en même temps : au plus 5 passent
   const paralleles = await Promise.all(Array.from({ length: 15 }, () =>
     appel('/api/auth/login', { methode: 'POST', json: { email: email2, password: 'faux' }, ip: '203.0.113.3' }).then((x) => x.status)));
   verifier('15 essais simultanés : au plus 5 vérifiés, les autres bloqués', paralleles.filter((s) => s === 401).length <= 5 && paralleles.filter((s) => s === 429).length >= 10, paralleles.join(','));
 
-  // Attaque répartie sur le compte : 55 essais depuis 11 adresses
   for (let a = 0; a < 11; a++) {
     await Promise.all(Array.from({ length: 5 }, () => appel('/api/auth/login', { methode: 'POST', json: { email: email2, password: 'faux' }, ip: `192.0.2.${10 + a}` })));
   }
   r = await appel('/api/auth/login', { methode: 'POST', json: { email: email2, password: MDP }, ip: '192.0.2.200' });
   verifier('compte très attaqué : nouvel appareil bloqué (429)', r.status === 429, r.status);
-  // Faux cookies : un jeton inventé, un jeton d'un autre compte, une valeur mal formée ne débloquent rien
   r = await appel('/api/auth/login', { methode: 'POST', json: { email: email2, password: MDP }, ip: '192.0.2.202', cookie: `cm_appareil=${'a'.repeat(64)}` });
   verifier('jeton « appareil connu » inventé : toujours bloqué', r.status === 429, r.status);
   const appareil1 = (await connexion('test1@kromadex.test', '198.51.100.21')).appareil;
@@ -295,7 +274,6 @@ try {
   verifier('Sentinelle : image refusée elle aussi (404)', r.status === 404, r.status);
   r = await appel(`/api/communaute?vue=fiche&id=${brouillon.id}`, { cookie: s2 });
   verifier('autre membre : fiche (codes, titre) refusée (404)', r.status === 404, r.status);
-  // Déconnexion rapide : pas de vidage de cache imposé (lent dans Chrome) ; les notifications de l'appareil sont retirées en même temps
   const endpoint = `https://push.exemple.invalid/${marque}`;
   await sql`INSERT INTO push_abonnements (user_id, endpoint, cles) VALUES (${comptes.test2.id}, ${endpoint}, '{}')`;
   const debutDeconnexion = Date.now();
@@ -312,7 +290,6 @@ try {
   const [jetable] = await sql`INSERT INTO users (email, password_hash, pseudo, name, role)
     VALUES (${emailJetable}, ${sel.toString('hex') + ':' + scryptSync(MDP, sel, 64).toString('hex')}, ${pseudoJetable}, 'Prénom Jetable', 'coloriste') RETURNING id`;
   const idJ = String(jetable.id);
-  // Données dans les tables sans lien automatique avec le compte, et traces qui la désignent
   const [tomeCat] = await sql`SELECT id FROM tome_catalog LIMIT 1`;
   if (tomeCat) await sql`INSERT INTO user_tomes (user_id, tome_id) VALUES (${idJ}, ${tomeCat.id})`;
   await sql`INSERT INTO tomes_perso (user_id, nom) VALUES (${idJ}, ${marque})`;
@@ -334,7 +311,6 @@ try {
   r = await appel('/api/user/compte', { methode: 'DELETE', cookie: sJ, json: { motDePasse: MDP } });
   verifier('abonnement annulé mais encore actif : la suppression est permise', r.status === 200, r.status);
 
-  // Toutes les colonnes qui peuvent désigner un compte, dans toutes les tables de la base
   const colonnes = await sql`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
     AND data_type IN ('uuid', 'text') AND column_name ~ '^(user_id|auteur|par|valide_par|createur|gagnant|invite|adversaire|joueur_a|joueur_b|suiveur|suivi|choisi_par|cible|id)$'`;
   const restes = [];
@@ -354,7 +330,6 @@ try {
   verifier('son pseudo retiré des sceaux reçus par les autres', (await sql`SELECT detail FROM recompenses WHERE source = ${marque + '-sceau'}`)[0]?.detail === 'de la cheffe');
 
   console.log('\n11. Communauté : questions et coloriages en cours');
-  // test2 est bloqué sur les nouveaux appareils depuis l'attaque simulée de la section 6 : on passe par son appareil connu
   r = await appel('/api/auth/login', { methode: 'POST', json: { email: 'test2@kromadex.test', password: MDP }, ip: '198.51.100.32', cookie: appareil2 });
   const s2b = cookieDe(r, 'cm_session');
   verifier('test2 se reconnecte depuis son appareil connu', r.status === 200 && Boolean(s2b), r.status);
@@ -418,7 +393,6 @@ try {
   const [apresLivre] = await sql`SELECT nb_pages, nb_pages_manuel FROM tome_catalog WHERE id = ${livre.id}`;
   verifier('Invocatrice : nombre de pages changé tout de suite et protégé de db:tomes', r.status === 200 && apresLivre.nb_pages === livre.nb_pages - 4 && apresLivre.nb_pages_manuel, r.status);
 
-  // Quête sur une page qui n'existe plus (ex. page 49 d'un livre passé à 45 pages) : ramenée à la dernière page
   const [quete] = await sql`INSERT INTO roue_tirages (user_id, tome, page_no, quete_le) VALUES (${comptes.test1.id}, ${livre.nom}, ${String(livre.nb_pages)}, now()) RETURNING id`;
   await appel('/quetes', { cookie: s1 });
   verifier('quête ajustée au nouveau nombre de pages', (await sql`SELECT page_no FROM roue_tirages WHERE id = ${quete.id}`)[0]?.page_no === String(livre.nb_pages - 4));
@@ -427,7 +401,6 @@ try {
   r = await appel('/api/roue', { methode: 'DELETE', cookie: s1, json: { quete: quete.id } });
   verifier('abandonner sa quête la supprime', r.status === 200 && (await sql`SELECT 1 FROM roue_tirages WHERE id = ${quete.id}`).length === 0, r.status);
 
-  // Quête accomplie : elle disparaît de la liste (XP donnés)
   const [quete2] = await sql`INSERT INTO roue_tirages (user_id, tome, page_no, quete_le) VALUES (${comptes.test1.id}, ${livre.nom}, '3', now()) RETURNING id`;
   await sql`INSERT INTO pages (user_id, title, tome, page_no, image_b64, image_type) VALUES (${comptes.test1.id}, ${marque + '-destin'}, ${livre.nom}, '3', ${(await imagePng()).toString('base64')}, 'image/png')`;
   r = await appel('/quetes', { cookie: s1 });
@@ -455,7 +428,6 @@ try {
   r = await appel('/api/xp');
   verifier('pop-up d’XP : rien sans connexion (401)', r.status === 401, r.status);
 
-  // Titre affiché : un titre de niveau déjà atteint est permis, pas un titre de niveau pas encore atteint
   const [{ genre: genre1 }] = await sql`SELECT genre FROM users WHERE id = ${comptes.test1.id}`;
   const premier = genre1 === 'masculin' ? 'Gribouilleur en herbe' : 'Gribouilleuse en herbe';
   r = await appel('/api/user/parametres', { methode: 'POST', cookie: s1, json: { titre: premier } });
@@ -485,7 +457,6 @@ try {
   verifier('l’Invocatrice voit qui a ajouté chaque mot-clef dans son Espace', (r.donnees?.mots || []).some((m) => m.mot === motTest && (m.pseudo || m.auteur_id)));
   r = await appel(`/api/mots-cles?nom=${encodeURIComponent(livre.nom)}`, { cookie: s2b });
   verifier('nouveau coloriage : les mots-clefs du tome sont retrouvés par son nom', r.donnees?.tome === livre.id && r.donnees.mots.some((m) => m.mot === motTest));
-  // Mot-clef signalé : point rouge pour la modération, qui disparaît avec « Il est correct »
   const [motSignale] = await sql`SELECT id FROM mots_cles WHERE tome_id = ${livre.id} AND page_no = '3' AND cle LIKE 'zebu%'`;
   r = await appel('/api/mots-cles', { methode: 'POST', cookie: s2b, json: { signaler: motSignale.id, raison: 'faux' } });
   const motsAvant = (await appel('/api/notifications', { cookie: s3 })).donnees?.mots_cles_signales || 0;
@@ -513,7 +484,6 @@ try {
   echecs++;
   console.error('\nErreur pendant les tests :', e);
 } finally {
-  // Remise en état : rien de ce que le test a créé ne reste
   const ids = Object.values(comptes).map((u) => u.id);
   for (const p of await sql`SELECT id FROM pages WHERE title LIKE ${marque + '-%'}`) {
     await sql`DELETE FROM xp_journal WHERE cle = ${'page:' + p.id}`;

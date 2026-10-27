@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 
-// Commentaires d'une missive (?missive=id)
 export async function GET(req) {
   const { erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -14,7 +13,6 @@ export async function GET(req) {
   return NextResponse.json({ commentaires });
 }
 
-// Commenter, seulement si la missive est publiée et que les commentaires sont permis
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -28,7 +26,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Retirer un commentaire : le sien, ou n'importe lequel pour l'admin et la modo
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

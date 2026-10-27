@@ -4,10 +4,7 @@ import { exigerPoste } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 
-// Kromadex+ offert par l'Invocatrice (onglet Kromadex+ de son espace).
-// Un abonnement payé n'est jamais touché ici : il reste actif jusqu'à sa propre fin.
 
-// Les membres à qui Kromadex+ est offert, les plus récents en premier
 export async function GET() {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
@@ -19,14 +16,12 @@ export async function GET() {
   return NextResponse.json({ membres });
 }
 
-// Offrir ou modifier : { userId, jusqu: 'AAAA-MM-JJ' ou null (sans date limite), raison }
 export async function PUT(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;
   const { userId, jusqu, raison } = await req.json().catch(() => ({}));
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(jusqu || '')) ? String(jusqu) : null;
   if (jusqu && !date) return NextResponse.json({ error: 'Date invalide' }, { status: 400 });
-  // Actif jusqu'à la fin de la journée choisie (heure du Québec)
   const maj = await sql`
     UPDATE users SET plus_offert = true,
       plus_offert_jusqu = CASE WHEN ${date}::date IS NULL THEN NULL ELSE ((${date}::date + 1)::timestamp AT TIME ZONE 'America/Toronto') END,
@@ -37,7 +32,6 @@ export async function PUT(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Retirer Kromadex+ offert : { userId }
 export async function DELETE(req) {
   const { erreur } = await exigerPoste('admin');
   if (erreur) return erreur;

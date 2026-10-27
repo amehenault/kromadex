@@ -4,15 +4,6 @@ import { FETES, MOIS_EPOPEES, MOIS_PROPHETIES } from '@/lib/activites';
 import { texteRappel } from '@/lib/planificationTexte';
 export { quand, texteRappel } from '@/lib/planificationTexte';
 
-// Activités que l'Invocatrice doit planifier, et quand elle doit être prévenue :
-//  - 2 semaines avant chaque mois : l'épreuve mensuelle et les 2 bingos ;
-//  - 1 mois avant chaque expédition (une par fête) ;
-//  - 2 mois avant chaque épopée (janvier, mars, juillet, septembre) et avant la prophétie (mai ou novembre :
-//    dès qu'une des deux est planifiée, il n'y a plus de rappel pour l'autre).
-// Tant qu'une activité n'est pas planifiée, le rappel reste affiché dans le profil de l'Invocatrice.
-// Notification push : tous les jours quand une activité est en retard (début dans JOURS_RETARD jours ou moins),
-// sinon aux 2 jours tant qu'elle n'est pas planifiée.
-// Les rappels ne commencent qu'à partir de DEBUT_RAPPELS.
 export const DEBUT_RAPPELS = '2026-11-01';
 export const JOURS_RETARD = 7;
 
@@ -37,7 +28,6 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
     if (x.debut <= horizon || rappel) liste.push({ ...x, jours, rappel });
   };
 
-  // Mois en cours et mois suivant : épreuve mensuelle et 2 bingos
   for (const n of [0, 1]) {
     const mois = premierDuMoisSuivant(aujourdhui, n);
     const epreuve = defis.find((d) => d.mois === mois);
@@ -49,7 +39,6 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
       preavis: PREAVIS.mois, lien: '/profil/admin?onglet=bingos' });
   }
 
-  // Expéditions : une par fête, cette année et l'an prochain
   for (const a of [annee, annee + 1]) {
     for (const f of FETES) {
       const debut = `${a}-${f.debut}`, fin = `${a}-${f.fin}`;
@@ -58,7 +47,6 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
       ajouter({ cle: `expedition:${a}:${f.valeur}`, genre: 'expedition', nom: `Expédition · ${f.nom}`, une: 'une nouvelle expédition',
         debut: x?.debut || debut, planifiee: !!x, titre: x?.titre, preavis: PREAVIS.expedition, lien: '/profil/admin?onglet=aventures' });
     }
-    // Épopées : une par saison
     for (const m of MOIS_EPOPEES) {
       const debut = iso(a, m);
       if (premierDuMoisSuivant(debut) <= aujourdhui) continue;
@@ -66,7 +54,6 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
       ajouter({ cle: `epopee:${debut.slice(0, 7)}`, genre: 'epopee', nom: 'Épopée', une: 'une nouvelle épopée',
         debut: x?.debut || debut, planifiee: !!x, titre: x?.titre, preavis: PREAVIS.epopee, lien: '/profil/admin?onglet=aventures' });
     }
-    // Prophétie : une par année, en mai ou en novembre
     const prophetie = aventures.find((v) => v.genre === 'prophetie' && v.debut.startsWith(String(a)));
     if (prophetie) {
       ajouter({ cle: `prophetie:${a}`, genre: 'prophetie', nom: 'Prophétie', une: 'une nouvelle prophétie', debut: prophetie.debut,
@@ -82,12 +69,10 @@ export async function activitesAVenir(aujourdhui = jourQuebec()) {
   return liste.sort((x, y) => x.debut.localeCompare(y.debut));
 }
 
-// Rappels du jour : les activités pas encore planifiées dont le préavis est commencé (en retard = 7 jours ou moins avant le début)
 export async function rappelsDuJour() {
   return (await activitesAVenir()).filter((a) => a.rappel).map((a) => ({ ...a, enRetard: a.jours <= JOURS_RETARD, texte: texteRappel(a) }));
 }
 
-// Notification du jour : tous les jours s'il y a un retard, sinon un jour sur deux
 export function notifierAujourdhui(rappels, aujourdhui = jourQuebec()) {
   if (!rappels.length) return false;
   if (rappels.some((r) => r.enRetard)) return true;

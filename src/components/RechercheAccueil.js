@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, BookOpen, Tag, X } from 'lucide-react';
 
-// Barre de recherche de l'accueil : tomes et livres par nom ou par mot-clef (ex. « Stitch »)
 export default function RechercheAccueil() {
   const [q, setQ] = useState('');
   const [resultats, setResultats] = useState(null);

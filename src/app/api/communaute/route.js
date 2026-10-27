@@ -9,18 +9,11 @@ import { VALEURS_TYPES } from '@/lib/typesColoriage';
 export const dynamic = 'force-dynamic';
 
 
-// Coloriages publiés.
-//  ?vue=fil&type=&avant=   : derniers coloriages publiés (20 à la fois)
-//  ?vue=tomes&type=        : tomes ayant des coloriages publiés de ce type
-//  ?vue=pages&tome=        : numéros de page publiés pour ce tome
-//  ?vue=page&tome=&page=   : coloriages publiés d'une page, avec leurs codes
-//  ?vue=fiche&id=          : un coloriage publié avec ses codes
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const q = new URL(req.url).searchParams;
   const vue = q.get('vue') || 'fil';
-  // Seuls les types que la personne fait ou veut voir sont proposés
   const visibles = await mesTypesVisibles(user.id);
   const type = visibles.includes(q.get('type')) ? q.get('type') : null;
   const tome = String(q.get('tome') || '').slice(0, 60);
@@ -56,13 +49,11 @@ export async function GET(req) {
       FROM pages p JOIN users u ON u.id = p.user_id
       WHERE p.publiee AND p.id = ${id}`;
     if (!fiche) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
-    // Palette dont s'inspire le coloriage, avec les codes de crayons et les packs utilisés
     const [pal] = await sql`
       SELECT pa.id, pa.nom, pa.couleurs, pa.packs,
              COALESCE((SELECT json_agg(trim(concat_ws(' ', mb.brand_name, mb.sub_type, mb.range_name))) FROM marker_brands mb WHERE mb.id = ANY(pa.packs)), '[]') AS noms_packs
       FROM pages p JOIN palettes pa ON pa.id = p.palette_id WHERE p.id = ${id}`;
     fiche.palette = pal ? (await ajouterCodes([pal]))[0] : null;
-    // Coloriage consulté (quêtes « Première découverte », « Chasseur.se d'inspiration »)
     if (String(fiche.auteur_id) !== String(moi)) {
       await sql`INSERT INTO vues (user_id, genre, cible) VALUES (${moi}, 'fiche', ${id}) ON CONFLICT DO NOTHING`;
     }
@@ -81,8 +72,6 @@ export async function GET(req) {
     return NextResponse.json({ fiches });
   }
 
-  // Fil : par défaut, seulement les types que la personne veut voir
-  // ?suivis=1 : seulement les membres que je suis, tous types confondus
   const suivis = q.get('suivis') === '1';
   const vus = type ? [type] : visibles;
   const avant = q.get('avant') && !isNaN(Date.parse(q.get('avant'))) ? q.get('avant') : null;
@@ -99,8 +88,6 @@ export async function GET(req) {
   return NextResponse.json({ fiches });
 }
 
-// Aimer ou ne plus aimer un coloriage publié ({ id }),
-// ou publier un de ses coloriages (avec image) depuis la section Coloriages terminés ({ publier: id, type })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

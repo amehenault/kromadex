@@ -5,6 +5,7 @@ import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 import { nomPionnier } from '@/lib/cadres';
 import { nomPoste, couleurPoste } from '@/lib/postes';
 import Pseudo from '@/components/Pseudo';
+import Deroulant from '@/components/Deroulant';
 
 const POSTES = [
   { valeur: 'coloriste', label: 'Coloriste' },
@@ -13,7 +14,6 @@ const POSTES = [
   { valeur: 'menestrel', label: 'Ménestrelle (1 épreuve et 1 bingo par mois)' },
 ];
 
-// Attribuer les postes et le rôle Pionnière (le titre affiché, c'est la personne qui le choisit dans ses Paramètres)
 export default function Membres({ role }) {
   const [membres, setMembres] = useState([]);
   const [recherche, setRecherche] = useState('');
@@ -37,7 +37,6 @@ export default function Membres({ role }) {
       && (filtre === 'tous' || u.role === filtre));
   }, [membres, recherche, filtre]);
 
-  // Abonnement Kromadex+ payé (affiché seulement)
   const paye = (u) => u.plus_jusqu && new Date(u.plus_jusqu) > new Date() && u.plus_statut !== 'aucun';
 
   async function modifier(id, corps) {
@@ -57,13 +56,14 @@ export default function Membres({ role }) {
         <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--texte-secondaire)' }} />
         <input placeholder="Rechercher un membre" value={recherche} onChange={(e) => setRecherche(e.target.value)} style={{ width: '100%', paddingLeft: '36px' }} />
       </div>
-      <select value={filtre} onChange={(e) => setFiltre(e.target.value)}>
-        <option value="tous">Tous les postes</option>
-        <option value="admin">Invocatrice des couleurs</option>
-        <option value="modo">Sentinelles du Kromadex</option>
-        <option value="cheffe">Cheffes</option>
-        <option value="coloriste">Coloristes</option>
-      </select>
+      <Deroulant titre="Postes" value={filtre} onChange={(v) => setFiltre(v)}
+        options={[
+          { valeur: 'tous', label: 'Tous les postes' },
+          { valeur: 'admin', label: 'Invocatrice des couleurs' },
+          { valeur: 'modo', label: 'Sentinelles du Kromadex' },
+          { valeur: 'cheffe', label: 'Cheffes' },
+          { valeur: 'coloriste', label: 'Coloristes' },
+        ]} />
       {message && <small>{message}</small>}
 
       {visibles.map((u) => (
@@ -79,9 +79,8 @@ export default function Membres({ role }) {
           ) : (
             <>
               <label style={champ}>Poste
-                <select value={u.role || 'coloriste'} onChange={(e) => modifier(u.id, { role: e.target.value })}>
-                  {POSTES.map((p) => <option key={p.valeur} value={p.valeur}>{p.label}</option>)}
-                </select>
+                <Deroulant titre="Poste" value={u.role || 'coloriste'} onChange={(v) => modifier(u.id, { role: v })}
+                  options={POSTES.map((p) => ({ valeur: p.valeur, label: p.label }))} />
               </label>
               {u.role === 'cheffe' && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
@@ -98,7 +97,6 @@ export default function Membres({ role }) {
                 <input type="checkbox" checked={Boolean(u.pionnier)} onChange={(e) => modifier(u.id, { pionnier: e.target.checked })} style={{ width: '20px', height: '20px', margin: 0 }} />
                 {nomPionnier(u.genre)} (bêta-testrice ou bêta-testeur, débloque le cadre ; Kromadex+ s’offre dans l’onglet Kromadex+)
               </label>
-              {/* Kromadex+ offert : dans l'onglet Kromadex+ ; ici on voit seulement les abonnements payés */}
               {paye(u) && (
                 <small style={aide}>
                   Abonnée Kromadex+ {u.plus_statut === 'annule' ? 'jusqu’au' : 'renouvelé vers le'} {new Date(u.plus_jusqu).toLocaleDateString('fr-CA')}

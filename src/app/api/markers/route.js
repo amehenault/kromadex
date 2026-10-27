@@ -6,11 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Le catalogue n'est visible qu'une fois connectée
     const user = await getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
-    // Récupération avec la colonne sub_type
     const allBrands = await sql`
       SELECT id, brand_name, range_name, COALESCE(sub_type, 'Autre') AS sub_type, created_by
       FROM marker_brands

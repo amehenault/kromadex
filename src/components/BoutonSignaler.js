@@ -5,8 +5,6 @@ import Feuille from './Feuille';
 import TexteErreur from './TexteErreur';
 import { RAISONS_SIGNALEMENT } from '@/lib/signalements';
 
-// Drapeau « Signaler » : un contenu qui contrevient aux règles d'utilisation (coloriage, commentaire, profil).
-// Le signalement arrive dans l'Espace de l'Invocatrice et des Sentinelles (Contenu signalé).
 export default function BoutonSignaler({ genre, cible, petit = false }) {
   const [ouvert, setOuvert] = useState(false);
   const [raison, setRaison] = useState('');

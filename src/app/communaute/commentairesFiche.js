@@ -6,7 +6,6 @@ import { Avatar, nomAuteur, poster } from './outils';
 import Pseudo from '@/components/Pseudo';
 import BoutonSignaler from '@/components/BoutonSignaler';
 
-// Commentaires d'un coloriage publié (pageId) ou d'une publication de la communauté (publicationId), avec un niveau de réponses
 export default function CommentairesFiche({ pageId, publicationId }) {
   const api = publicationId ? '/api/publications/commentaires' : '/api/communaute/commentaires';
   const lecture = publicationId ? `${api}?publication=${publicationId}` : `${api}?page=${pageId}`;
@@ -14,7 +13,7 @@ export default function CommentairesFiche({ pageId, publicationId }) {
   const genreSignalement = publicationId ? 'commentaire_publication' : 'commentaire';
   const [liste, setListe] = useState(null);
   const [texte, setTexte] = useState('');
-  const [reponseA, setReponseA] = useState(null); // commentaire auquel on répond
+  const [reponseA, setReponseA] = useState(null);
   const [erreur, setErreur] = useState('');
 
   async function charger() {

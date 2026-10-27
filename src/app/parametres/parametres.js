@@ -10,6 +10,7 @@ import Preferences from '@/app/profil/edit/preferences';
 import Acces from '@/app/profil/edit/acces';
 import ChoixCadre from '@/components/ChoixCadre';
 import { useAccord } from '@/components/Genre';
+import Deroulant from '@/components/Deroulant';
 
 const enregistrer = (corps) => fetch('/api/user/parametres', {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps),
@@ -19,7 +20,6 @@ const carte = { display: 'flex', flexDirection: 'column', gap: '10px', marginBot
 const titre_ = { margin: 0, display: 'flex', alignItems: 'center', gap: '8px' };
 const ligne = { display: 'flex', alignItems: 'center', gap: '10px', minHeight: '48px', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' };
 
-// Page de Paramètres : flèche de retour (vers le menu des Paramètres, ou vers le profil pour le menu lui-même) et titre
 export function PageParametres({ titre, retour = '/parametres', children }) {
   return (
     <div className="contenu edition-profil" style={{ maxWidth: '500px', margin: '0 auto', padding: 'var(--espace-3)' }}>
@@ -34,7 +34,6 @@ export function PageParametres({ titre, retour = '/parametres', children }) {
   );
 }
 
-// Notifications : l'appareil, puis chaque type
 export function Notifications({ clePublique, types, notifs: initiales }) {
   const [notifs, setNotifs] = useState(initiales);
   async function basculer(cle, v) {
@@ -57,8 +56,6 @@ export function Notifications({ clePublique, types, notifs: initiales }) {
   );
 }
 
-// Titre et cadre affichés : un seul titre est affiché sur le profil, celui choisi ici (par défaut, celui du niveau actuel).
-// On peut choisir n'importe quel titre de niveau déjà atteint (du premier à l'actuel) ou un titre spécial gagné. Puis le cadre.
 export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titreActuel, titresNiveau = [], titres }) {
   const router = useRouter();
   const [titre, setTitre] = useState(titreInitial === 'Coloriste débutant' ? '' : titreInitial);
@@ -71,19 +68,12 @@ export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titreA
     <>
       <section className="carte" style={carte}>
         <h3 style={titre_}><Award size={20} aria-hidden="true" /> Titre affiché</h3>
-        <select value={titre} onChange={(e) => choisirTitre(e.target.value)} aria-label="Titre affiché">
-          <option value="">Titre de mon niveau actuel : {titreActuel}</option>
-          {titresNiveau.length > 0 && (
-            <optgroup label="Titres de niveau déjà atteints">
-              {titresNiveau.map((t) => <option key={t} value={t}>{t}</option>)}
-            </optgroup>
-          )}
-          {titres.length > 0 && (
-            <optgroup label="Titres spéciaux gagnés">
-              {titres.map((t) => <option key={t} value={t}>{t}</option>)}
-            </optgroup>
-          )}
-        </select>
+        <Deroulant ariaLabel="Titre affiché" value={titre} onChange={(v) => choisirTitre(v)}
+          options={[
+            { valeur: '', label: `Titre de mon niveau actuel : ${titreActuel}` },
+            ...titresNiveau.map((t) => ({ valeur: t, label: t, groupe: 'Titres de niveau déjà atteints' })),
+            ...titres.map((t) => ({ valeur: t, label: t, groupe: 'Titres spéciaux gagnés' })),
+          ]} />
         <small style={{ color: 'var(--texte-secondaire)' }}>
           Ce titre remplace celui de ton niveau sur ton profil. Gagne des épreuves et des activités pour débloquer des titres spéciaux.
         </small>
@@ -93,8 +83,6 @@ export function TitreEtCadre({ cadres, cadre, genre, titre: titreInitial, titreA
   );
 }
 
-// Mes informations : photo de profil, pseudo, nom et présentation, préférences de coloriage, courriel et mot de passe,
-// puis la suppression du compte
 export function MesInformations({ role }) {
   return (
     <>
@@ -107,7 +95,6 @@ export function MesInformations({ role }) {
   );
 }
 
-// Supprimer son compte : confirmation, puis mot de passe (on ne peut pas revenir en arrière)
 function SupprimerCompte({ role }) {
   const router = useRouter();
   const acc = useAccord();

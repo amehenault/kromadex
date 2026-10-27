@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 const jour = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Toronto' });
 
-// Kromadex+ : l'offre, le paiement (ThriveCart) et la gestion de l'abonnement (carte, annulation)
 export default async function KromadexPlus() {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -26,7 +25,6 @@ export default async function KromadexPlus() {
         <Link href="/profil" className="btn alt" aria-label="Retour au profil" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} />
         </Link>
-        {/* Même nom que le bouton du profil : logo Kromadex+ et « Gérer l'abonnement » */}
         <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', minWidth: 0 }}>
           <img src="/kromadex-plus.svg" alt="Kromadex+" style={{ height: '26px', width: 'auto', maxWidth: '100%' }} />
           <span>Gérer l’abonnement</span>
@@ -34,7 +32,6 @@ export default async function KromadexPlus() {
       </div>
 
       {abo.plus ? (
-        // Déjà Kromadex+ : état de l'abonnement et gestion
         <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-3)', marginBottom: 'var(--espace-3)' }}>
           <h2 style={{ margin: 0, fontSize: '1.15rem' }}>Tu profites de Kromadex+</h2>
           {paye ? (

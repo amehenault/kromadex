@@ -10,10 +10,6 @@ import BoutonSignaler from '@/components/BoutonSignaler';
 
 const date = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-// Missives : « Non lue » tant qu'on ne l'a pas ouverte, puis « Lue ». Les épinglées passent en premier.
-// seulementEpinglees : accueil, où seules les missives épinglées (jusqu'à leur échéance) s'affichent.
-// J'aime toujours possible, commentaires selon la missive.
-// gestion (Invocatrice) : une missive ouverte montre aussi Modifier, Épingler jusqu'au… et Supprimer
 export default function MissivesEpinglees({ monId, seulementEpinglees, vide, gestion }) {
   const [missives, setMissives] = useState(null);
   const [ouverte, setOuverte] = useState(null);
@@ -23,7 +19,6 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide, ges
       if (!d) return;
       const liste = (d.missives || []).filter((m) => !seulementEpinglees || m.epinglee);
       setMissives([...liste.filter((m) => m.epinglee), ...liste.filter((m) => !m.epinglee)]);
-      // Arrivée depuis l'accueil (#missive-12) : on défile jusqu'à elle
       const id = Number(window.location.hash.replace('#missive-', ''));
       if (id) setTimeout(() => document.getElementById(`missive-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     });
@@ -35,7 +30,6 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide, ges
     setOuverte(ouverte === m.id ? null : m.id);
     if (!m.lue) {
       maj(m.id, { lue: true });
-      // La pastille du menu se met à jour une fois la lecture enregistrée
       poster('/api/missives', { lue: m.id }).then(() => window.dispatchEvent(new Event('kromadex-lu')));
     }
   }
@@ -80,7 +74,6 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide, ges
             </span>
           </button>
 
-          {/* Sondage : voter compte comme avoir lu la missive */}
           {m.sondage && (
             <Sondage missiveId={m.id} sondage={m.sondage}
               onVote={() => { if (!m.lue) { maj(m.id, { lue: true }); window.dispatchEvent(new Event('kromadex-lu')); } }} />
@@ -110,7 +103,6 @@ export default function MissivesEpinglees({ monId, seulementEpinglees, vide, ges
   );
 }
 
-// Outils de l'Invocatrice sur une missive ouverte : modifier le titre et le texte, épingler jusqu'à une date, supprimer
 function OutilsMissive({ m, onMaj, onSupprimee }) {
   const [edition, setEdition] = useState(false);
   const [titre, setTitre] = useState(m.titre);

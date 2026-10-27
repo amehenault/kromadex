@@ -4,20 +4,18 @@ import { Plus, Tags, X, Flag, Trash2 } from 'lucide-react';
 
 const RAISONS = [['repetition', 'Répétition'], ['faux', 'Faux'], ['inapproprie', 'Inapproprié']];
 
-// Mots-clefs d'un tome : ajout réservé aux personnes qui possèdent le tome, signalement possible
 export default function MotsCles({ tomeId, possede }) {
-  const [feuille, setFeuille] = useState(null); // 'ajouter' | 'voir'
+  const [feuille, setFeuille] = useState(null);
   const [mots, setMots] = useState([]);
   const [mot, setMot] = useState('');
   const [page, setPage] = useState('');
   const [message, setMessage] = useState('');
-  const [signalement, setSignalement] = useState(null); // id du mot-clef à signaler
+  const [signalement, setSignalement] = useState(null);
 
   async function charger() {
     const r = await fetch(`/api/mots-cles?tome=${tomeId}`);
     if (r.ok) setMots((await r.json()).mots || []);
   }
-  // Les deux fenêtres montrent les mots-clefs de tous les membres (à l'ajout : ceux de la page choisie)
   function ouvrir(f) { setFeuille(f); setMessage(''); charger(); }
 
   async function ajouter(e) {
@@ -78,7 +76,6 @@ export default function MotsCles({ tomeId, possede }) {
                   <input value={page} onChange={(e) => setPage(e.target.value.replace(/\D/g, ''))} inputMode="numeric" maxLength={4} placeholder="Tout le livre si vide" />
                 </label>
                 <button type="submit" className="btn" disabled={mot.trim().length < 2} style={{ minHeight: '46px' }}>Ajouter</button>
-                {/* Mots-clefs déjà mis par les membres pour cette page (ou pour tout le livre) */}
                 <small style={{ fontWeight: 700 }}>{page ? `Déjà ajoutés pour la page ${page}` : 'Déjà ajoutés pour tout le livre'}</small>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {mots.filter((m) => String(m.page_no || '') === page).map((m) => (

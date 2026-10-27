@@ -5,7 +5,6 @@ import ActivitesAVenir from './activites';
 
 export const dynamic = 'force-dynamic';
 
-// Activités à venir (Invocatrice) : ce qui est planifié, ce qui reste à planifier, et les notifications
 export default async function ActivitesAVenirPage() {
   const user = await getUser();
   if (!user) redirect('/login');

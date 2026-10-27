@@ -4,7 +4,6 @@ import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 import { isId } from '@/lib/pages';
 
-// Commentaires d'un coloriage publié (?page=id), dans l'ordre, avec les réponses
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -18,7 +17,6 @@ export async function GET(req) {
   return NextResponse.json({ commentaires });
 }
 
-// Commenter un coloriage publié, ou répondre à un commentaire ({ pageId, texte, parentId? })
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -30,7 +28,6 @@ export async function POST(req) {
   if (!p) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   let parent = null;
   if (parentId) {
-    // On répond toujours au commentaire principal (un seul niveau de réponses)
     const [c] = await sql`SELECT id, parent_id FROM page_commentaires WHERE id = ${Number(parentId)} AND page_id = ${pageId}`;
     if (!c) return NextResponse.json({ error: 'Commentaire introuvable' }, { status: 404 });
     parent = c.parent_id || c.id;
@@ -39,7 +36,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true });
 }
 
-// Retirer un commentaire : le sien, ceux reçus sur son coloriage, ou n'importe lequel pour l'admin et la modo
 export async function DELETE(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

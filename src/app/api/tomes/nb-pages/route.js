@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 
-// Toute personne connectée peut indiquer le nombre de coloriages d'un tome Cozy colo
-// du catalogue, seulement s'il est encore inconnu (une fois rempli, il ne change plus).
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

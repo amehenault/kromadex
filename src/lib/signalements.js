@@ -1,4 +1,3 @@
-// Signalements de contenu qui contrevient aux règles d'utilisation (utilisable dans le navigateur et sur le serveur)
 export const GENRES_SIGNALEMENT = {
   coloriage: 'Coloriage publié',
   commentaire: 'Commentaire sur un coloriage',

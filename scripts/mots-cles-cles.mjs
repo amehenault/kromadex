@@ -1,6 +1,3 @@
-// Remplit la clé de comparaison des mots-clefs qui n'en ont pas encore (après la migration 2026-10-22-mots-cles-cle.sql).
-//   node --env-file=.env.local scripts/mots-cles-cles.mjs
-// Ne supprime rien : un doublon éventuel est seulement affiché, pour être réglé à la main dans l'Espace (onglet Mots-clefs).
 import { neon } from '@neondatabase/serverless';
 import { cleMot } from '../src/lib/cleMot.js';
 const sql = neon(process.env.DATABASE_URL);

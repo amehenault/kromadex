@@ -1,4 +1,3 @@
-// Tests des images envoyées : node --test tests/unitaires/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { crc32 } from 'node:zlib';
@@ -7,7 +6,6 @@ import { traiterImage, formatReel, enTetesImage, ErreurImage, POIDS_MAX } from '
 
 const png = (w = 64, h = 48) => sharp({ create: { width: w, height: h, channels: 3, background: '#4bbca1' } }).png().toBuffer();
 
-// En-tête PNG qui annonce des dimensions énormes (sans les pixels) : sert à tester le refus avant décodage
 function pngAnnonce(largeur, hauteur) {
   const chunk = (type, data) => {
     const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
@@ -17,7 +15,7 @@ function pngAnnonce(largeur, hauteur) {
   };
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(largeur, 0); ihdr.writeUInt32BE(hauteur, 4);
-  ihdr[8] = 8; ihdr[9] = 2; // 8 bits, RVB
+  ihdr[8] = 8; ihdr[9] = 2;
   return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', Buffer.alloc(0)), chunk('IEND', Buffer.alloc(0))]);
 }
 

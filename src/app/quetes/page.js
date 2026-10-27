@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic';
 
 const ICONES = { Compass, Palette, Heart, MessageCircle, BookOpen, Flame };
 
-// Quêtes globales : la progression se calcule toute seule, les XP sont donnés à la fin de chaque quête
 export default async function QuetesPage() {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -39,7 +38,6 @@ export default async function QuetesPage() {
         </div>
       )}
 
-      {/* Pages tirées par la Roue du Destin (14 jours pour les colorier) */}
       <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} />
 
       {CATEGORIES_QUETES.map((c) => {

@@ -2,17 +2,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Search, Plus, Check } from 'lucide-react';
 
-// Choix du tome ou du livre d'un coloriage : liste déroulante (téléphone et ordinateur) avec recherche,
-// séparée entre coloriage mystère, Cozy colo et les autres, et ajout d'un nouveau tome ou livre.
-// bibliotheque : [{ nom, autreNom, type, total }] (autreNom : nom dans l'autre langue, trouvé aussi par la recherche) (type : mystere | cozy | autre | null pour un tome perso)
 export default function ChoixTome({ valeur, bibliotheque, onChange }) {
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState('');
-  const [nouveau, setNouveau] = useState(null); // nom en cours d'ajout
+  const [nouveau, setNouveau] = useState(null);
   const [ajoutes, setAjoutes] = useState([]);
   const zone = useRef(null);
 
-  // Fermer en touchant à côté
   useEffect(() => {
     if (!ouvert) return;
     const fermer = (e) => { if (zone.current && !zone.current.contains(e.target)) setOuvert(false); };
@@ -74,7 +70,6 @@ export default function ChoixTome({ valeur, bibliotheque, onChange }) {
 
           {groupes.map(([titre, liste]) => (
             <div key={titre}>
-              {/* Titres des sections (Coloriage mystère, Cozy colo…) en couleur secondaire pour bien s'y repérer */}
               <small style={{ display: 'block', padding: '10px 12px 4px', fontWeight: 800, color: 'var(--couleur-secondaire)', textTransform: 'uppercase', fontSize: '0.75rem' }}>{titre}</small>
               {liste.map((t) => (
                 <button key={t.nom} type="button" role="option" aria-selected={t.nom === valeur} onClick={() => choisir(t.nom)} style={ligne(t.nom === valeur)}>
@@ -87,7 +82,6 @@ export default function ChoixTome({ valeur, bibliotheque, onChange }) {
           ))}
           {!groupes.length && <small style={{ display: 'block', padding: '10px 12px', color: 'var(--texte-secondaire)' }}>Aucun tome ni livre trouvé.</small>}
 
-          {/* Ajouter un tome ou un livre qui n'est pas dans la liste */}
           <div style={{ borderTop: '1px solid var(--bordure-carte)', padding: '8px' }}>
             {nouveau === null ? (
               <button type="button" onClick={() => setNouveau(recherche)} style={{ ...ligne(false), fontWeight: 700, color: 'var(--btn-secondaire-texte)' }}>

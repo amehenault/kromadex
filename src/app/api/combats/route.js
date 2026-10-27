@@ -10,9 +10,6 @@ import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/
 
 const ACTIFS = ['invitation', 'ouvert', 'soumission'];
 
-// Combats visibles : invitations, joutes ouvertes, mes combats, verdicts en cours et combats terminés.
-// Anonymat : dans une joute, personne ne voit qui participe (« Coloriste 1 » à « Coloriste 4 ») ;
-// dans un duel, seules les deux personnes se connaissent. Les membres qui votent ne voient jamais personne.
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -49,7 +46,6 @@ export async function GET() {
   return NextResponse.json({ combats });
 }
 
-// Actions : creer, accepter (duel), rejoindre (joute), refuser, annuler, soumettre, quitter
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -58,7 +54,6 @@ export async function POST(req) {
   const moi = user.id;
   const erreur = (message, status = 400) => NextResponse.json({ error: message }, { status });
 
-  // Un de mes coloriages, du type demandé par le combat
   const monColoriage = async (pageId, categorie) => {
     if (!isId(String(pageId || ''))) return null;
     const [p] = await sql`SELECT id, COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') AS type_coloriage FROM pages WHERE id = ${pageId} AND user_id = ${moi} AND image_b64 IS NOT NULL`;
@@ -67,7 +62,6 @@ export async function POST(req) {
 
   if (b.action === 'creer') {
     const genre = b.genre === 'joute' ? 'joute' : 'duel';
-    // Joute : 2, 3 ou 4 coloristes en tout (la personne qui la lance comprise)
     const places = [2, 3, 4].includes(Number(b.places)) ? Number(b.places) : COMBATS.maxJoute;
     const categorie = VALEURS_TYPES.includes(b.categorie) ? b.categorie : null;
     if (!categorie) return erreur('Choisis le type de coloriage');
@@ -76,7 +70,6 @@ export async function POST(req) {
     if (!themeType || !theme) return erreur('Choisis le thème (couleur, personnage ou ambiance) et écris-le');
     const [{ n }] = await sql`SELECT count(*)::int AS n FROM combats WHERE createur = ${moi} AND statut = ANY(${ACTIFS})`;
     if (n >= 3) return erreur('Tu as déjà 3 combats en attente', 429);
-    // Les duels sont réservés à Kromadex+ ; les joutes comptent dans les 3 combats par mois de la version gratuite
     const limite = (genre === 'duel' && await verifierLimite(moi, 'duels')) || await verifierLimite(moi, 'combats');
     if (limite) return limite;
 
@@ -93,7 +86,6 @@ export async function POST(req) {
       prevenir('combats', { ids: [u.id] }, { titre: 'Invitation à un duel', texte: `Thème : ${theme}. Tu as 5 jours pour accepter.`, lien: '/combats' });
       return NextResponse.json({ ok: true, id: c.id });
     }
-    // Joute : on lance l'appel sans coloriage ; la personne qui la crée a le même délai que les autres pour soumettre le sien
     const [c] = await sql`
       INSERT INTO combats (genre, createur, categorie, theme_type, theme, statut, soumission_fin, places)
       VALUES ('joute', ${moi}, ${categorie}, ${themeType}, ${theme}, 'ouvert', now() + make_interval(days => ${COMBATS.joursSoumission}), ${places})
@@ -110,15 +102,12 @@ export async function POST(req) {
     if (c.statut !== 'invitation' || String(c.invite) !== String(moi)) return erreur('Tu ne peux pas accepter ce duel', 403);
     const limite = await verifierLimite(moi, 'duels', { combatId: c.id }) || await verifierLimite(moi, 'combats', { combatId: c.id });
     if (limite) return limite;
-    // Les 12 jours pour soumettre commencent à l'acceptation du duel (pas à l'envoi de l'invitation)
     const maj = await sql`UPDATE combats SET statut = 'soumission', soumission_fin = now() + make_interval(days => ${COMBATS.joursSoumission})
       WHERE id = ${c.id} AND statut = 'invitation' RETURNING id`;
     if (!maj.length) return erreur('Ce duel n’est plus en attente', 409);
     await sql`INSERT INTO combat_participants (combat_id, user_id) VALUES (${c.id}, ${moi}) ON CONFLICT DO NOTHING`;
     return NextResponse.json({ ok: true });
   }
-  // Joute : accepter l'appel sans coloriage ; la joute est enregistrée dans « Mes combats » et le coloriage
-  // se soumet ensuite, avant la date limite de la joute
   if (b.action === 'rejoindre') {
     if (c.genre !== 'joute' || c.statut !== 'ouvert') return erreur('Cette joute n’accepte plus de coloristes', 403);
     if (moiDedans) return NextResponse.json({ ok: true });

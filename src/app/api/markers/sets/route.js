@@ -4,7 +4,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Ajouter ou supprimer un set de sa collection
 export async function POST(req) {
   try {
     const user = await getUser();
@@ -13,7 +12,6 @@ export async function POST(req) {
     const { brandId, action, customBrandName, customRangeName } = await req.json();
     const userIdStr = String(user.id);
 
-    // Création d'un kit personnalisé si demandé
     if (action === 'CREATE_CUSTOM') {
       if (!customBrandName || !customRangeName) {
         return NextResponse.json({ error: 'Nom de marque et de set requis' }, { status: 400 });

@@ -14,7 +14,6 @@ export async function getUserProfile(userId) {
   if (!users.length) return null;
   let user = users[0];
 
-  // Si l'utilisateur est Chef mais que la date d'expiration est dépassée, retrogradation en coloriste
   if (user.role === 'cheffe' && user.cheffe_expires_at && new Date(user.cheffe_expires_at) < new Date()) {
     await sql`
       UPDATE users
@@ -25,7 +24,6 @@ export async function getUserProfile(userId) {
     user.cheffe_expires_at = null;
   }
 
-  // Le niveau découle toujours de l'XP (corrige les niveaux enregistrés avec l'ancien barème)
   const niveau = calculerNiveau(user.xp);
   if (niveau !== user.level) {
     await sql`UPDATE users SET level = ${niveau} WHERE id = ${userId}`;
@@ -35,12 +33,10 @@ export async function getUserProfile(userId) {
   return user;
 }
 
-// Ajouter de l'XP à un utilisateur
 export async function addXP(userId, amount) {
   const user = await getUserProfile(userId);
   if (!user) return;
 
-  // Un retrait d'XP (montant négatif) ne descend jamais sous 0
   const newXP = Math.max(0, (user.xp || 0) + amount);
   const newLevel = calculateLevel(newXP);
 

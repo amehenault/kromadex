@@ -7,13 +7,11 @@ import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle
 
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-// Kromadex+ offert : rechercher un membre, lui offrir Kromadex+ (avec ou sans date limite, et une raison pour soi),
-// et voir uniquement les membres à qui il est offert, pour modifier ou retirer
 export default function KromadexPlus() {
   const [offerts, setOfferts] = useState([]);
   const [membres, setMembres] = useState([]);
   const [recherche, setRecherche] = useState('');
-  const [form, setForm] = useState(null); // { userId, nom, jusqu, raison, modification }
+  const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
 
   async function charger() {
@@ -23,7 +21,6 @@ export default function KromadexPlus() {
   }
   useEffect(() => { charger(); }, []);
 
-  // Suggestions de la recherche : membres sans Kromadex+ offert (l'Invocatrice exclue)
   const suggestions = useMemo(() => {
     const q = recherche.trim().toLowerCase();
     if (q.length < 2) return [];
@@ -47,7 +44,6 @@ export default function KromadexPlus() {
 
   return (
     <div style={colonne}>
-      {/* Offrir à quelqu'un */}
       <div className="carte" style={colonne}>
         <b>Offrir Kromadex+</b>
         {!form ? (
@@ -89,7 +85,6 @@ export default function KromadexPlus() {
         {message && <small>{message}</small>}
       </div>
 
-      {/* Uniquement les membres à qui Kromadex+ est offert */}
       <div className="carte" style={colonne}>
         <b>Kromadex+ offert ({offerts.length})</b>
         {offerts.map((o) => (

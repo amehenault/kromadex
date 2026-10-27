@@ -1,7 +1,3 @@
--- Coffrets Flysea 240 et 360 (feutres acryliques Brush), codes lus sur les fiches du fabricant (images du 2026-10-26).
--- Couleurs : celles des fiches 120, 168 et 240 (même rendu), sinon mesurées sur le 360 et corrigées vers ce rendu.
--- Le 240 donne aussi la vraie couleur de 72 crayons du 288 (estimées jusque-là) : on les met à jour.
--- Rejouable : un coffret déjà présent n'est pas recréé.
 
 INSERT INTO marker_brands (brand_name, range_name, category, sub_type, created_by)
 SELECT 'Flysea', 'Set de 240', 'feutre', 'Acrylique Brush', NULL

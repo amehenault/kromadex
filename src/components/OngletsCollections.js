@@ -4,10 +4,6 @@ import Link from 'next/link';
 import { ArrowLeft, BookOpen, Pencil } from 'lucide-react';
 import { VALEURS_TYPES, nomCollections, nomMesTomes } from '@/lib/typesColoriage';
 
-// En-tête commun des collections (bouton « Collections de tomes, de livres et de crayons » du profil) :
-//  onglets du haut : Crayons (par défaut) | Tomes et livres ;
-//  sous Tomes et livres : Ma collection (par défaut) | Tomes et livres à ajouter.
-// actif : 'crayons' | 'collection' | 'ajouter' ; visibles : types de coloriage vus (sinon lus dans les préférences)
 export default function OngletsCollections({ actif, visibles: visiblesDonnes }) {
   const [lus, setLus] = useState(VALEURS_TYPES);
   const visibles = visiblesDonnes || lus;
@@ -17,7 +13,7 @@ export default function OngletsCollections({ actif, visibles: visiblesDonnes }) 
       .then((p) => p?.typesVisibles && setLus(p.typesVisibles)).catch(() => {});
   }, [visiblesDonnes]);
 
-  const tomes = nomMesTomes(visibles); // Tomes et livres, Tomes ou Livres
+  const tomes = nomMesTomes(visibles);
   const onglet = (href, actifIci, contenu, petit) => (
     <Link href={href} aria-current={actifIci ? 'page' : undefined} className={actifIci ? 'btn' : 'btn alt'} replace
       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: petit ? '44px' : '48px', minWidth: 0,

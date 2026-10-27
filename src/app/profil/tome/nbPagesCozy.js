@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Tome Cozy colo dont le nombre de coloriages est inconnu : n'importe qui peut le compléter
 export default function NbPagesCozy({ tomeId }) {
   const router = useRouter();
   const [valeur, setValeur] = useState('');

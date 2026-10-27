@@ -9,10 +9,9 @@ const versOctets = (base64) => {
   return Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
 };
 
-// Activer ou désactiver les notifications push sur l'appareil utilisé (téléphone, tablette, ordinateur)
 export default function NotificationsAppareil({ clePublique }) {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
-  const [etat, setEtat] = useState('verification'); // verification | indisponible | refusees | actives | inactives
+  const acc = useAccord();
+  const [etat, setEtat] = useState('verification');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function NotificationsAppareil({ clePublique }) {
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error);
       setEtat('actives');
       try { localStorage.removeItem(CLE_NOTIFS_DESACTIVEES); } catch {}
-      // Notification d'essai pour confirmer que tout fonctionne
       await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ essai: true }) });
     } catch (e) { setMessage(e.message || 'Impossible d’activer les notifications sur cet appareil.'); }
   }
@@ -47,7 +45,6 @@ export default function NotificationsAppareil({ clePublique }) {
       await fetch('/api/push', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: abonnement.endpoint }) });
       await abonnement.unsubscribe();
     }
-    // Choix de la personne : pas de réabonnement automatique à la prochaine connexion sur cet appareil
     try { localStorage.setItem(CLE_NOTIFS_DESACTIVEES, '1'); } catch {}
     setEtat('inactives');
   }
@@ -67,7 +64,6 @@ export default function NotificationsAppareil({ clePublique }) {
       {etat === 'inactives' && (
         <>
           <button type="button" className="btn" style={bouton} onClick={activer}><Bell size={18} aria-hidden="true" /> Activer les notifications sur cet appareil</button>
-          {/* Mémo pour donner envie d'activer les notifications */}
           <small style={{ ...aide, background: 'var(--accent-doux)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', lineHeight: 1.45 }}>
             <b style={{ color: 'var(--texte-principal)' }}>Ne rate plus rien de Kromadex !</b> Sois {acc('prévenue', 'prévenu')} dès qu’une nouvelle missive arrive,
             qu’on t’invite en duel ou que l’Invocatrice répond à ta demande. Tu choisis exactement ce que tu reçois,

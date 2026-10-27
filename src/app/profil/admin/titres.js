@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Plus, Sparkles } from 'lucide-react';
 import { envoyer, colonne, ligneCarte, champ, aide } from './outils';
 
-// Créer des titres et voir leurs conditions
 export default function Titres() {
   const [titres, setTitres] = useState([]);
   const [nom, setNom] = useState('');

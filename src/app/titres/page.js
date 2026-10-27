@@ -8,13 +8,12 @@ import { TITRES } from '@/lib/titres';
 
 export const dynamic = 'force-dynamic';
 
-// Les 62 titres, un par niveau, accordés selon le genre du profil
 export default async function TitresPage() {
   const user = await getUser();
   if (!user) redirect('/login');
   const profil = await getUserProfile(user.id);
   const niveau = calculerNiveau(profil?.xp);
-  const forme = profil?.genre === 'masculin' ? 0 : 1; // le féminin prime (masculin seulement pour « masculin »)
+  const forme = profil?.genre === 'masculin' ? 0 : 1;
 
   return (
     <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>

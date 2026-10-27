@@ -6,17 +6,16 @@ import { compresserImage } from '@/lib/compressionImage';
 import ChoixCouleur from '@/components/ChoixCouleur';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
+import Deroulant from '@/components/Deroulant';
 
 const vide = () => ({
   id: null, titre: '', categorie: 'les_deux', debut: '', fin: '',
   cases: Array(NB_CASES).fill(''), conditions: Array(NB_CASES).fill(''),
   styles: Array.from({ length: NB_CASES }, () => ({ fond: '', texte: '' })),
 });
-// Image de fond de chaque case : url affichée, fichier à envoyer, ou image du serveur à retirer
 const imagesVides = () => Array.from({ length: NB_CASES }, () => ({ url: '', fichier: null, serveur: false, retirer: false }));
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' });
 
-// Créer et programmer les bingos : grille de 3 x 3, une tâche courte et sa condition par case
 export default function Bingos({ role }) {
   const menestrel = role === 'menestrel';
   const [bingos, setBingos] = useState([]);
@@ -24,8 +23,7 @@ export default function Bingos({ role }) {
   const [caseActive, setCaseActive] = useState(0);
   const [message, setMessage] = useState('');
   const [images, setImages] = useState(imagesVides);
-  const [couleur, setCouleur] = useState(null); // 'fond' ou 'texte' : choix de couleur ouvert pour la case active
-  // Brouillon automatique dès qu'on commence à remplir le bingo
+  const [couleur, setCouleur] = useState(null);
   const brouillon = useBrouillon('bingo', form, Boolean(form.titre.trim() || form.cases.some((c) => c.trim()) || form.conditions.some((c) => c.trim())));
 
   async function charger() {
@@ -51,7 +49,6 @@ export default function Bingos({ role }) {
     e.preventDefault();
     const r = await envoyer('/api/bingos', 'POST', form);
     if (!r.ok) { setMessage(r.error); return; }
-    // Puis les images de fond des cases : nouvelles images envoyées, images retirées supprimées
     let erreurImage = '';
     for (let i = 0; i < NB_CASES; i++) {
       const im = images[i];
@@ -83,9 +80,8 @@ export default function Bingos({ role }) {
           <input value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} placeholder="ex. Bingo d'automne" maxLength={100} />
         </label>
         <label style={champ}>Pour qui
-          <select value={form.categorie} onChange={(e) => setForm({ ...form, categorie: e.target.value })}>
-            {CATEGORIES_BINGO.map((c) => <option key={c.valeur} value={c.valeur}>{c.label}</option>)}
-          </select>
+          <Deroulant titre="Pour qui" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
+            options={CATEGORIES_BINGO.map((c) => ({ valeur: c.valeur, label: c.label }))} />
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           <label style={champ}>Début
@@ -102,7 +98,6 @@ export default function Bingos({ role }) {
         <small style={aide}>Touche une case pour écrire sa tâche et sa condition ({remplies} / {NB_CASES}).</small>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px' }}>
           {form.cases.map((c, i) => {
-            // Aperçu de la case telle que les membres la verront (fond, image, texte sur son rectangle)
             const a = apparenceCase({ ...styleCase(i), image: images[i].retirer ? '' : images[i].url });
             return (
               <button key={i} type="button" onClick={() => setCaseActive(i)} aria-label={`Case ${i + 1}${c ? ` : ${c}` : ''}`}
@@ -125,7 +120,6 @@ export default function Bingos({ role }) {
             placeholder="ex. Colorie une page entière avec au moins 5 couleurs pastel" />
         </label>
 
-        {/* Apparence de la case active : fond, texte, image de fond (le texte passe alors sur un rectangle) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <small style={{ ...aide, fontWeight: 700 }}>Case {caseActive + 1} : apparence</small>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px' }}>

@@ -7,7 +7,6 @@ import Roue from './roue';
 
 export const dynamic = 'force-dynamic';
 
-// Roue du Destin : tirer au hasard une page non faite parmi les tomes du compte
 export default async function RouePage() {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -15,7 +14,6 @@ export default async function RouePage() {
     listerMesTomes(user.id),
     sql`SELECT lower(tome) AS t, page_no FROM pages WHERE user_id = ${user.id} AND tome <> ''`,
   ]);
-  // Numéros de pages déjà faites, par tome (une double page « 28-29 » compte pour 28 et 29)
   const faites = {};
   for (const p of pages) {
     for (const n of pagesDuNumero(p.page_no)) (faites[p.t] ||= new Set()).add(n);

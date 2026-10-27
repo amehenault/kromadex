@@ -4,12 +4,8 @@ import { hashPassword } from '@/lib/auth';
 
 const sha = (t) => createHash('sha256').update(t).digest('hex');
 
-// Adresse de contact de Kromadex : les réponses au courriel y arrivent et elle est écrite dans le courriel.
-// L'expéditeur (EMAIL_FROM, par défaut info@kromadex.com) doit être sur un domaine vérifié chez Resend (kromadex.com l'est).
 const CONTACT = (process.env.EMAIL_REPLY_TO || 'info@kromadex.com').trim();
 
-// Envoi du lien par Resend si une clé est configurée (RESEND_API_KEY, EMAIL_FROM : mêmes variables que Planidae).
-// Sans clé ou si l'envoi échoue, la demande arrive dans l'espace admin (onglet Demandes) avec le lien à transmettre.
 async function envoyerCourriel(email, lien) {
   const cle = (process.env.RESEND_API_KEY || '').replace(/^﻿/, '').trim();
   if (!cle) return false;
@@ -22,7 +18,6 @@ async function envoyerCourriel(email, lien) {
       reply_to: CONTACT,
       subject: 'Réinitialiser ton mot de passe Kromadex',
       text: `Bonjour,\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 1 heure) :\n${lien}\n\nSi tu n'as rien demandé, ignore ce courriel.\nUne question ? Écris-nous à ${CONTACT}\n\nKromadex`,
-      // Version HTML : un vrai bouton cliquable (certaines boîtes, comme Hotmail, ne rendent pas le lien du texte cliquable)
       html: `
         <div style="font-family:'Trebuchet MS',Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#273136;background:#fbfbfb;border-radius:12px;">
           <h2 style="margin:0 0 16px;color:#273136;">Kromadex</h2>
@@ -40,11 +35,9 @@ async function envoyerCourriel(email, lien) {
   return r.ok;
 }
 
-// Crée un lien de réinitialisation (valable 1 heure). Ne révèle jamais si le courriel existe.
 export async function demanderReinitialisation(email, origine) {
   const [u] = await sql`SELECT id FROM users WHERE email = ${email}`;
   if (!u) return;
-  // Au plus 3 demandes par heure et par compte
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM reinitialisations WHERE user_id = ${u.id} AND cree_le > now() - interval '1 hour'`;
   if (n >= 3) return;
   const jeton = randomBytes(32).toString('hex');
@@ -57,8 +50,6 @@ export async function demanderReinitialisation(email, origine) {
   }
 }
 
-// Change le mot de passe avec un jeton valide ; le jeton ne sert qu'une fois et les sessions ouvertes sont fermées.
-// Renvoie { erreur } ou { userId }.
 export async function reinitialiser(jeton, motDePasse) {
   if (!/^[0-9a-f]{64}$/.test(jeton || '')) return { erreur: 'Lien invalide.' };
   if (String(motDePasse || '').length < 8) return { erreur: 'Le mot de passe doit contenir au moins 8 caractères.' };

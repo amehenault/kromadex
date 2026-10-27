@@ -6,7 +6,6 @@ import Pseudo from '@/components/Pseudo';
 
 const image = (c) => `/api/pages/${c.page_id}/image?s=${c.img_size || 0}`;
 
-// Validation des bingos : le coloriage correspond-il à la case ? Les XP sont versés le dernier jour du mois.
 export default function ValidationBingos() {
   const [cases, setCases] = useState(null);
   const [message, setMessage] = useState('');

@@ -1,4 +1,3 @@
--- Crayons à l'unité : entrés à la main dans Collection de crayons (marque, code et couleur de la pastille)
 create table if not exists crayons_unite (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,

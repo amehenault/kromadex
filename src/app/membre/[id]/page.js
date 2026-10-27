@@ -7,7 +7,6 @@ import { recompensesDe } from '@/lib/recompensesServeur';
 
 export const dynamic = 'force-dynamic';
 
-// Profil public d'un membre : photo, niveau, titre, abonnés et coloriages publiés
 export default async function MembrePage({ params }) {
   const user = await getUser();
   if (!user) redirect('/login');
@@ -27,7 +26,6 @@ export default async function MembrePage({ params }) {
     recompensesDe(id),
   ]);
   if (!m) notFound();
-  // Profil consulté (quêtes « Première visite », « Curiosité colorée »…)
   if (String(m.id) !== String(user.id)) {
     await sql`INSERT INTO vues (user_id, genre, cible) VALUES (${user.id}, 'profil', ${String(m.id)}) ON CONFLICT DO NOTHING`;
   }

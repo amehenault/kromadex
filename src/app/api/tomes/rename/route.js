@@ -5,7 +5,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Renommer un tome personnalisé (hors catalogue) et/ou fixer son nombre de pages
 export async function POST(req) {
   try {
     const user = await getUser();

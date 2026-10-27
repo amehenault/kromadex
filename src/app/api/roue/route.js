@@ -4,9 +4,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Roue du Destin :
-//  { tome, page } : noter un tirage (on garde les 20 derniers, sauf ceux ajoutés aux quêtes) et renvoyer son id
-//  { quete: id } : ajouter le tirage aux quêtes (14 jours pour le colorier et gagner 10 XP)
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -28,7 +25,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, id: t.id });
 }
 
-// Abandonner une quête du Destin en cours ({ quete: id }) : elle disparaît, sans XP
 export async function DELETE(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

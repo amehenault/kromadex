@@ -16,7 +16,6 @@ const AIDE_TEXTE = {
 };
 const COULEUR_STATUT = { nouvelle: 'var(--texte-secondaire)', en_cours: 'var(--btn)', resolue: 'var(--btn-save)', ajoutee: 'var(--btn-save)', refusee: 'var(--danger)' };
 
-// Page Aide : envoyer une demande et suivre les réponses
 export default function AideClient() {
   const [type, setType] = useState('');
   const [message, setMessage] = useState('');
@@ -29,13 +28,11 @@ export default function AideClient() {
     if (!res.ok) return;
     const d = (await res.json()).demandes || [];
     setDemandes(d);
-    // Les réponses affichées ici sont considérées comme vues
     if (d.some((x) => !x.reponse_vue)) {
       fetch('/api/demandes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vues: true }) })
         .then(() => window.dispatchEvent(new Event('kromadex-lu')));
     }
   }
-  // Arrivée avec un type déjà choisi (ex. /aide?type=erreur_tome&tome=Nom, depuis un livre Cozy colo)
   useEffect(() => {
     charger();
     const p = new URLSearchParams(window.location.search);
@@ -66,7 +63,6 @@ export default function AideClient() {
         <PlayCircle size={18} aria-hidden="true" /> Revoir la présentation de Kromadex
       </Link>
 
-      {/* Mémo : les demandes traitées ne restent pas indéfiniment */}
       <div className="carte" role="note" style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: 'var(--espace-3)', borderLeft: '4px solid var(--couleur-secondaire)' }}>
         <Info size={20} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '1px' }} />
         <small style={{ fontWeight: 600 }}>

@@ -1,4 +1,3 @@
-// Petits outils partagés par les sections de l'espace admin
 export async function envoyer(url, method, corps) {
   const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
   const d = await res.json().catch(() => ({}));

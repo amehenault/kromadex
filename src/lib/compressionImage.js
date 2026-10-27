@@ -1,7 +1,3 @@
-// Compression dans le navigateur avant l'envoi (photos de téléphone souvent de 5 à 15 Mo).
-// Réduit le plus grand côté et réencode en JPEG. Le serveur garde sa propre limite et revérifie tout.
-// Si le navigateur ne sait pas lire le fichier (ex. HEIC sur certains Android), le fichier part tel quel
-// et le serveur renvoie un message clair.
 export async function compresserImage(fichier, coteMax = 1600, qualite = 0.82) {
   if (!fichier) return fichier;
   try {

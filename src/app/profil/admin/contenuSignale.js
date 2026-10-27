@@ -7,6 +7,7 @@ import { GENRES_SIGNALEMENT } from '@/lib/signalements';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn } from './outils';
 import Pseudo from '@/components/Pseudo';
 import { Avatar } from '@/app/communaute/outils';
+import Deroulant from '@/components/Deroulant';
 
 const SANCTIONS = [[0, 'Avertir'], [7, 'Suspendre 7 jours'], [30, 'Suspendre 30 jours'], [36500, 'Bannir']];
 const RETIRER = {
@@ -15,8 +16,6 @@ const RETIRER = {
 };
 const SUR = { commentaire: 'le coloriage', commentaire_missive: 'la missive', commentaire_publication: 'la publication' };
 
-// Contenu signalé par les membres (règles d'utilisation) : on voit le contenu et les raisons,
-// puis on le retire, on ignore le signalement, et on peut sanctionner la personne
 export default function ContenuSignale() {
   const [liste, setListe] = useState(null);
   const [message, setMessage] = useState('');
@@ -99,7 +98,6 @@ export default function ContenuSignale() {
               </small>
             )}
 
-            {/* Raisons données par les membres (les noms de qui a signalé restent visibles ici seulement) */}
             <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.85rem' }}>
               {s.signalements.map((x, i) => (
                 <li key={i} style={{ overflowWrap: 'anywhere' }}>
@@ -121,10 +119,8 @@ export default function ContenuSignale() {
             </div>
             {c && !['admin', 'modo'].includes(c.role) && (
               <label style={champ}>Sanctionner la personne
-                <select value="" onChange={(e) => e.target.value !== '' && sanctionner(s, Number(e.target.value))}>
-                  <option value="">Choisir une sanction</option>
-                  {SANCTIONS.map(([j, l]) => <option key={j} value={j}>{l}</option>)}
-                </select>
+                <Deroulant titre="Sanctionner la personne" placeholder="Choisir une sanction" value="" onChange={(v) => sanctionner(s, Number(v))}
+                  options={SANCTIONS.map(([j, l]) => ({ valeur: j, label: l }))} />
               </label>
             )}
           </div>

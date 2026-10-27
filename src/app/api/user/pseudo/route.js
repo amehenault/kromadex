@@ -5,7 +5,6 @@ import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } fr
 
 export const dynamic = 'force-dynamic';
 
-// Disponibilité d'un pseudo pendant la saisie (?q=), aussi pendant l'inscription (sans compte)
 export async function GET(req) {
   const user = await getUser();
   const pseudo = nettoyerPseudo(new URL(req.url).searchParams.get('q'));
@@ -15,7 +14,6 @@ export async function GET(req) {
   return NextResponse.json({ libre: true });
 }
 
-// Changer son pseudo
 export async function POST(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

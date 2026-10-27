@@ -19,39 +19,34 @@ const json = (url, method = 'GET', corps) =>
 
 const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 
-// Crayons à utiliser pour une palette : pour chaque couleur, le crayon le plus proche des packs choisis
-// qui n'est pas déjà pris. On garde ainsi autant de crayons que de couleurs demandées (6 couleurs = 6 crayons) ;
-// un crayon ne se répète que si les packs n'en ont pas assez.
 function codesPour(couleurs, packs, crayons) {
   return crayonsPourCouleurs(couleurs, crayons.filter((c) => packs.includes(c.pack)));
 }
 
-// Une suggestion dans des packs précis : chaque couleur devient le crayon le plus proche (même nombre de couleurs)
 function ajusterAuxPacks(palette, packs, crayons) {
   const codes = codesPour(palette.couleurs, packs, crayons);
   return codes.length ? { ...palette, couleurs: codes.map((c) => c.hex) } : palette;
 }
 
-// Palettes de couleurs (Cozy colo) : suggestions, mes palettes et palettes partagées par la communauté
 export default function Palettes() {
   const router = useRouter();
   const [onglet, setOnglet] = useState('suggestions');
   const [crayons, setCrayons] = useState([]);
   const [packs, setPacks] = useState([]);
-  const [packsChoisis, setPacksChoisis] = useState([]); // [] = sans coffrets de crayons
+  const [packsChoisis, setPacksChoisis] = useState([]);
   const [nombre, setNombre] = useState(5);
   const [suggestions, setSuggestions] = useState([]);
   const [mes, setMes] = useState([]);
   const [communaute, setCommunaute] = useState([]);
   const [message, setMessage] = useState('');
-  const [creation, setCreation] = useState(null); // { id?, nom, couleurs, packs, partagee? }
+  const [creation, setCreation] = useState(null);
   const [erreurCreation, setErreurCreation] = useState('');
   const [fiche, setFiche] = useState(null);
-  const [couleurOuverte, setCouleurOuverte] = useState(null); // index de la couleur de la palette en cours de modification
-  const [theme, setTheme] = useState(null); // ambiance ou fête des suggestions ({ categorie, cle }), null = au hasard
-  const [filtre, setFiltre] = useState(null); // ambiance ou fête affichée dans Mes palettes et Communauté, null = toutes
-  const [choixTheme, setChoixTheme] = useState(null); // fenêtre ouverte : 'suggestions', 'filtre', 'ambiance' ou 'fete' (palette en création)
-  const [ajout, setAjout] = useState(null); // ajout d'un coloriage inspiré : { palette, etape: 'source' | 'app' }
+  const [couleurOuverte, setCouleurOuverte] = useState(null);
+  const [theme, setTheme] = useState(null);
+  const [filtre, setFiltre] = useState(null);
+  const [choixTheme, setChoixTheme] = useState(null);
+  const [ajout, setAjout] = useState(null);
 
   async function chargerMes() { const r = await json('/api/palettes?vue=mes'); if (r.ok) setMes(r.palettes || []); }
   async function chargerCommunaute() { const r = await json('/api/palettes?vue=communaute'); if (r.ok) setCommunaute(r.palettes || []); }
@@ -61,14 +56,12 @@ export default function Palettes() {
     chargerMes();
     chargerCommunaute();
   }, []);
-  // Suggestions : au hasard, ou dans l'ambiance ou la fête choisie (lib/themesPalettes.js)
   const generer = () => {
     const t = theme && themeDe(theme.categorie, theme.cle);
     const liste = t ? Array.from({ length: 6 }, () => ({ nom: t.nom, couleurs: couleursDuTheme(t, nombre) })) : genererPalettes(nombre);
     setSuggestions(liste.map((p) => (packsChoisis.length ? ajusterAuxPacks(p, packsChoisis, crayons) : p)));
   };
-  useEffect(generer, [nombre, packsChoisis, crayons, theme]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Ambiance et fête d'une suggestion : celle choisie pour générer
+  useEffect(generer, [nombre, packsChoisis, crayons, theme]);
   const themeSuggestion = { ambiance: theme?.categorie === 'ambiance' ? theme.cle : '', fete: theme?.categorie === 'fete' ? theme.cle : '' };
 
   async function enregistrer(p, partagee = false) {
@@ -82,7 +75,6 @@ export default function Palettes() {
   }
   async function enregistrerCreation(partagee) {
     setErreurCreation('');
-    // Dans des packs précis, la palette garde la couleur exacte des crayons
     const p = creation.packs.length ? ajusterAuxPacks(creation, creation.packs, crayons) : creation;
     const r = await enregistrer(p, partagee);
     if (r.ok) { setCreation(null); setOnglet('mes'); } else setErreurCreation(r.error || 'Enregistrement impossible.');
@@ -106,8 +98,6 @@ export default function Palettes() {
       {couleurs.map((c, i) => <span key={i} title={c} style={{ flex: 1, background: c }} />)}
     </div>
   );
-  // Un cercle par crayon, avec son code (ou son nom s'il n'a pas de code), tous sur une seule rangée
-  // (une colonne par couleur ; cercles et texte plus petits à partir de 6 couleurs pour tenir sur un téléphone)
   const Codes = ({ codes, nomsPacks }) => {
     if (!codes?.length) return null;
     const serre = codes.length > 5;
@@ -127,7 +117,6 @@ export default function Palettes() {
   };
   const nomsDe = (ids) => ids.map((id) => packs.find((p) => p.id === id)).filter(Boolean).map(nomPack);
 
-  // Bouton qui ouvre le choix d'une ambiance ou d'une fête (ChoixTheme), avec le choix actuel à droite
   const BoutonTheme = ({ libelle, valeur, icone: Icone = PartyPopper, onClick }) => (
     <button type="button" className="btn alt" onClick={onClick}
       style={{ minHeight: '48px', display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left', padding: '6px 10px' }}>
@@ -137,7 +126,6 @@ export default function Palettes() {
       <ChevronRight size={18} aria-hidden="true" style={{ flex: '0 0 auto' }} />
     </button>
   );
-  // Ambiance et fête d'une palette enregistrée, en petites étiquettes
   const Etiquettes = ({ p }) => {
     const l = [nomTheme('ambiance', p.ambiance), nomTheme('fete', p.fete)].filter(Boolean);
     return l.length ? (
@@ -146,14 +134,12 @@ export default function Palettes() {
       </div>
     ) : null;
   };
-  // Filtre de Mes palettes et Communauté : la palette a cette ambiance ou cette fête
   const filtrer = (l) => (filtre ? l.filter((p) => p[filtre.categorie] === filtre.cle) : l);
   const nomFiltre = filtre ? nomTheme(filtre.categorie, filtre.cle) : 'Toutes';
   const BoutonFiltre = () => (
     <BoutonTheme libelle="Ambiance ou fête" valeur={nomFiltre} icone={Filter} onClick={() => setChoixTheme('filtre')} />
   );
 
-  // Choix des packs de crayons : aucun = sans coffrets de crayons
   const ChoixPacks = ({ valeur, onChange }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <b>Pack de crayons à utiliser</b>
@@ -179,7 +165,6 @@ export default function Palettes() {
     </div>
   );
 
-  // Coloriages publiés qui s'inspirent de la palette
   const Coloriages = ({ liste }) => (
     liste?.length ? (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -195,7 +180,6 @@ export default function Palettes() {
       </div>
     ) : null
   );
-  // Le coloriage vient de l'application (un coloriage déjà enregistré) ou du téléphone (nouvelle photo)
   const BoutonColoriage = ({ p }) => (
     <button type="button" className="btn alt" style={petit} onClick={() => setAjout({ palette: p, etape: 'source' })}>
       <ImagePlus size={16} aria-hidden="true" /> Ajouter un coloriage avec cette palette
@@ -378,7 +362,6 @@ export default function Palettes() {
         </div>
       )}
 
-      {/* Changer une couleur : les crayons des coffrets choisis, ou une palette libre (nuance et code hex) */}
       {creation && couleurOuverte !== null && creation.couleurs[couleurOuverte] && (
         <ChoixCouleur valeur={creation.couleurs[couleurOuverte]}
           crayons={creation.packs.length ? crayons.filter((c) => creation.packs.includes(c.pack)) : []}
@@ -387,7 +370,6 @@ export default function Palettes() {
           onFermer={() => setCouleurOuverte(null)} />
       )}
 
-      {/* Ambiance ou fête : des suggestions, du filtre, ou de la palette en création (une seule catégorie à la fois) */}
       {choixTheme && (
         <ChoixTheme
           categorie={['ambiance', 'fete'].includes(choixTheme) ? choixTheme : undefined}
@@ -415,7 +397,6 @@ export default function Palettes() {
           </Link>
         </Feuille>
       )}
-      {/* Coloriage déjà enregistré : il s'ouvre avec la palette ajoutée, il reste à l'enregistrer */}
       {ajout?.etape === 'app' && (
         <ChoixColoriage avertissement={false} aide="Touche un coloriage : il s’ouvre avec la palette, il reste à l’enregistrer."
           onChoisir={(f) => router.push(`/pages/${f.id}?palette=${ajout.palette.id}`)}

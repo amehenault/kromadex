@@ -9,9 +9,8 @@ import { FETES, NOMS_AVENTURES } from '@/lib/activites';
 const ICONES = { expedition: Compass, epopee: Shield, prophetie: Sparkles };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-// Expéditions, épopées et prophéties en cours (et terminées depuis moins de 30 jours)
 export default function ListeAventures() {
-  const acc = useAccord(); // accord au genre de la personne connectée (le féminin prime)
+  const acc = useAccord();
   const [donnees, setDonnees] = useState(null);
 
   useEffect(() => {
@@ -23,7 +22,6 @@ export default function ListeAventures() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      {/* Inventaire : les Parchemins du Destin (Kromadex+ en reçoit un chaque mois) */}
       {parchemins > 0 && (
         <div className="carte" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ width: 44, height: 44, flex: '0 0 auto', borderRadius: '50%', background: 'var(--accent-doux)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primaire)' }}>

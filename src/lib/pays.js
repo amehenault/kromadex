@@ -1,5 +1,3 @@
-// Pays ou région du profil : sert seulement à afficher les heures dans le bon fuseau.
-// Les pays sur plusieurs fuseaux sont découpés par région.
 export const PAYS = [
   { valeur: 'ca-qc', label: 'Canada - Québec', fuseau: 'America/Toronto' },
   { valeur: 'ca-on', label: 'Canada - Ontario (Est)', fuseau: 'America/Toronto' },

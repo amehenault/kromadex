@@ -8,7 +8,6 @@ import Pseudo from '@/components/Pseudo';
 
 const quand = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-// Fil d'actualités : questions, coloriages en cours et coloriages terminés, du plus récent au plus ancien
 export default function FilActualites() {
   const [suivis, setSuivis] = useState(false);
   const [fil, setFil] = useState([]);
@@ -48,7 +47,6 @@ export default function FilActualites() {
         {fil.map((x) => (x.sorte === 'publication'
           ? <CartePublication key={`p${x.id}`} p={x} onOuvrir={setPublication} onLike={(p) => aimerPublication(p, maj('publication'))} />
           : (
-            // Coloriage terminé publié
             <div key={`c${x.id}`} role="button" tabIndex={0} onClick={() => setFiche(x.id)} onKeyDown={(e) => e.key === 'Enter' && setFiche(x.id)}
               style={{ cursor: 'pointer', background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>

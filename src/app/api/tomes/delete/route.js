@@ -5,7 +5,6 @@ import { getUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Retirer un tome de son profil : le tome reste dans le catalogue et les fiches ne sont pas effacées
 export async function POST(req) {
   try {
     const user = await getUser();

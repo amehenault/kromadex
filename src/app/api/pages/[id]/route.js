@@ -20,11 +20,9 @@ export async function PUT(req, { params }) {
     const codes = formData.get('codes');
     const file = formData.get('image');
     const pub = lirePublication(formData);
-    // Palette dont s'inspire le coloriage (gardée telle quelle si le champ n'est pas envoyé)
     const changePalette = formData.has('palette_id');
     const paletteId = changePalette ? await lirePalette(formData, user.id) : null;
 
-    // Image vérifiée et réencodée (refusée si ce n'est pas une vraie image JPG, PNG ou WebP)
     const image = await imageDuFormulaire(file, { coteMax: COTE.coloriage });
     if (image) {
       const base64 = image.b64;
@@ -39,13 +37,11 @@ export async function PUT(req, { params }) {
             codes = ${codes},
             publiee = ${pub.publiee},
             type_coloriage = ${pub.type},
-            -- la date de publication est gardée tant que la fiche reste publiée
             publiee_le = CASE WHEN ${pub.publiee} THEN COALESCE(publiee_le, now()) ELSE NULL END, 
             image_b64 = ${base64}, 
             image_type = ${imageType}
         WHERE id = ${id} AND user_id = ${user.id}
       `;
-      // Première vraie image de la fiche : les XP du coloriage sont donnés à ce moment (une seule fois par fiche)
       const [p] = await sql`SELECT 1 FROM pages WHERE id = ${id} AND user_id = ${user.id}`;
       if (p) await accorderXPColoriage(user.id, id).catch(() => {});
     } else {
@@ -58,13 +54,11 @@ export async function PUT(req, { params }) {
             codes = ${codes},
             publiee = ${pub.publiee},
             type_coloriage = ${pub.type},
-            -- la date de publication est gardée tant que la fiche reste publiée
             publiee_le = CASE WHEN ${pub.publiee} THEN COALESCE(publiee_le, now()) ELSE NULL END
         WHERE id = ${id} AND user_id = ${user.id}
       `;
     }
 
-    // Double page cochée ou décochée sans nouvelle image : XP de la seconde page donnés ou repris
     await ajusterXPDoublePage(user.id, id).catch(() => {});
     if (changePalette) await sql`UPDATE pages SET palette_id = ${paletteId} WHERE id = ${id} AND user_id = ${user.id}`;
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
@@ -91,7 +85,6 @@ export async function DELETE(req, { params }) {
       RETURNING id
     `;
 
-    // Les XP gagnés en ajoutant ce coloriage sont retirés (les deux pages d'une double page)
     if (supprimee.length) await retirerXPColoriage(user.id, id).catch(() => {});
 
     revalidatePath('/');

@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 
-// Types de coloriage visibles pour la personne connectée (selon ses préférences)
 export default function useTypesVisibles() {
   const [visibles, setVisibles] = useState(VALEURS_TYPES);
   useEffect(() => {

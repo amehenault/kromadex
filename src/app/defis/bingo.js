@@ -18,18 +18,15 @@ const ETAT = {
 };
 const etatCase = (c) => (!c ? null : c.valide === true ? 'valide' : c.valide === false ? 'refuse' : 'attente');
 
-// Un bingo de 3 x 3 : toucher une case montre sa condition, puis on y ajoute son coloriage.
-// L'admin ou une sentinelle valide chaque case ; les XP sont versés le dernier jour du mois.
 export default function Bingo({ bingo }) {
   const [cases, setCases] = useState(() => Object.fromEntries((bingo.cochees || []).filter((c) => c.page).map((c) => [c.case, c])));
   const [ouverte, setOuverte] = useState(null);
   const [choix, setChoix] = useState(false);
   const [erreur, setErreur] = useState('');
   const [inscrit, setInscrit] = useState(Boolean(bingo.inscrit));
-  const [conditions, setConditions] = useState(null); // case dont on lit seulement les conditions
+  const [conditions, setConditions] = useState(null);
   const [participants, setParticipants] = useState(bingo.participants || 0);
 
-  // S'inscrire au bingo (1 bingo par mois en version gratuite, les 2 avec Kromadex+)
   async function inscrire() {
     setErreur('');
     const r = await fetch('/api/bingos/inscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bingoId: bingo.id }) });
@@ -89,8 +86,6 @@ export default function Bingo({ bingo }) {
         {bingo.cases.map((tache, i) => {
           const x = cases[i];
           const e = etatCase(x);
-          // Fond de la case : mon coloriage s'il y en a un, sinon la couleur ou l'image choisie à la création.
-          // Avec un fond, le texte est toujours posé sur un rectangle pour rester lisible.
           const im = (bingo.images || []).find((y) => y.case === i);
           const a = apparenceCase({ ...(bingo.styles?.[i] || {}), image: x ? image(x) : im ? imageCaseBingo(bingo.id, i, im.v) : '' });
           return (
@@ -106,7 +101,6 @@ export default function Bingo({ bingo }) {
                 <span style={a.rectangle ? { background: a.rectangle, padding: '3px 6px', borderRadius: 'var(--rayon-s)' } : undefined}>{tache}</span>
                 {e && (() => { const { Icone } = ETAT[e]; return <Icone size={18} aria-hidden="true" style={{ position: 'absolute', top: 4, right: 4, color: '#ffffff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))' }} />; })()}
               </button>
-              {/* Petit bouton : seulement les conditions de cette case */}
               <button type="button" onClick={() => setConditions(i)} aria-label={`Voir les conditions : ${tache}`}
                 style={{
                   position: 'absolute', left: '4px', right: '4px', bottom: '4px',

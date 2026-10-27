@@ -1,6 +1,3 @@
-// Liste de toutes les images de récompenses du jeu, pour l'onglet Récompenses de l'Espace de l'Invocatrice.
-// Lancé automatiquement avant chaque compilation (npm run build) : les fichiers de public/ ne sont pas lisibles
-// par le serveur une fois en ligne, la liste est donc écrite d'avance dans src/lib/manifesteRecompenses.json.
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
@@ -8,7 +5,6 @@ const PUBLIC = 'public';
 const DOSSIERS = ['recompenses-activites', 'pionniers', 'inventaire'];
 const EXTENSIONS = /\.(svg|png|webp|jpe?g)$/i;
 
-// Type affiché (et filtre) d'après le dossier et le nom du fichier
 function typeDe(chemin) {
   const c = chemin.toLowerCase();
   if (c.startsWith('pionniers/')) return 'Pionnières';
@@ -30,7 +26,6 @@ function typeDe(chemin) {
   return 'Autres';
 }
 
-// Dimensions : attributs width/height ou viewBox d'un SVG, en-tête d'un PNG
 function dimensions(fichier, buf) {
   if (/\.svg$/i.test(fichier)) {
     const t = buf.toString('utf8', 0, Math.min(buf.length, 4000));

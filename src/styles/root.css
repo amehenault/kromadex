@@ -29,7 +29,7 @@
   --sentinelle: #15a281;
   --admin: #8a0043;
 
-  /* Surfaces et textes (utilisés par base.css, .carte et les écrans) */
+  /* Surfaces et textes */
   --fond-page: var(--blanc);
   --texte-principal: var(--noir);
   --texte: var(--texte-principal);
@@ -38,6 +38,16 @@
   --fond-carte: #ffffff;
   --bordure: #dbe9e4;
   --bordure-carte: var(--bordure);
+
+  /* Roue du Destin */
+  --roue-1: var(--couleur-principale);
+  --roue-2: #ffd166;
+  --roue-3: var(--couleur-secondaire);
+  --roue-4: #7ec8f0;
+  --roue-5: #f48fb1;
+  --roue-6: #a5d86e;
+  --roue-7: #ffb347;
+  --roue-8: #6fd3c9;
 
   /* Alertes */
   --danger: #9c033b;

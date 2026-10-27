@@ -5,8 +5,6 @@ import Feuille from './Feuille';
 import { IconeRecompense } from './Recompense';
 import { regrouperRecompenses, RECOMPENSES } from '@/lib/recompenses';
 
-// Inventaire du profil : objets pas encore utilisés (ex. Parchemins du Destin), regroupés.
-// « 3x Parchemin du Destin » quand on en a plusieurs ; toucher un objet ouvre sa description.
 export default function Inventaire({ objets }) {
   const [ouvert, setOuvert] = useState(null);
   const groupes = regrouperRecompenses(objets || []);
@@ -18,7 +16,6 @@ export default function Inventaire({ objets }) {
       </h3>
       {!groupes.length && <small style={{ color: 'var(--texte-secondaire)' }}>Ton inventaire est vide. Les objets gagnés, comme le Parchemin du Destin, apparaîtront ici.</small>}
 
-      {/* Un seul objet : son icône et son nom */}
       {groupes.length === 1 && groupes.map((g) => (
         <button key={`${g.genre}|${g.detail}`} type="button" onClick={() => setOuvert(g)}
           style={{ all: 'unset', boxSizing: 'border-box', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', minHeight: '72px', minWidth: 0 }}>
@@ -29,7 +26,6 @@ export default function Inventaire({ objets }) {
         </button>
       ))}
 
-      {/* Plusieurs objets différents : 3 icônes de large, sans les noms (le nom et la description s'ouvrent au toucher) */}
       {groupes.length > 1 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px 8px' }}>
           {groupes.map((g) => (
@@ -56,7 +52,6 @@ export default function Inventaire({ objets }) {
           <small style={{ color: 'var(--texte-secondaire)', fontWeight: 600 }}>
             Tu en possèdes {ouvert.nombre}.
           </small>
-          {/* Mémo : l'objet ne s'utilise jamais tout seul */}
           <div role="note" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '10px 12px', borderRadius: 'var(--rayon-m)', background: 'var(--accent-doux)' }}>
             <Info size={18} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '1px' }} />
             <small style={{ fontWeight: 600 }}>

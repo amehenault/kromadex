@@ -10,15 +10,12 @@ const PAGES_LEGALES = [
   { href: MENTIONS_LEGALES, label: 'Mentions légales' },
 ];
 
-// Déconnexion : bouton corail pleine largeur, tout en bas du profil, puis les pages légales (soulignées, une sous l'autre)
 export default function BoutonDeconnexion() {
   const r = useRouter();
   const [occupe, setOccupe] = useState(false);
 
   async function sortir() {
     setOccupe(true);
-    // Notifications de cet appareil (ex. appareil partagé) : on lit l'abonnement sans jamais attendre plus de 300 ms,
-    // le serveur le retire dans la même requête que la déconnexion, puis le navigateur s'en désabonne sans qu'on l'attende
     const abonnement = await Promise.race([
       navigator.serviceWorker?.getRegistration().then((reg) => reg?.pushManager.getSubscription()).catch(() => null),
       new Promise((ok) => setTimeout(() => ok(null), 300)),

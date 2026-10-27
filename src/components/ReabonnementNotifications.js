@@ -6,11 +6,8 @@ const versOctets = (base64) => {
   return Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
 };
 
-// Clé gardée sur l'appareil quand la personne a choisi « Désactiver sur cet appareil » : on ne la réabonne pas
 export const CLE_NOTIFS_DESACTIVEES = 'kromadex-notifs-desactivees';
 
-// Connectée sur un appareil qui a déjà permis les notifications : l'abonnement est (re)créé et noté pour ce compte,
-// sans rien demander. Ex. après une déconnexion (qui désabonne l'appareil), ou un abonnement perdu côté serveur.
 export default function ReabonnementNotifications({ clePublique }) {
   useEffect(() => {
     (async () => {

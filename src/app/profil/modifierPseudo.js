@@ -5,19 +5,16 @@ import { Pencil, Check, X } from 'lucide-react';
 import Pseudo from '@/components/Pseudo';
 import TexteAjuste from '@/components/TexteAjuste';
 
-// Pseudo du profil, dans la couleur du poste : modifiable à tout moment, avec vérification en direct
-// qu'aucune autre personne ne l'utilise déjà
 export default function ModifierPseudo({ pseudo, role }) {
   const router = useRouter();
   const [edition, setEdition] = useState(false);
   const [valeur, setValeur] = useState(pseudo);
-  const [etat, setEtat] = useState(null); // { libre, erreur }
+  const [etat, setEtat] = useState(null);
   const [occupe, setOccupe] = useState(false);
 
   const propre = valeur.trim().replace(/^@/, '');
   const inchange = propre.toLowerCase() === pseudo.toLowerCase();
 
-  // Disponibilité vérifiée 400 ms après la dernière frappe
   useEffect(() => {
     if (!edition || !propre || inchange) { setEtat(null); return; }
     const minuteur = setTimeout(() => {
@@ -50,7 +47,6 @@ export default function ModifierPseudo({ pseudo, role }) {
           minHeight: '44px', width: '100%', boxSizing: 'border-box',
         }}>
         {pseudo
-          // Toujours sur une seule ligne : un pseudo long devient plus petit au lieu de passer à la ligne
           ? <span style={{ flex: '0 1 auto', minWidth: 0 }}><TexteAjuste taille={0.95} min={0.5}><Pseudo x={{ pseudo }} role={role} /></TexteAjuste></span>
           : <small style={{ color: 'var(--texte-secondaire)', fontWeight: 700 }}>Choisir un pseudo</small>}
         <Pencil size={15} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--texte-secondaire)' }} />

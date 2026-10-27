@@ -5,7 +5,6 @@ import { cloturerEpreuves } from '@/lib/clotures';
 import { avancerCombats } from '@/lib/combats';
 import { avancerTournois } from '@/lib/tournois';
 
-// Podium de l'Assemblée (accueil) : gagnant.es des 30 derniers jours et leurs récompenses
 export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

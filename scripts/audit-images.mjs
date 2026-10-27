@@ -1,8 +1,3 @@
-// Inventaire des images déjà enregistrées (LECTURE SEULE, rien n'est modifié ni supprimé).
-//   node --env-file=.env.local scripts/audit-images.mjs
-// Classe chaque image d'après ses premiers octets : jpeg, png, webp, ou « suspecte » (pas une vraie image).
-// Depuis la correction de sécurité, une image suspecte n'est plus jamais servie par l'appli (réponse 404),
-// mais elle reste dans la base : la liste permet de décider ensuite quoi en faire.
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
@@ -30,7 +25,7 @@ for (const [nom, requete] of Object.entries(sources)) {
     const f = formatReel(Buffer.from(l.debut, 'base64')) || 'suspecte';
     compte[f] = (compte[f] || 0) + 1;
     if (f === 'suspecte') suspectes.push(`${l.id} (type annoncé : ${l.type || 'aucun'})`);
-    if (l.taille > 5_600_000) lourdes++; // environ 4 Mo une fois décodée
+    if (l.taille > 5_600_000) lourdes++;
   }
   console.log(`\n${nom} : ${lignes.length} image(s)`, compte, lourdes ? `, ${lourdes} de plus de 4 Mo` : '');
   for (const s of suspectes) console.log(`  suspecte : ${s}`);

@@ -10,10 +10,6 @@ export const dynamic = 'force-dynamic';
 
 const dateValide = (v) => (v && !isNaN(Date.parse(v)) ? v : null);
 
-// Publications de la communauté (questions, coloriages en cours), membres connectés seulement.
-//  ?genre=question|en_cours&avant=  : les publications de ce genre (20 à la fois)
-//  ?vue=fil&avant=&suivis=1         : fil d'actualités, publications et coloriages publiés mélangés, du plus récent au plus ancien
-//  ?id=12                           : une publication
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -44,7 +40,6 @@ export async function GET(req) {
   }
   if (q.get('vue') !== 'fil') return NextResponse.json({ publications });
 
-  // Fil d'actualités : on ajoute les coloriages publiés (des types que la personne veut voir) et on garde les 20 plus récents
   const visibles = await mesTypesVisibles(moi);
   const coloriages = await sql`
     SELECT 'coloriage' AS sorte, p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le AS date, OCTET_LENGTH(p.image_b64) AS img_size,
@@ -60,7 +55,6 @@ export async function GET(req) {
   return NextResponse.json({ fil });
 }
 
-// Publier (formulaire : genre, texte, page_id facultatif, images 1 à 4), ou aimer / ne plus aimer ({ like: id })
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -83,7 +77,6 @@ export async function POST(req) {
   const fichiers = f.getAll('images').filter((x) => typeof x === 'object' && x.size);
   if (fichiers.length > MAX_IMAGES_PUBLICATION) return NextResponse.json({ error: `${MAX_IMAGES_PUBLICATION} images au maximum` }, { status: 400 });
 
-  // Coloriage en cours choisi dans ses coloriages : on reprend sa photo (le coloriage lui-même reste privé)
   const pageId = String(f.get('page_id') || '');
   let page = null;
   if (pageId) {
@@ -97,13 +90,11 @@ export async function POST(req) {
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM publications WHERE user_id = ${profil.id} AND cree_le > now() - interval '1 day'`;
   if (n >= MAX_PUBLICATIONS_JOUR) return NextResponse.json({ error: 'Tu as déjà beaucoup publié aujourd’hui, réessaie demain.' }, { status: 429 });
 
-  // Images vérifiées et réencodées (métadonnées retirées) avant d'enregistrer quoi que ce soit
   let images;
   try { images = await Promise.all(fichiers.map((x) => imageDuFormulaire(x, { coteMax: COTE.coloriage }))); }
   catch (e) { if (e instanceof ErreurImage) return reponseErreurImage(e); throw e; }
   if (page) images.unshift({ b64: page.image_b64, type: page.image_type || 'image/webp' });
 
-  // Une seule transaction : la publication et ses images sont enregistrées ensemble, ou pas du tout
   const [[p]] = await sql.transaction([
     sql`INSERT INTO publications (user_id, genre, texte, page_id) VALUES (${profil.id}, ${genre}, ${texte}, ${page?.id || null}) RETURNING id`,
     ...images.slice(0, MAX_IMAGES_PUBLICATION).map((img, i) => sql`INSERT INTO publication_images (publication_id, no, image_b64, type)
@@ -112,7 +103,6 @@ export async function POST(req) {
   return NextResponse.json({ ok: true, id: p.id });
 }
 
-// Retirer une publication : la sienne, ou n'importe laquelle pour l'admin et les Sentinelles
 export async function DELETE(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;

@@ -12,8 +12,6 @@ export default async function Fiche({ params, searchParams }) {
   const user = await getUser();
   if (!user) redirect('/login');
 
-  // Tomes et livres de la personne (possédés, perso ou déjà utilisés), avec leur type et leur nombre de pages
-  // et les pages déjà coloriées de chacun (pour signaler un doublon)
   const [mesTomes, [moi], faites] = await Promise.all([
     listerMesTomes(user.id),
     sql`select types_pratiques from users where id = ${user.id}`,
@@ -21,7 +19,6 @@ export default async function Fiche({ params, searchParams }) {
   ]);
   const bibliotheque = mesTomes.map((t) => ({
     nom: t.nom, autreNom: t.autreNom, type: t.type, total: t.total || null,
-    // Pages déjà faites (sans compter le coloriage qu'on modifie ; une double page « 28-29 » donne 28 et 29)
     faites: [...new Set(faites.filter((x) => x.t === t.nom.toLowerCase() && String(x.id) !== String(id))
       .flatMap((x) => { const n = pagesDuNumero(x.page_no); return n.length ? n.map(String) : [String(x.page_no).trim()]; }))],
   }));
@@ -34,13 +31,11 @@ export default async function Fiche({ params, searchParams }) {
     if (!r.length) notFound();
     page = r[0];
   }
-  // Tome du catalogue du coloriage (les mots-clefs partagés s'y rattachent) et s'il est dans ma bibliothèque
   const [tomeCatalogue] = page?.tome ? await sql`
     select c.id, c.nom, exists (select 1 from user_tomes u where u.tome_id = c.id and u.user_id = ${String(user.id)}) as possede
     from tome_catalog c where lower(c.nom) = lower(${page.tome})
     order by possede desc limit 1` : [];
   const initial = page ? null : { tome: String(q?.tome || '').slice(0, 60), page_no: String(q?.page || '').slice(0, 10) };
-  // Palette dont s'inspire le coloriage (?palette= depuis une palette, aussi pour un coloriage existant, sinon celle déjà liée)
   const idPalette = parseInt(q?.palette, 10) || page?.palette_id || null;
   const [palette] = idPalette ? await sql`
     select id, nom, couleurs from palettes where id = ${idPalette} and (user_id = ${user.id} or partagee)` : [];

@@ -5,8 +5,6 @@ import { ArrowLeft, Search, ChevronRight } from 'lucide-react';
 import Feuille from './Feuille';
 import { libelleMarque } from '@/lib/libelleCrayon';
 
-// Crayons de la personne, rechargés à chaque ouverture (un crayon ajouté juste avant apparaît) : ceux de ses coffrets, puis ses crayons à l'unité
-// (entrés à la main dans Collection de crayons), regroupés dans un coffret « Crayons à l'unité » placé en premier
 const UNITE = 'unite';
 const lire = (url) => fetch(url).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
 const charger = () => (Promise.all([lire('/api/palettes?vue=crayons'), lire('/api/crayons-unite')]).then(([d, u]) => {
@@ -19,10 +17,6 @@ const charger = () => (Promise.all([lire('/api/palettes?vue=crayons'), lire('/ap
 
 const nomPack = (p) => [p.marque, p.sorte, p.gamme].filter(Boolean).join(' ');
 
-// Choisir un code couleur dans ses coffrets : d'abord le coffret (avec recherche), puis le crayon,
-// comme dans Collection de crayons (cercle de couleur, numéro et marque dessous), avec recherche par numéro.
-// onChoisir({ code, marque, hex })
-// rappel : ce qu'on est en train de remplir (symbole, lettre ou numéro de la ligne), toujours visible en haut
 export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
   const [donnees, setDonnees] = useState(null);
   const [pack, setPack] = useState(null);
@@ -31,8 +25,6 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
   useEffect(() => { charger().then(setDonnees); }, []);
 
   const q = recherche.trim().toLowerCase();
-  // Marque affichée sous le crayon et écrite dans le code : celle du coffret avec sa sorte si ce n'est ni du brush ni de l'alcool
-  // (lib/libelleCrayon.js), ou celle entrée à la main pour un crayon à l'unité
   const marqueDe = (c) => (pack?.id === UNITE ? c.marque : (pack?.marque ? libelleMarque(pack.marque, pack.sorte) : nomPack(pack || {})));
   const packs = useMemo(() => (donnees?.packs || []).filter((p) => !q || nomPack(p).toLowerCase().includes(q)), [donnees, q]);
   const crayons = useMemo(() => (donnees?.crayons || [])
@@ -67,7 +59,6 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
         </>
       )}
 
-      {/* Étape 1 : choisir le coffret */}
       {donnees && donnees.packs.length > 0 && !pack && (
         <>
           {barre}
@@ -85,7 +76,6 @@ export default function ChoixCrayon({ onChoisir, onFermer, onManuel, rappel }) {
         </>
       )}
 
-      {/* Étape 2 : choisir le crayon */}
       {pack && (
         <>
           <button type="button" className="btn alt" onClick={() => { setPack(null); setRecherche(''); }}

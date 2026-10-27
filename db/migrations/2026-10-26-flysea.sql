@@ -1,7 +1,3 @@
--- Coffrets Flysea (feutres acryliques Brush), codes lus sur les fiches du fabricant (captures du 2026-10-26).
--- Noms traduits des fiches (sets 12 à 120), les autres codes n'ont pas de nom sur les fiches.
--- Couleurs mesurées sur les captures. Sans les packs 100 % brillants ou pailletés.
--- Rejouable : un coffret déjà présent n'est pas recréé.
 
 INSERT INTO marker_brands (brand_name, range_name, category, sub_type, created_by)
 SELECT 'Flysea', 'Set de 12', 'feutre', 'Acrylique Brush', NULL

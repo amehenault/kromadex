@@ -8,7 +8,6 @@ import TexteErreur from '@/components/TexteErreur';
 import useTypesVisibles from '@/components/useTypesVisibles';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 
-// Coloriages terminés : le fil des coloriages publiés, et un bouton pour publier un de ses coloriages (déjà dans Coloriages)
 export default function Termines() {
   const visibles = useTypesVisibles();
   const [choix, setChoix] = useState(false);
@@ -28,7 +27,7 @@ export default function Termines() {
     const r = await fetch('/api/communaute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publier: coloriage.id, type }) });
     if (!r.ok) { setErreur((await r.json().catch(() => ({}))).error || 'Erreur, réessaie.'); return; }
     setColoriage(null);
-    setVersion((v) => v + 1); // recharge le fil
+    setVersion((v) => v + 1);
   }
 
   const types = TYPES_COLORIAGE.filter((t) => visibles.includes(t.valeur));

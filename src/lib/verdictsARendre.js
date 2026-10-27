@@ -3,9 +3,6 @@ import { cloturerEpreuves } from '@/lib/clotures';
 import { avancerCombats } from '@/lib/combats';
 import { avancerTournois } from '@/lib/tournois';
 
-// Toutes les activités dont le verdict est ouvert et où la personne peut voter :
-// épreuves (officielle, sentinelles, chef.fes), duels et joutes, matchs de tournoi.
-// votee : la personne a déjà rendu son verdict.
 export async function verdictsARendre(userId) {
   await Promise.all([cloturerEpreuves(), avancerCombats(), avancerTournois()]);
   const [epreuves, combats, matchs] = await Promise.all([

@@ -334,8 +334,10 @@ export default function Editor({ page, initial, bibliotheque = [], mesTypes = []
     }
   }, []);
   // Contenu non enregistré : on demande avant de quitter la page (lien, touche Retour, fermeture de l'onglet)
-  const etatPage = JSON.stringify({ f, double, groupes, publiee, typeColo, palette: palette?.id || null, image: Boolean(image) });
-  const etatDepart = useRef(etatPage);
+  const etat = (idPalette) => JSON.stringify({ f, double, groupes, publiee, typeColo, palette: idPalette, image: Boolean(image) });
+  const etatPage = etat(palette?.id || null);
+  // Coloriage existant ouvert depuis une palette (?palette=) : la palette ajoutée reste à enregistrer
+  const etatDepart = useRef(page ? etat(page.palette_id || null) : etatPage);
   const { confirmer: confirmerQuitter, liberer: libererPage } = useGardeQuitter(etatPage !== etatDepart.current,
     `Es-tu ${acc('sûre', 'sûr')} de vouloir quitter cette page ? Tu perdras tout le contenu de cette page.`);
   // Logo de Kromadex déjà converti en image intégrée : html-to-image n'a rien à télécharger pendant l'export,

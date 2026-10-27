@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X, Pencil, ImagePlus, ChevronRight, PartyPopper, Filter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Images, Smartphone, Sparkles, Palette as IconePalette, Users, RefreshCw, Save, Share2, Trash2, Plus, Minus, X, Pencil, ImagePlus, ChevronRight, PartyPopper, Filter } from 'lucide-react';
 import { genererPalettes, crayonsPourCouleurs, MIN_COULEURS, MAX_COULEURS } from '@/lib/palettes';
 import { couleursDuTheme, themeDe, nomTheme } from '@/lib/themesPalettes';
 import ChoixTheme from '@/components/ChoixTheme';
@@ -10,6 +11,8 @@ import FicheDetail from '@/app/communaute/ficheDetail';
 import Pseudo from '@/components/Pseudo';
 import TexteErreur from '@/components/TexteErreur';
 import ChoixCouleur from '@/components/ChoixCouleur';
+import ChoixColoriage from '@/components/ChoixColoriage';
+import Feuille from '@/components/Feuille';
 
 const json = (url, method = 'GET', corps) =>
   fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: corps && JSON.stringify(corps) }).then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) }));
@@ -31,6 +34,7 @@ function ajusterAuxPacks(palette, packs, crayons) {
 
 // Palettes de couleurs (Cozy colo) : suggestions, mes palettes et palettes partagées par la communauté
 export default function Palettes() {
+  const router = useRouter();
   const [onglet, setOnglet] = useState('suggestions');
   const [crayons, setCrayons] = useState([]);
   const [packs, setPacks] = useState([]);
@@ -47,6 +51,7 @@ export default function Palettes() {
   const [theme, setTheme] = useState(null); // ambiance ou fête des suggestions ({ categorie, cle }), null = au hasard
   const [filtre, setFiltre] = useState(null); // ambiance ou fête affichée dans Mes palettes et Communauté, null = toutes
   const [choixTheme, setChoixTheme] = useState(null); // fenêtre ouverte : 'suggestions', 'filtre', 'ambiance' ou 'fete' (palette en création)
+  const [ajout, setAjout] = useState(null); // ajout d'un coloriage inspiré : { palette, etape: 'source' | 'app' }
 
   async function chargerMes() { const r = await json('/api/palettes?vue=mes'); if (r.ok) setMes(r.palettes || []); }
   async function chargerCommunaute() { const r = await json('/api/palettes?vue=communaute'); if (r.ok) setCommunaute(r.palettes || []); }
@@ -190,8 +195,11 @@ export default function Palettes() {
       </div>
     ) : null
   );
+  // Le coloriage vient de l'application (un coloriage déjà enregistré) ou du téléphone (nouvelle photo)
   const BoutonColoriage = ({ p }) => (
-    <Link href={`/pages/new?palette=${p.id}`} className="btn alt" style={petit}><ImagePlus size={16} aria-hidden="true" /> Ajouter un coloriage avec cette palette</Link>
+    <button type="button" className="btn alt" style={petit} onClick={() => setAjout({ palette: p, etape: 'source' })}>
+      <ImagePlus size={16} aria-hidden="true" /> Ajouter un coloriage avec cette palette
+    </button>
   );
 
   const codesCreation = useMemo(() => (creation ? codesPour(creation.couleurs, creation.packs, crayons) : []), [creation, crayons]);
@@ -392,6 +400,26 @@ export default function Palettes() {
             setChoixTheme(null);
           }}
           onFermer={() => setChoixTheme(null)} />
+      )}
+
+      {ajout?.etape === 'source' && (
+        <Feuille titre="Ajouter un coloriage" onFermer={() => setAjout(null)}>
+          <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>D’où vient le coloriage inspiré de la palette {ajout.palette.nom || 'Sans titre'} ?</small>
+          <button type="button" className="btn" onClick={() => setAjout({ ...ajout, etape: 'app' })}
+            style={{ ...petit, width: '100%', justifyContent: 'center', minHeight: '48px' }}>
+            <Images size={18} aria-hidden="true" /> Mes coloriages dans l’application
+          </button>
+          <Link href={`/pages/new?palette=${ajout.palette.id}`} className="btn alt"
+            style={{ ...petit, width: '100%', justifyContent: 'center', minHeight: '48px' }}>
+            <Smartphone size={18} aria-hidden="true" /> Une photo de mon téléphone
+          </Link>
+        </Feuille>
+      )}
+      {/* Coloriage déjà enregistré : il s'ouvre avec la palette ajoutée, il reste à l'enregistrer */}
+      {ajout?.etape === 'app' && (
+        <ChoixColoriage avertissement={false} aide="Touche un coloriage : il s’ouvre avec la palette, il reste à l’enregistrer."
+          onChoisir={(f) => router.push(`/pages/${f.id}?palette=${ajout.palette.id}`)}
+          onFermer={() => setAjout(null)} />
       )}
 
       {fiche && <FicheDetail id={fiche} onFermer={() => setFiche(null)} />}

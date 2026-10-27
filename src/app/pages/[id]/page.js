@@ -40,8 +40,8 @@ export default async function Fiche({ params, searchParams }) {
     from tome_catalog c where lower(c.nom) = lower(${page.tome})
     order by possede desc limit 1` : [];
   const initial = page ? null : { tome: String(q?.tome || '').slice(0, 60), page_no: String(q?.page || '').slice(0, 10) };
-  // Palette dont s'inspire le coloriage (?palette= depuis une palette, ou celle déjà liée)
-  const idPalette = page ? page.palette_id : parseInt(q?.palette, 10) || null;
+  // Palette dont s'inspire le coloriage (?palette= depuis une palette, aussi pour un coloriage existant, sinon celle déjà liée)
+  const idPalette = parseInt(q?.palette, 10) || page?.palette_id || null;
   const [palette] = idPalette ? await sql`
     select id, nom, couleurs from palettes where id = ${idPalette} and (user_id = ${user.id} or partagee)` : [];
   return (

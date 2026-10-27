@@ -7,6 +7,7 @@ import { Avatar, BoutonJaime, imagePage, poster } from './outils';
 import { CodesLecture } from './ficheDetail';
 import useTypesVisibles from '@/components/useTypesVisibles';
 import Pseudo from '@/components/Pseudo';
+import AvecMesCrayons from '@/components/AvecMesCrayons';
 
 export default function CodesCouleurs() {
   const [type, setType] = useState('mystere');
@@ -69,6 +70,7 @@ export default function CodesCouleurs() {
                 <BoutonJaime aime={f.aime} likes={f.likes} onClick={() => aimer(f)} />
               </div>
               <CodesLecture codes={f.codes} />
+              <AvecMesCrayons codes={f.codes} />
             </div>
           ))}
         </div>

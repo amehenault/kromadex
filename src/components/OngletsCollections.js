@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Pencil } from 'lucide-react';
+import { ArrowLeft, BookOpen, Pencil, Heart } from 'lucide-react';
 import { VALEURS_TYPES, nomCollections, nomMesTomes } from '@/lib/typesColoriage';
 
 export default function OngletsCollections({ actif, visibles: visiblesDonnes }) {
@@ -34,6 +34,10 @@ export default function OngletsCollections({ actif, visibles: visiblesDonnes }) 
         {onglet('/profil/collection', actif === 'crayons', <><Pencil size={18} aria-hidden="true" /> Crayons</>)}
         {onglet('/profil/progression', actif !== 'crayons', <><BookOpen size={18} aria-hidden="true" /> {tomes}</>)}
       </nav>
+      <Link href="/profil/souhaits" className="btn alt"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minHeight: '44px', fontWeight: 700, fontSize: '0.9rem' }}>
+        <Heart size={18} aria-hidden="true" /> Ma liste de souhaits
+      </Link>
       {actif !== 'crayons' && (
         <nav aria-label={tomes} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '6px', padding: '6px', borderRadius: 'var(--rayon-m)', background: 'var(--accent-doux)' }}>
           {onglet('/profil/progression', actif === 'collection', 'Ma collection', true)}

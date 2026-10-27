@@ -7,6 +7,7 @@ import { Avatar, BoutonJaime, nomAuteur, nomType, imagePage, poster } from './ou
 import CommentairesFiche from './commentairesFiche';
 import Pseudo from '@/components/Pseudo';
 import BoutonSignaler from '@/components/BoutonSignaler';
+import AvecMesCrayons from '@/components/AvecMesCrayons';
 
 export function CodesLecture({ codes }) {
   const groupes = (Array.isArray(codes) ? codes : []).filter((g) => (g.rows || []).some((r) => r.num || r.label));
@@ -104,7 +105,7 @@ export default function FicheDetail({ id, onFermer, onLike }) {
               </div>
             )}
             {fiche.palette && <PaletteInspiration palette={fiche.palette} />}
-            <div className="carte"><b style={{ display: 'block', marginBottom: '8px' }}>Codes couleurs</b><CodesLecture codes={fiche.codes} /></div>
+            <div className="carte"><b style={{ display: 'block', marginBottom: '8px' }}>Codes couleurs</b><CodesLecture codes={fiche.codes} /><div style={{ marginTop: '10px' }}><AvecMesCrayons codes={fiche.codes} /></div></div>
             <CommentairesFiche pageId={fiche.id} />
           </div>
         )}

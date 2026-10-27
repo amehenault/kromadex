@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Palette, Plus, Trash2, ArrowLeft, Search, ChevronRight, Check, X } from 'lucide-react';
+import { Palette, Plus, Trash2, ArrowLeft, Search, ChevronRight, Check, X, ShoppingCart, Heart } from 'lucide-react';
 import CrayonsUnite from '@/components/CrayonsUnite';
 import OngletsCollections from '@/components/OngletsCollections';
+import Feuille from '@/components/Feuille';
 
 export default function CollectionCrayonsPage() {
   const [toutesMarques, setToutesMarques] = useState([]);
@@ -21,10 +22,40 @@ export default function CollectionCrayonsPage() {
   const [customNomSet, setCustomNomSet] = useState('');
   const [marqueOuverte, setMarqueOuverte] = useState(null);
   const [rechercheMarque, setRechercheMarque] = useState('');
+  const [aRacheter, setARacheter] = useState([]);
+  const [couleurTouchee, setCouleurTouchee] = useState(null);
+  const [voirRacheter, setVoirRacheter] = useState(false);
+  const [souhaitsCoffrets, setSouhaitsCoffrets] = useState(new Set());
 
   useEffect(() => {
     chargerDonneesInitiales();
+    chargerRacheter();
+    fetch('/api/souhaits').then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setSouhaitsCoffrets(new Set((d.coffrets || []).map((c) => Number(c.id))))).catch(() => {});
   }, []);
+
+  async function chargerRacheter() {
+    const r = await fetch('/api/racheter').catch(() => null);
+    if (r?.ok) setARacheter((await r.json()).crayons || []);
+  }
+  const idsRacheter = new Set(aRacheter.map((c) => Number(c.id)));
+
+  async function changerRacheter(colorId, retirer) {
+    await fetch('/api/racheter', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ colorId, action: retirer ? 'REMOVE' : 'ADD' }),
+    }).catch(() => {});
+    chargerRacheter();
+  }
+
+  async function basculerSouhaitCoffret(idNum) {
+    const voulu = souhaitsCoffrets.has(idNum);
+    setSouhaitsCoffrets((prev) => { const m = new Set(prev); if (voulu) m.delete(idNum); else m.add(idNum); return m; });
+    await fetch('/api/souhaits', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brandId: idNum, action: voulu ? 'REMOVE' : 'ADD' }),
+    }).catch(() => {});
+  }
 
   async function chargerDonneesInitiales() {
     try {
@@ -209,6 +240,14 @@ export default function CollectionCrayonsPage() {
         >
           <Plus size={18} aria-hidden="true" /> Ajouter un coffret de crayons
         </button>
+        <button
+          type="button"
+          className="btn alt"
+          onClick={() => setVoirRacheter(true)}
+          style={{ fontWeight: 'bold', display: 'flex', width: '100%', minHeight: '48px', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+        >
+          <ShoppingCart size={18} aria-hidden="true" /> Crayons à racheter ({aRacheter.length})
+        </button>
 
         {marquesAffichees.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espace-2)' }}>
@@ -283,19 +322,29 @@ export default function CollectionCrayonsPage() {
         gap: 'var(--espace-2)'
       }}>
         {couleursFiltrees.map((c) => (
-          <div
+          <button
             key={c.id}
+            type="button"
+            onClick={() => setCouleurTouchee(c)}
+            aria-label={`${c.color_code}${idsRacheter.has(Number(c.id)) ? ', dans la liste à racheter' : ''}`}
             style={{
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               padding: '10px 6px',
               background: '#ffffff',
-              border: '1px solid #e2e8f0',
+              border: idsRacheter.has(Number(c.id)) ? '2px solid var(--couleur-principale)' : '1px solid #e2e8f0',
               borderRadius: 'var(--rayon-s)',
-              textAlign: 'center'
+              textAlign: 'center',
+              font: 'inherit',
+              cursor: 'pointer',
+              minWidth: 0
             }}
           >
+            {idsRacheter.has(Number(c.id)) && (
+              <ShoppingCart size={14} aria-hidden="true" style={{ position: 'absolute', top: '4px', right: '4px', color: 'var(--couleur-principale)' }} />
+            )}
             <div style={{
               width: '34px',
               height: '34px',
@@ -309,9 +358,66 @@ export default function CollectionCrayonsPage() {
             <b style={{ fontSize: '0.95rem', color: '#1a202c', letterSpacing: '0.5px' }}>
               {c.color_code}
             </b>
-          </div>
+          </button>
         ))}
       </div>
+
+      {couleurTouchee && (() => {
+        const dejaLa = idsRacheter.has(Number(couleurTouchee.id));
+        return (
+          <Feuille titre="Crayons à racheter" onFermer={() => setCouleurTouchee(null)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span aria-hidden="true" style={{ width: '40px', height: '40px', flex: '0 0 auto', borderRadius: '50%', background: couleurTouchee.hex_value || '#808080', border: '1px solid rgba(0,0,0,0.15)' }} />
+              <span style={{ minWidth: 0 }}>
+                <b style={{ display: 'block' }}>{couleurTouchee.color_code}</b>
+                {couleurTouchee.color_name && <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>{couleurTouchee.color_name}</small>}
+              </span>
+            </div>
+            <p style={{ margin: 0, fontWeight: 600 }}>
+              {dejaLa ? 'Veux-tu le retirer de la liste de crayons à racheter ?' : 'Veux-tu l’ajouter à la liste de crayons à racheter ?'}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button type="button" className="btn" style={{ minHeight: '48px', fontWeight: 700 }}
+                onClick={() => { changerRacheter(couleurTouchee.id, dejaLa); setCouleurTouchee(null); }}>
+                Oui
+              </button>
+              <button type="button" className="btn alt" style={{ minHeight: '48px', fontWeight: 700 }} onClick={() => setCouleurTouchee(null)}>
+                Non
+              </button>
+            </div>
+          </Feuille>
+        );
+      })()}
+
+      {voirRacheter && (
+        <Feuille titre={`Crayons à racheter (${aRacheter.length})`} onFermer={() => setVoirRacheter(false)} haute>
+          {!aRacheter.length && (
+            <p style={{ margin: 0, color: 'var(--texte-secondaire)' }}>
+              Ta liste est vide. Touche une couleur de tes coffrets pour l’ajouter.
+            </p>
+          )}
+          {Object.entries(aRacheter.reduce((g, c) => ((g[c.nom_pack] ||= []).push(c), g), {})).map(([pack, liste]) => (
+            <div key={pack} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <b style={{ fontSize: '0.9rem', color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>{pack}</b>
+              {liste.map((c) => (
+                <div key={c.id} className="deroulant-choix" style={{ cursor: 'default' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                    <span aria-hidden="true" style={{ width: '30px', height: '30px', flex: '0 0 auto', borderRadius: '50%', background: c.hex || '#808080', border: '1px solid rgba(0,0,0,0.15)' }} />
+                    <span style={{ minWidth: 0 }}>
+                      <b style={{ display: 'block' }}>{c.code}</b>
+                      {c.nom && <small style={{ color: 'var(--texte-secondaire)', overflowWrap: 'anywhere' }}>{c.nom}</small>}
+                    </span>
+                  </span>
+                  <button type="button" className="btn alt" aria-label={`Retirer ${c.code} de la liste`} onClick={() => changerRacheter(c.id, true)}
+                    style={{ minWidth: '44px', minHeight: '44px', padding: 0, flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <X size={18} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </Feuille>
+      )}
 
       {afficherModalAjout && (
         <div
@@ -422,12 +528,13 @@ export default function CollectionCrayonsPage() {
                       <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--texte-secondaire)', margin: '0 0 6px' }}>
                         {subType}
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '6px' }}>
                         {structureMarques[marqueOuverte][subType].map((b) => {
                           const possede = mesSetsIds.has(Number(b.id));
+                          const voulu = souhaitsCoffrets.has(Number(b.id));
                           return (
+                            <div key={b.id} style={{ display: 'flex', gap: '4px', minWidth: 0 }}>
                             <button
-                              key={b.id}
                               type="button"
                               onClick={() => (possede ? retirerSet(Number(b.id)) : ajouterSet(Number(b.id)))}
                               style={{
@@ -436,11 +543,22 @@ export default function CollectionCrayonsPage() {
                                 background: possede ? 'var(--btn)' : 'var(--carte)',
                                 color: possede ? '#ffffff' : 'var(--texte-principal)',
                                 fontWeight: possede ? 'bold' : 'normal', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', textAlign: 'center'
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', textAlign: 'center',
+                                flex: 1, minWidth: 0
                               }}
                             >
                               {possede ? <Check size={14} /> : <Plus size={14} />} {b.range_name}
                             </button>
+                            {!possede && (
+                              <button type="button" onClick={() => basculerSouhaitCoffret(Number(b.id))}
+                                aria-label={voulu ? `Retirer ${b.range_name} de ma liste de souhaits` : `Je veux ${b.range_name}`} aria-pressed={voulu}
+                                style={{ flex: '0 0 auto', minWidth: '44px', minHeight: '44px', borderRadius: '8px', cursor: 'pointer',
+                                  border: '1px solid var(--bordure-carte)', background: 'var(--carte)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  color: voulu ? '#e0457b' : 'var(--texte-secondaire)' }}>
+                                <Heart size={18} fill={voulu ? '#e0457b' : 'none'} aria-hidden="true" />
+                              </button>
+                            )}
+                            </div>
                           );
                         })}
                       </div>

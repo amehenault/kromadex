@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Search, Plus, Check } from 'lucide-react';
+import { ArrowLeft, BookOpen, Search, Plus, Check, Heart } from 'lucide-react';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import OngletsCollections from '@/components/OngletsCollections';
 import AvisPagesCozy from '@/components/AvisPagesCozy';
@@ -50,6 +50,20 @@ export default function CatalogueTomesPage() {
   }, []);
 
   const [ajoutCozy, setAjoutCozy] = useState('');
+  const [souhaits, setSouhaits] = useState(new Set());
+  useEffect(() => {
+    fetch('/api/souhaits').then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setSouhaits(new Set((d.tomes || []).map((t) => Number(t.id))))).catch(() => {});
+  }, []);
+
+  async function basculerSouhait(id) {
+    const voulu = souhaits.has(id);
+    setSouhaits((prev) => { const m = new Set(prev); if (voulu) m.delete(id); else m.add(id); return m; });
+    await fetch('/api/souhaits', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tomeId: id, action: voulu ? 'REMOVE' : 'ADD' }),
+    }).catch(() => {});
+  }
 
   async function basculer(tome) {
     const id = Number(tome.id);
@@ -57,6 +71,7 @@ export default function CatalogueTomesPage() {
     const maj = new Set(possedes);
     if (possede) maj.delete(id); else maj.add(id);
     if (!possede && tome.type === 'cozy') setAjoutCozy(tome.nom);
+    if (!possede) setSouhaits((prev) => { const m = new Set(prev); m.delete(id); return m; });
     setPossedes(maj);
     setEnCours(id);
     try {
@@ -174,7 +189,7 @@ export default function CatalogueTomesPage() {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
         gap: '10px'
       }}>
         {tomesAffiches.map((t) => {
@@ -208,15 +223,24 @@ export default function CatalogueTomesPage() {
                   {progression[t.id]?.coloriees || 0} / {t.nb_pages || '?'} pages
                 </small>
               ) : t.nb_pages ? <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.72rem' }}>{t.nb_pages} pages</small> : null}
-              <button
-                type="button"
-                className={possede ? 'btn alt' : 'btn'}
-                disabled={enCours === Number(t.id)}
-                onClick={() => basculer(t)}
-                style={{ marginTop: 'auto', fontSize: '0.75rem', padding: '7px 6px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-              >
-                {possede ? 'Retirer' : <><Plus size={13} /> Ajouter</>}
-              </button>
+              <div style={{ marginTop: 'auto', display: 'flex', gap: '4px' }}>
+                <button
+                  type="button"
+                  className={possede ? 'btn alt' : 'btn'}
+                  disabled={enCours === Number(t.id)}
+                  onClick={() => basculer(t)}
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.75rem', padding: '7px 6px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                >
+                  {possede ? 'Retirer' : <><Plus size={13} /> Ajouter</>}
+                </button>
+                {!possede && (
+                  <button type="button" onClick={() => basculerSouhait(Number(t.id))} className="btn alt"
+                    aria-label={souhaits.has(Number(t.id)) ? `Retirer ${t.nom} de ma liste de souhaits` : `Je veux ${t.nom}`} aria-pressed={souhaits.has(Number(t.id))}
+                    style={{ flex: '0 0 auto', minWidth: '44px', minHeight: '44px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: souhaits.has(Number(t.id)) ? '#e0457b' : 'var(--texte-secondaire)' }}>
+                    <Heart size={18} fill={souhaits.has(Number(t.id)) ? '#e0457b' : 'none'} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

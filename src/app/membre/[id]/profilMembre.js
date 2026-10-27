@@ -16,6 +16,7 @@ import BoutonSignaler from '@/components/BoutonSignaler';
 import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
+import ListeSouhaits from '@/components/ListeSouhaits';
 
 
 export default function ProfilMembre({ membre, fiches: initiales, recompenses = [], moi }) {
@@ -102,6 +103,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
 
       <MesRecompenses recompenses={[...badgePionnier(m), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]} titre={moi ? 'Mes récompenses' : 'Récompenses'}
         epingles={m.badges_epingles || []} modifiable={moi} />
+
+      <ListeSouhaits id={m.id} moi={moi} titre={moi ? 'Ma liste de souhaits' : 'Liste de souhaits'} />
 
       <h3 style={{ margin: '0 0 10px' }}>Coloriages publiés</h3>
       {!fiches.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage publié pour l'instant.</p>}

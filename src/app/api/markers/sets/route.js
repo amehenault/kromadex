@@ -40,6 +40,7 @@ export async function POST(req) {
         VALUES (${userIdStr}, ${brandId})
         ON CONFLICT DO NOTHING
       `;
+      await sql`DELETE FROM souhaits WHERE user_id = ${user.id} AND brand_id = ${brandId}`;
     } else if (action === 'REMOVE') {
       await sql`
         DELETE FROM user_sets

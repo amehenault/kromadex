@@ -50,6 +50,7 @@ export async function POST(req) {
         sql`INSERT INTO user_tomes (user_id, tome_id) VALUES (${userIdStr}, ${id}) ON CONFLICT DO NOTHING`,
         sql`DELETE FROM user_tomes_masques WHERE user_id = ${userIdStr}
             AND lower(nom) = (SELECT lower(nom) FROM tome_catalog WHERE id = ${id})`,
+        sql`DELETE FROM souhaits WHERE user_id = ${user.id} AND tome_id = ${id}`,
       ]);
     } else if (action === 'REMOVE') {
       await sql`

@@ -23,7 +23,7 @@ IMAGES.filter((i) => i.chemin.startsWith('/parrainage/') && i.fichier.toLowerCas
   .forEach((i) => {
     const base = i.fichier.replace(/\.[a-z0-9]+$/i, '');
     CADRES[`parrainage_${base}`] = {
-      nom: 'Cadre de parrainage', image: i.chemin, photo: 0.6,
+      nom: 'Cadre de parrainage', image: i.chemin, photo: 0.88, echelle: 1.15,
       condition: 'Avoir invité une amie qui a publié son premier coloriage sur Kromadex.',
     };
   });

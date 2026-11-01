@@ -144,6 +144,22 @@
     "hauteur": 500
   },
   {
+    "chemin": "/parrainage/kromadex-parrainage-badge.svg",
+    "fichier": "kromadex-parrainage-badge.svg",
+    "type": "Parrainage",
+    "octets": 22944,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
+    "chemin": "/parrainage/kromadex-parrainage-cadre.svg",
+    "fichier": "kromadex-parrainage-cadre.svg",
+    "type": "Parrainage",
+    "octets": 16185,
+    "largeur": 500,
+    "hauteur": 500
+  },
+  {
     "chemin": "/pionniers/kromadex-pionnier-badge.svg",
     "fichier": "kromadex-pionnier-badge.svg",
     "type": "Pionnières",

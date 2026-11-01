@@ -3,7 +3,7 @@ import { CADRES, styleCadre } from '@/lib/cadres';
 export default function PhotoCadre({ cadre, taille, children }) {
   const c = CADRES[cadre];
   if (c?.image) {
-    const total = Math.round(taille * 1.6);
+    const total = Math.round(taille * (c.echelle || 1.6));
     return (
       <span title={c.nom} style={{ position: 'relative', width: total, height: total, flex: '0 0 auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
         {children(Math.round(total * c.photo))}

@@ -8,6 +8,7 @@ export const TYPES_ACTIVITES = {
   defi_cheffe: 'Épreuve des Cheffes',
   defi_menestrel: 'Épreuve des Ménestrelles',
   defi_groupe: 'Épreuve de groupe',
+  tournoi: 'Tournoi du royaume',
 };
 
 export const mentionActivite = (x) => `${TYPES_ACTIVITES[x.genre] || 'Activité'} : ${x.nom_activite}`;

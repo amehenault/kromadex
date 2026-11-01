@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { annoncerBientot } from '@/lib/annonces';
 import { exigerPoste } from '@/lib/roles';
 import { NB_CASES, VALEURS_CATEGORIES_BINGO } from '@/lib/bingos';
 import { mesTypesVisibles, categoriesBingoVisibles } from '@/lib/visibilite';
@@ -38,6 +39,7 @@ export async function GET(req) {
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste('admin', 'menestrel');
   if (erreur) return erreur;
+  annoncerBientot();
   const menestrel = profil.role === 'menestrel';
   const { id, titre, cases, conditions, categorie, debut, fin, styles } = await req.json();
   const hex = (c) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c.toUpperCase() : '');

@@ -1,5 +1,6 @@
 export const TYPES_NOTIFS = [
-  { cle: 'missives', label: 'Nouvelles missives' },
+  { cle: 'activites', label: 'Nouvelles activités (bingos, épreuves, aventures, tournois)' },
+  { cle: 'missives', label:'Nouvelles missives' },
   { cle: 'reponses', label: 'Réponses à mes demandes d’aide' },
   { cle: 'combats', label: 'Invitations à un combat' },
   { cle: 'abonnement', label: 'Mon abonnement Kromadex+' },

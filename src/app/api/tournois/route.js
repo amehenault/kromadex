@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { annoncerBientot } from '@/lib/annonces';
 import { exigerPoste } from '@/lib/roles';
 import { isId } from '@/lib/pages';
 import { VALEURS_CATEGORIES, pageConvient } from '@/lib/defis';
@@ -38,6 +39,7 @@ export async function GET() {
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
+  annoncerBientot();
   await avancerTournois();
   const b = await req.json().catch(() => ({}));
   const moi = profil.id;

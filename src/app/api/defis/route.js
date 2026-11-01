@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { annoncerBientot } from '@/lib/annonces';
 import { exigerPoste } from '@/lib/roles';
 import { jourQuebec, premierDuMoisQuebec as premierDuMois, finDuMois } from '@/lib/temps';
 import { VALEURS_CATEGORIES } from '@/lib/defis';
@@ -69,6 +70,7 @@ export async function GET(req) {
 export async function POST(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
+  annoncerBientot();
   const c = await req.json().catch(() => ({}));
   const genre = c.genre || 'officiel';
   const titre = String(c.titre || '').trim().slice(0, 100);

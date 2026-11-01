@@ -8,6 +8,7 @@ import { mesTypesVisibles } from '@/lib/visibilite';
 import { parcheminsDisponibles } from '@/lib/recompensesServeur';
 import { chargerAventure, etatEpopee, soumettre, soumettreTest, repondreEnigme, nbColoriages, normaliser } from '@/lib/aventures';
 import { choixNbColoriages } from '@/lib/activites';
+import { annoncerBientot } from '@/lib/annonces';
 import { verifierLimite, parcheminDuMois } from '@/lib/abonnement';
 
 const GENRES = ['expedition', 'epopee', 'prophetie'];
@@ -186,6 +187,7 @@ export async function POST(req) {
   }
 
   if (profil.role !== 'admin') return non('Réservé à l’Invocatrice', 403);
+  annoncerBientot();
   const genre = GENRES.includes(b.genre) ? b.genre : null;
   const titre = String(b.titre || '').trim().slice(0, 100);
   const debut = date(b.debut), fin = date(b.fin);

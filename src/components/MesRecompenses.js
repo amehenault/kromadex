@@ -8,7 +8,7 @@ import { regrouperRecompenses, nomRecompense, MAX_EPINGLES } from '@/lib/recompe
 
 const cle = (g) => `${g.genre}|${g.detail}`;
 
-export default function MesRecompenses({ recompenses, titre = 'Mes récompenses', vide, epingles: initiales = [], modifiable = false }) {
+export default function MesRecompenses({ recompenses, titre = 'Mes récompenses', vide, epingles: initiales = [], modifiable = false, compact = false }) {
   const router = useRouter();
   const [tout, setTout] = useState(false);
   const [epingles, setEpingles] = useState(initiales);
@@ -16,9 +16,9 @@ export default function MesRecompenses({ recompenses, titre = 'Mes récompenses'
   if (!recompenses?.length) {
     if (!vide) return null;
     return (
-      <section className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Award size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}</h3>
-        <small style={{ color: 'var(--texte-secondaire)' }}>{vide}</small>
+      <section className="carte" style={{ marginBottom: compact ? 0 : 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: compact ? '1rem' : undefined }}><Award size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}</h3>
+        <small style={{ color: 'var(--texte-secondaire)' }}>{compact ? 'Tes badges et reliques apparaîtront ici.' : vide}</small>
       </section>
     );
   }
@@ -44,6 +44,61 @@ export default function MesRecompenses({ recompenses, titre = 'Mes récompenses'
     enregistrer([...choisis.map(cle), k]);
   }
 
+  const feuilleTout = tout && (
+    <Feuille titre={titre} onFermer={() => setTout(false)}>
+      {modifiable && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <small style={{ color: 'var(--texte-secondaire)' }}>
+            {choisis.length
+              ? `${choisis.length} / ${MAX_EPINGLES} badges épinglés sur ton profil.`
+              : `Kromadex affiche tes ${MAX_EPINGLES} badges les plus récents. Épingle jusqu’à ${MAX_EPINGLES} badges pour choisir toi-même.`}
+          </small>
+          {choisis.length > 0 && (
+            <button type="button" className="btn alt" onClick={() => enregistrer([])} style={{ minHeight: '44px' }}>
+              Laisser Kromadex choisir (les {MAX_EPINGLES} plus récents)
+            </button>
+          )}
+          {message && <small role="alert" style={{ color: 'var(--danger)', fontWeight: 600 }}>{message}</small>}
+        </div>
+      )}
+      {groupes.map((g) => {
+        const epingle = epingles.includes(cle(g));
+        return (
+          <div key={cle(g)} style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}><LigneRecompense r={g} nombre={g.nombre} /></div>
+            {modifiable && (
+              <button type="button" onClick={() => basculer(g)} aria-pressed={epingle}
+                aria-label={epingle ? `Retirer l’épingle : ${nomRecompense(g, g.nombre)}` : `Épingler : ${nomRecompense(g, g.nombre)}`}
+                className={epingle ? 'btn' : 'btn alt'}
+                style={{ minWidth: '44px', minHeight: '44px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
+                {epingle ? <PinOff size={18} aria-hidden="true" /> : <Pin size={18} aria-hidden="true" />}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </Feuille>
+  );
+
+  if (compact) {
+    const derniere = recents[0];
+    return (
+      <section className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '1rem' }}><Award size={18} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}</h3>
+        <button type="button" onClick={() => setTout(true)} aria-label={`Dernière récompense : ${nomRecompense(derniere, derniere.nombre)}. Voir toutes mes récompenses`}
+          style={{ all: 'unset', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textAlign: 'center', minWidth: 0 }}>
+          <IconeQuantite r={derniere} nombre={derniere.nombre} taille={64} />
+          <small style={{ fontWeight: 600, overflowWrap: 'anywhere', fontSize: '0.75rem' }}>{nomRecompense(derniere, derniere.nombre)}</small>
+        </button>
+        <button type="button" onClick={() => setTout(true)}
+          style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', minHeight: '44px', fontWeight: 700, fontSize: '0.8rem', marginTop: 'auto' }}>
+          Tout voir ({groupes.length}) <ChevronRight size={18} aria-hidden="true" />
+        </button>
+        {feuilleTout}
+      </section>
+    );
+  }
+
   return (
     <section className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -61,41 +116,7 @@ export default function MesRecompenses({ recompenses, titre = 'Mes récompenses'
           </div>
         ))}
       </div>
-      {tout && (
-        <Feuille titre={titre} onFermer={() => setTout(false)}>
-          {modifiable && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <small style={{ color: 'var(--texte-secondaire)' }}>
-                {choisis.length
-                  ? `${choisis.length} / ${MAX_EPINGLES} badges épinglés sur ton profil.`
-                  : `Kromadex affiche tes ${MAX_EPINGLES} badges les plus récents. Épingle jusqu’à ${MAX_EPINGLES} badges pour choisir toi-même.`}
-              </small>
-              {choisis.length > 0 && (
-                <button type="button" className="btn alt" onClick={() => enregistrer([])} style={{ minHeight: '44px' }}>
-                  Laisser Kromadex choisir (les {MAX_EPINGLES} plus récents)
-                </button>
-              )}
-              {message && <small role="alert" style={{ color: 'var(--danger)', fontWeight: 600 }}>{message}</small>}
-            </div>
-          )}
-          {groupes.map((g) => {
-            const epingle = epingles.includes(cle(g));
-            return (
-              <div key={cle(g)} style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <div style={{ flex: 1, minWidth: 0 }}><LigneRecompense r={g} nombre={g.nombre} /></div>
-                {modifiable && (
-                  <button type="button" onClick={() => basculer(g)} aria-pressed={epingle}
-                    aria-label={epingle ? `Retirer l’épingle : ${nomRecompense(g, g.nombre)}` : `Épingler : ${nomRecompense(g, g.nombre)}`}
-                    className={epingle ? 'btn' : 'btn alt'}
-                    style={{ minWidth: '44px', minHeight: '44px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}>
-                    {epingle ? <PinOff size={18} aria-hidden="true" /> : <Pin size={18} aria-hidden="true" />}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </Feuille>
-      )}
+      {feuilleTout}
     </section>
   );
 }

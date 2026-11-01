@@ -14,7 +14,6 @@ import TomesAdmin from './tomesAdmin';
 import Moderation from './moderation';
 import Demandes from './demandes';
 import MotsCles from './motsCles';
-import KromadexPlus from './kromadexPlus';
 import Lancement from './lancement';
 import ReglageParrainage from './reglageParrainage';
 import Recompenses from './recompenses';
@@ -28,9 +27,8 @@ const ONGLETS = [
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
   { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
   { cle: 'activites', label: 'Activités', icone: Sparkles, roles: ['admin', 'modo', 'cheffe', 'menestrel'] },
-  { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
   { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
-  { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
+  { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
   { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
   { cle: 'recompenses', label: 'Récompenses', icone: Award, roles: ['admin'] },
   { cle: 'tomes', label: 'Tomes et livres', icone: BookOpen, roles: ['admin'] },
@@ -129,7 +127,6 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'validation' && <ValidationBingos />}
       {actif === 'signalements' && <><ContenuSignale /><SignalementsEpreuves /></>}
       {actif === 'motscles' && <MotsCles />}
-      {actif === 'plus' && <KromadexPlus />}
       {actif === 'lancement' && <Lancement />}
       {actif === 'reglages' && <ReglageParrainage />}
       {actif === 'recompenses' && <Recompenses />}

@@ -6,7 +6,7 @@ import { Dices, Pencil, Trash2 } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import { XP_QUETE_DESTIN } from '@/lib/destin';
 
-export default function QuetesDuDestin({ quetes: initiales, titre = 'Quêtes du Destin' }) {
+export default function QuetesDuDestin({ quetes: initiales, titre = 'Quêtes du Destin', sansTitre = false }) {
   const router = useRouter();
   const [quetes, setQuetes] = useState(initiales);
 
@@ -17,10 +17,12 @@ export default function QuetesDuDestin({ quetes: initiales, titre = 'Quêtes du 
   }
 
   return (
-    <section className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <b style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
-        <Dices size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}
-      </b>
+    <section className="carte" style={{ marginBottom: sansTitre ? 0 : 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {!sansTitre && (
+        <b style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
+          <Dices size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre}
+        </b>
+      )}
       {!quetes.length && (
         <small style={{ color: 'var(--texte-secondaire)' }}>
           Fais tourner la <Link href="/roue" style={{ color: 'inherit', fontWeight: 700 }}>Roue du Destin</Link> et ajoute la page tirée à tes quêtes :

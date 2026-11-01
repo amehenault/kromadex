@@ -49,8 +49,7 @@ import { verifierQuetes } from '@/lib/quetes';
 import { accord } from '@/lib/genre';
 import { quetesDestin } from '@/lib/quetesDestin';
 import QuetesDuDestin from '@/components/QuetesDuDestin';
-import ObjectifsPerso from '@/components/ObjectifsPerso';
-import Albums from '@/components/Albums';
+import OngletsQuetesObjectifs from '@/components/OngletsQuetesObjectifs';
 import Parrainage from '@/components/Parrainage';
 import { codeParrainage, filleules } from '@/lib/parrainage';
 import { lireReglage } from '@/lib/reglages';
@@ -393,11 +392,12 @@ export default async function ProfilPage() {
         </div>
       </div>
 
-      <MesRecompenses recompenses={[...badgePionnier(profile), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]}
-        epingles={profile?.badges_epingles || []} modifiable
-        vide="Tes badges, reliques et sceaux d’épreuves, de combats et d’aventures apparaîtront ici. Tu pourras en épingler 6 ; sinon les 6 plus récents s’affichent." />
-
-      <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: 'var(--espace-3)', alignItems: 'stretch' }}>
+        <MesRecompenses recompenses={[...badgePionnier(profile), ...recompenses.filter((r) => !OBJETS.includes(r.genre))]}
+          epingles={profile?.badges_epingles || []} modifiable compact
+          vide="Tes badges, reliques et sceaux d’épreuves, de combats et d’aventures apparaîtront ici." />
+        <Inventaire objets={recompenses.filter((r) => OBJETS.includes(r.genre) && !r.utilise)} compact />
+      </div>
 
       {prochesQuetes.length > 0 && (
         <div className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -426,12 +426,8 @@ export default async function ProfilPage() {
         </div>
       )}
 
-      {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
-
-      <ObjectifsPerso objectifs={JSON.parse(JSON.stringify(objectifs))}
+      <OngletsQuetesObjectifs destin={JSON.parse(JSON.stringify(destin))} objectifs={JSON.parse(JSON.stringify(objectifs))}
         bibliotheque={mesTomes.map((t) => ({ nom: t.nom, autreNom: t.autreNom, type: t.type, total: t.total || null }))} />
-
-      <Albums id={String(authUser.id)} moi />
 
       {parrainageActif && <Parrainage code={codeInvitation} filleules={JSON.parse(JSON.stringify(mesInvitees))} />}
 

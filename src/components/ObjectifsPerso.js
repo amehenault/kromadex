@@ -8,7 +8,7 @@ import TexteErreur from '@/components/TexteErreur';
 const XP = 2;
 const libelle = (o) => o.texte || `Colorier la page ${o.page_no} de ${o.tome}`;
 
-export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque }) {
+export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque, sansTitre = false }) {
   const router = useRouter();
   const [objectifs, setObjectifs] = useState(initiaux);
   const [ouvert, setOuvert] = useState(false);
@@ -40,10 +40,12 @@ export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque }) {
   const lien = { display: 'inline-flex', alignItems: 'center', gap: '4px', minHeight: '44px', fontWeight: 700, fontSize: '0.85rem', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 };
 
   return (
-    <section className="carte" style={{ marginBottom: 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <b style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
-        <Target size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Mes objectifs
-      </b>
+    <section className="carte" style={{ marginBottom: sansTitre ? 0 : 'var(--espace-3)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {!sansTitre && (
+        <b style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
+          <Target size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Mes objectifs
+        </b>
+      )}
       <small style={{ color: 'var(--texte-secondaire)' }}>
         Fixe-toi tes propres objectifs : chacun rapporte {XP} XP une fois accompli.
       </small>

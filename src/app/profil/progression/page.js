@@ -5,6 +5,7 @@ import { listerMesTomes } from '@/lib/mesTomes';
 import { typesVisibles } from '@/lib/typesColoriage';
 import OngletsCollections from '@/components/OngletsCollections';
 import MesTomes from '../mesTomes';
+import Albums from '@/components/Albums';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export default async function ProgressionPage() {
   return (
     <div className="contenu">
       <OngletsCollections actif="collection" visibles={visibles} />
+      <Albums id={String(user.id)} moi />
       {groupes.length ? groupes.map((g) => (
         <div key={g.cle} className="carte" style={{ marginBottom: 'var(--espace-3)' }}>
           <h3 style={{ margin: '0 0 var(--espace-3)', fontSize: '1rem' }}>{g.titre}</h3>

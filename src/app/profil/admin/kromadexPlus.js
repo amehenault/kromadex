@@ -7,19 +7,30 @@ import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle
 
 const jourLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-export default function KromadexPlus() {
+const FILTRES = [['ont', 'Ont Kromadex+'], ['offerts', 'Offert par moi'], ['offrir', 'Offrir Kromadex+']];
+
+export default function KromadexPlus({ membres: membresDonnes }) {
   const [offerts, setOfferts] = useState([]);
-  const [membres, setMembres] = useState([]);
+  const [membresLus, setMembres] = useState([]);
+  const membres = membresDonnes || membresLus;
+  const [filtre, setFiltre] = useState('ont');
   const [recherche, setRecherche] = useState('');
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
 
   async function charger() {
-    const [a, b] = await Promise.all([fetch('/api/abonnement'), fetch('/api/roles')]);
+    const [a, b] = await Promise.all([fetch('/api/abonnement'), membresDonnes ? null : fetch('/api/roles')]);
     if (a.ok) setOfferts((await a.json()).membres || []);
-    if (b.ok) setMembres((await b.json()).users || []);
+    if (b?.ok) setMembres((await b.json()).users || []);
   }
   useEffect(() => { charger(); }, []);
+
+  const offertsActifs = offerts.filter((o) => !o.expire);
+  const abonnees = membres.filter((u) => u.role !== 'admin' && u.plus_jusqu && new Date(u.plus_jusqu) > new Date() && u.plus_statut !== 'aucun' && !offertsActifs.some((o) => String(o.id) === String(u.id)));
+  const ontPlus = [
+    ...abonnees.map((u) => ({ ...u, source: u.plus_statut === 'annule' ? `Abonnement payé, se termine le ${new Date(u.plus_jusqu).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}` : 'Abonnement payé' })),
+    ...offertsActifs.map((o) => ({ ...o, source: o.jusqu ? `Offert jusqu’au ${jourLong(o.jusqu)}` : 'Offert, sans date de fin' })),
+  ];
 
   const suggestions = useMemo(() => {
     const q = recherche.trim().toLowerCase();
@@ -44,6 +55,29 @@ export default function KromadexPlus() {
 
   return (
     <div style={colonne}>
+      <div role="group" aria-label="Filtres Kromadex+" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        {FILTRES.map(([cle, label]) => (
+          <button key={cle} type="button" onClick={() => { setFiltre(cle); setMessage(''); if (cle !== 'offrir' && !form?.modification) setForm(null); }} aria-pressed={filtre === cle}
+            className={filtre === cle ? 'btn' : 'btn alt'} style={{ flex: '0 0 auto', minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 14px' }}>
+            {label}{cle === 'ont' ? ` (${ontPlus.length})` : cle === 'offerts' ? ` (${offerts.length})` : ''}
+          </button>
+        ))}
+      </div>
+
+      {filtre === 'ont' && (
+        <div className="carte" style={colonne}>
+          <b>Membres avec Kromadex+ ({ontPlus.length})</b>
+          {ontPlus.map((u) => (
+            <div key={u.id} style={ligneCarte}>
+              <Pseudo x={u} />
+              <small style={{ fontWeight: 600 }}>{u.source}</small>
+            </div>
+          ))}
+          {!ontPlus.length && <p style={aide}>Personne n’a Kromadex+ pour l’instant.</p>}
+        </div>
+      )}
+
+      {(filtre === 'offrir' || form?.modification) && (
       <div className="carte" style={colonne}>
         <b>Offrir Kromadex+</b>
         {!form ? (
@@ -84,9 +118,12 @@ export default function KromadexPlus() {
         )}
         {message && <small>{message}</small>}
       </div>
+      )}
 
+      {filtre === 'offerts' && (
       <div className="carte" style={colonne}>
-        <b>Kromadex+ offert ({offerts.length})</b>
+        <b>Kromadex+ offert par moi ({offerts.length})</b>
+        {message && <small>{message}</small>}
         {offerts.map((o) => (
           <div key={o.id} style={{ ...ligneCarte, opacity: o.expire ? 0.7 : 1 }}>
             <Pseudo x={o} />
@@ -108,6 +145,7 @@ export default function KromadexPlus() {
         ))}
         {!offerts.length && <p style={aide}>Tu n’as encore offert Kromadex+ à personne.</p>}
       </div>
+      )}
     </div>
   );
 }

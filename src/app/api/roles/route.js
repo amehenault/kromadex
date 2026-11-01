@@ -9,6 +9,7 @@ export async function GET() {
 
   const users = await sql`
     SELECT id, pseudo, name, role, title, xp, level, cheffe_expires_at, unlocked_titles, pionnier, genre,
+           created_at, (avatar_b64 IS NOT NULL) AS a_avatar, avatar_maj,
            to_char(plus_offert_jusqu AT TIME ZONE 'America/Toronto' - interval '1 day', 'YYYY-MM-DD') AS plus_offert_jusqu, plus_statut, plus_jusqu
     FROM users
     ORDER BY (role = 'admin') DESC, lower(COALESCE(pseudo, name, '')) ASC

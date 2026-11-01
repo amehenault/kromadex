@@ -8,6 +8,14 @@
     "hauteur": 500
   },
   {
+    "chemin": "/recompenses-activites/epopee/kromadex-epopee-portes-nouvelles.svg",
+    "fichier": "kromadex-epopee-portes-nouvelles.svg",
+    "type": "Épopée",
+    "octets": 22198,
+    "largeur": 400,
+    "hauteur": 500
+  },
+  {
     "chemin": "/recompenses-activites/epreuve/chef/kromadex-sceau1.svg",
     "fichier": "kromadex-sceau1.svg",
     "type": "Épreuve des cheffes",

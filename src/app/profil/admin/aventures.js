@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown, ImagePlus, Eye } from 'lucide-react';
 import Link from 'next/link';
+import ChoixImageRecompense from '@/components/ChoixImageRecompense';
 import { compresserImage } from '@/lib/compressionImage';
 import { CATEGORIES_DEFI } from '@/lib/defis';
 import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES, choixNbColoriages } from '@/lib/activites';
@@ -218,10 +219,14 @@ export default function Aventures() {
       </div>
     );
     const imageRecompenseChamp = (
-      <label style={champ}>Image de la récompense (facultatif)
-        <input value={form.image} onChange={(e) => maj({ image: e.target.value })} maxLength={120} placeholder={epopee ? 'ex. blason-valombre.png' : 'ex. orbe-trois-lunes.png'} />
-        <small style={{ ...aide, fontWeight: 400 }}>Laisse vide pour utiliser l’image par défaut. Sinon, nom d’un fichier dans public/recompenses-activites.</small>
-      </label>
+      <div style={champ}>
+        {epopee ? 'Blason à gagner' : 'Orbe à gagner'}
+        <small style={{ ...aide, fontWeight: 400 }}>
+          Images du dossier public/recompenses-activites/{epopee ? 'epopee' : 'prophetie'}. « Par défaut » prend la première.
+        </small>
+        <ChoixImageRecompense dossier={epopee ? 'epopee' : 'prophetie'} genre={epopee ? 'blason' : 'orbe'}
+          valeur={form.image || ''} onChange={(v) => maj({ image: v })} />
+      </div>
     );
     const messageFin = (label, explication) => (
       <label style={champ}>{label}

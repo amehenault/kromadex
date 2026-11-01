@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy, Eye, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy, Eye, RotateCcw, Footprints } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
@@ -157,6 +157,17 @@ export default function Aventure({ id, test: modeTest = false }) {
   const mes = (etapeId) => a.mesSoumissions.filter((s) => s.etape_id === etapeId);
   const bouton = { minHeight: '48px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' };
   const carteEtape = { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' };
+  const fuir = () => (window.history.length > 1 ? router.back() : router.push('/aventures'));
+  const choixParticiper = (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+      <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}>
+        {a.genre === 'epopee' ? <Swords size={18} aria-hidden="true" /> : <Check size={18} aria-hidden="true" />} Participer
+      </button>
+      <button type="button" className="btn alt" style={bouton} onClick={fuir}>
+        <Footprints size={18} aria-hidden="true" /> Fuir
+      </button>
+    </div>
+  );
   const vignettes = (liste) => liste.length > 0 && (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '6px' }}>
       {liste.map((s) => (
@@ -234,9 +245,9 @@ export default function Aventure({ id, test: modeTest = false }) {
 
       {a.genre !== 'epopee' && !a.inscrit && !terminee && (
         <div className="carte" style={carteEtape}>
-          <b>S’inscrire à {a.genre === 'expedition' ? 'l’expédition' : 'la prophétie'}</b>
-          <small style={{ color: 'var(--texte-secondaire)' }}>Inscris-toi pour pouvoir soumettre tes coloriages. Ils devront venir de ta section Tomes / Livres.</small>
-          <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}>S’inscrire</button>
+          <b>Vas-tu participer à {a.genre === 'expedition' ? 'l’expédition' : 'la prophétie'} ?</b>
+          <small style={{ color: 'var(--texte-secondaire)' }}>Participe pour pouvoir soumettre tes coloriages. Ils devront venir de ta section Tomes / Livres.</small>
+          {choixParticiper}
           <NombreParticipants n={a.participants} />
         </div>
       )}
@@ -298,7 +309,7 @@ export default function Aventure({ id, test: modeTest = false }) {
                 Seules les âmes valeureuses osent affronter le dragon qui terrorise ce royaume. Pour t’inscrire, tu dois faire preuve de courage :
                 chaque coloriage que tu soumettras devra venir de ta section Tomes / Livres.
               </p>
-              {!terminee && <button type="button" className="btn" style={bouton} onClick={() => action({ action: 'inscrire' })}><Swords size={18} aria-hidden="true" /> Je m’engage dans l’épopée</button>}
+              {!terminee && choixParticiper}
               <NombreParticipants n={a.participants} />
             </div>
           ) : (

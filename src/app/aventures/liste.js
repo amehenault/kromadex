@@ -15,6 +15,8 @@ export default function ListeAventures() {
 
   useEffect(() => {
     fetch('/api/aventures').then((r) => (r.ok ? r.json() : null)).then((d) => setDonnees(d || { aventures: [], parchemins: 0 }));
+    fetch('/api/activites-vues', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sorte: 'aventures' }) })
+      .then(() => window.dispatchEvent(new Event('kromadex-lu'))).catch(() => {});
   }, []);
 
   if (!donnees) return <p>Chargement…</p>;

@@ -54,6 +54,7 @@ import Albums from '@/components/Albums';
 import Parrainage from '@/components/Parrainage';
 import { codeParrainage, filleules } from '@/lib/parrainage';
 import { lireReglage } from '@/lib/reglages';
+import { activitesNonVues } from '@/lib/activitesVues';
 import { listerObjectifs } from '@/lib/objectifs';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,7 @@ export default async function ProfilPage() {
   const destin = await quetesDestin(authUser.id);
   const objectifs = await listerObjectifs(authUser.id);
   const parrainageActif = await lireReglage('parrainage_actif');
+  const activitesNouvelles = await activitesNonVues(authUser.id);
   const [codeInvitation, mesInvitees] = parrainageActif ? await Promise.all([codeParrainage(authUser.id), filleules(authUser.id)]) : [null, []];
 
   const profile = await getUserProfile(authUser.id);
@@ -540,6 +542,7 @@ export default async function ProfilPage() {
         <Link href="/aventures" className="btn profil-acces-lien">
           <Compass size={22} aria-hidden="true" />
           <span>Aventures</span>
+          {activitesNouvelles.aventures > 0 && <span className="pastille" aria-hidden="true" />}
         </Link>
 
         <Link href="/combats" className="btn profil-acces-lien">

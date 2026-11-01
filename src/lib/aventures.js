@@ -6,7 +6,8 @@ import { jourQuebec } from '@/lib/temps';
 import { XP_EPOPEE, XP_PROPHETIE, PALIERS_BOUSSOLE } from '@/lib/activites';
 
 
-export const nbColoriages = (a) => Math.max(1, Number(a.nb_coloriages) || 1);
+// À l'expédition, chaque coloriage est une étape.
+export const nbColoriages = (a) => Math.max(1, a.etapes?.length || Number(a.nb_coloriages) || 1);
 const xpDe = (a, cle, defaut) => (Number.isFinite(Number(a.xp?.[cle])) ? Number(a.xp[cle]) : defaut);
 export const normaliser = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -99,7 +100,9 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   const mesSoumissions = await sql`SELECT etape_id, to_char(jour, 'YYYY-MM-DD') AS jour FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${userId}`;
 
   if (a.genre === 'expedition') {
-    if (mesSoumissions.length >= nbColoriages(a)) return { erreur: 'Tu as déjà soumis tous les coloriages de cette expédition' };
+    if (mesSoumissions.some((s) => s.etape_id === etape.id)) {
+      return { erreur: nbColoriages(a) > 1 ? 'Tu as déjà soumis ton coloriage pour cette étape' : 'Une seule soumission est permise par expédition' };
+    }
     if (manquantes.length) return { erreur: 'La contrainte obligatoire doit être respectée' };
     if (secondaires.length && !choisies.some((id) => secondaires.some((s) => s.id === id))) return { erreur: 'Respecte au moins une contrainte secondaire' };
   } else if (a.genre === 'prophetie') {
@@ -135,10 +138,8 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   const gagner = async (cle, montant) => { if (montant > 0 && (await accorderXP(userId, cle, montant))) xp += montant; };
   if (a.genre === 'expedition') {
     for (const s of secondaires) if (choisies.includes(s.id)) await gagner(`aventure:${a.id}:c:${s.id}`, s.xp);
-    if (mesSoumissions.length + 1 >= nbColoriages(a)) {
-      await gagner(`aventure:${a.id}:base`, etape.xp);
-      await verifierBoussole(userId);
-    }
+    await gagner(nbColoriages(a) > 1 ? `aventure:${a.id}:etape:${etape.id}` : `aventure:${a.id}:base`, etape.xp);
+    if (mesSoumissions.length + 1 >= nbColoriages(a)) await verifierBoussole(userId);
   } else if (a.genre === 'prophetie') {
     await gagner(`aventure:${a.id}:etape:${etape.id}`, etape.xp || xpDe(a, 'etape', XP_PROPHETIE.etape));
     const [{ faites }] = await sql`SELECT count(DISTINCT etape_id)::int AS faites FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${userId} AND reussie`;

@@ -158,9 +158,9 @@ export default function Aventure({ id }) {
 
   let gains = '';
   if (a.genre === 'expedition') {
-    const base = a.etapes[0]?.xp || 0;
-    const sec = (a.etapes[0]?.contraintes || []).filter((c) => c.genre === 'secondaire').map((c) => c.xp).filter(Boolean);
-    gains = `${base} XP${sec.length ? ` + ${sec[0]} XP par contrainte secondaire réussie` : ''} · progression de la Boussole`;
+    const base = a.etapes.reduce((s, e) => s + (e.xp || 0), 0);
+    const sec = a.etapes.flatMap((e) => e.contraintes || []).filter((c) => c.genre === 'secondaire').map((c) => c.xp).filter(Boolean);
+    gains = `${base} XP${a.etapes.length > 1 ? ` (${a.etapes.length} étapes)` : ''}${sec.length ? ` + ${sec[0]} XP par contrainte secondaire réussie` : ''} · progression de la Boussole`;
   } else if (a.genre === 'epopee') {
     gains = `${xpDe(a, 'phase1', XP_EPOPEE.phase1)} XP pour ouvrir la route · ${xpDe(a, 'attaque', XP_EPOPEE.attaque)} XP pour ta 1re attaque · ${xpDe(a, 'victoire', XP_EPOPEE.victoire)} XP si le dragon est vaincu (maximum ${xpDe(a, 'max', XP_EPOPEE.max)} XP) · ${a.recompense || 'un blason'}`;
   } else {
@@ -228,26 +228,38 @@ export default function Aventure({ id }) {
         </div>
       )}
 
-      {a.genre === 'expedition' && a.etapes.map((e) => {
-        const nb = Math.max(1, a.nb_coloriages || 1);
-        const faits = mes(e.id).length;
+      {a.genre === 'expedition' && a.etapes.length > 1 && (
+        <small style={{ display: 'block', fontWeight: 700, marginBottom: 'var(--espace-3)' }}>
+          Étapes accomplies : {a.etapes.filter((e) => mes(e.id).length).length} / {a.etapes.length}
+        </small>
+      )}
+      {a.genre === 'expedition' && a.etapes.map((e, i) => {
+        const plusieurs = a.etapes.length > 1;
+        const faite = mes(e.id).length > 0;
+        const titre = plusieurs ? (/^Étape \d+$/.test(e.nom) || !e.nom ? `Étape ${i + 1}` : `Étape ${i + 1} : ${e.nom}`) : (e.nom === 'Expédition' ? 'Coloriage demandé' : e.nom);
         return (
           <div key={e.id} className="carte" style={carteEtape}>
-            <b>{e.nom}</b>
+            <b>{titre}</b>
             {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{e.instructions}</p>}
             <Contraintes etape={e} />
-            {nb > 1 && <small style={{ fontWeight: 700 }}>Coloriages soumis : {Math.min(faits, nb)} / {nb}</small>}
-            {faits >= nb && <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Expédition réussie</small>}
-            {vignettes(mes(e.id))}
-            {faits < nb && !terminee && a.inscrit && (
-              <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}>
-                <ImageIcon size={18} aria-hidden="true" /> {nb > 1 ? `Soumettre mon coloriage ${faits + 1} sur ${nb}` : 'Soumettre mon coloriage'}
-              </button>
-            )}
-            {faits < nb && (
-              <small style={{ color: 'var(--texte-secondaire)' }}>
-                {nb > 1 ? `${nb} coloriages à soumettre, chacun une seule fois.` : 'Une seule soumission est permise.'} Il n’y a pas de verdict : l’expédition est réussie dès que tous tes coloriages respectent les contraintes.
-              </small>
+            {faite ? (
+              <>
+                <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}>
+                  <Check size={16} aria-hidden="true" /> {plusieurs ? 'Étape accomplie' : 'Expédition réussie'}
+                </small>
+                {vignettes(mes(e.id))}
+              </>
+            ) : (
+              <>
+                {!terminee && a.inscrit && (
+                  <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}>
+                    <ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage
+                  </button>
+                )}
+                <small style={{ color: 'var(--texte-secondaire)' }}>
+                  Une seule soumission est permise{plusieurs ? ' par étape' : ''}. Il n’y a pas de verdict : {plusieurs ? 'l’expédition est réussie quand toutes tes étapes sont accomplies.' : 'l’expédition est réussie dès que les contraintes sont respectées.'}
+                </small>
+              </>
             )}
           </div>
         );

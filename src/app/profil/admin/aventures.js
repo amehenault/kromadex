@@ -71,10 +71,19 @@ export default function Aventures() {
     [e[i], e[j]] = [e[j], e[i]]; setForm({ ...form, etapes: e });
   };
 
+  function nombreEtapesExpedition(n) {
+    const etapes = form.etapes.slice(0, n).map((e, i) => ({ ...e, nom: n > 1 && (!e.nom || e.nom === 'Expédition') ? `Étape ${i + 1}` : n === 1 && /^Étape \d+$/.test(e.nom) ? 'Expédition' : e.nom }));
+    const base = form.etapes[0];
+    while (etapes.length < n) {
+      etapes.push({ nom: `Étape ${etapes.length + 1}`, instructions: '', message: '', xp: base?.xp || 0, contraintes: [contrainte('obligatoire'), contrainte('secondaire'), contrainte('secondaire')] });
+    }
+    setForm({ ...form, nb_coloriages: n, etapes });
+  }
+
   function choisirFete(valeur) {
     const f = FETES.find((x) => x.valeur === valeur);
     const annee = (form.debut || '').slice(0, 4) || new Date().getFullYear();
-    setForm({ ...form, fete: valeur, debut: `${annee}-${f.debut}`, fin: `${annee}-${f.fin}`, etapes: form.etapes.map((e, i) => (i === 0 ? { ...e, xp: f.xp } : e)) });
+    setForm({ ...form, fete: valeur, debut: `${annee}-${f.debut}`, fin: `${annee}-${f.fin}`, etapes: form.etapes.map((e, i) => (i === 0 || form.etapes.length > 1 ? { ...e, xp: f.xp } : e)) });
   }
 
   function ouvrir(f) {
@@ -175,10 +184,16 @@ export default function Aventures() {
         {form.genre === 'prophetie' && nombre('xc', 'XP quand toutes les étapes sont accomplies', form.xp.complet, (v) => maj({ xp: { ...form.xp, complet: v } }))}
         {form.genre === 'expedition' && (
           <label style={champ}>Nombre de coloriages à soumettre
-            <Deroulant titre="Nombre de coloriages" value={String(Math.min(form.nb_coloriages || 1, choixNbColoriages(form.debut, form.fin).at(-1)))}
-              onChange={(v) => maj({ nb_coloriages: Number(v) })}
-              options={choixNbColoriages(form.debut, form.fin).map((n) => ({ valeur: String(n), label: `${n} coloriage${n > 1 ? 's' : ''}` }))} />
-            <small style={{ ...aide, fontWeight: 400 }}>1 seul si l’expédition dure moins de 2 semaines, sinon jusqu’à un par semaine complète.</small>
+            <Deroulant titre="Nombre de coloriages" value={String(form.etapes.length)}
+              onChange={(v) => nombreEtapesExpedition(Number(v))}
+              options={[...new Set([...choixNbColoriages(form.debut, form.fin), form.etapes.length])].sort((x, y) => x - y)
+                .map((n) => ({ valeur: String(n), label: `${n} coloriage${n > 1 ? 's' : ''}` }))} />
+            <small style={{ ...aide, fontWeight: 400 }}>
+              1 seul si l’expédition dure moins de 2 semaines, sinon jusqu’à un par semaine complète. Chaque coloriage est une étape, avec ses instructions et ses contraintes.
+            </small>
+            {form.etapes.length > choixNbColoriages(form.debut, form.fin).at(-1) && (
+              <small style={{ color: 'var(--danger)' }}>Trop de coloriages pour ces dates : allonge l’expédition ou réduis le nombre de coloriages.</small>
+            )}
           </label>
         )}
         {form.genre !== 'epopee' && (
@@ -221,7 +236,7 @@ export default function Aventures() {
         {form.etapes.map((e, i) => (
           <div key={i} style={{ ...ligneCarte, gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-              <b>{form.genre === 'epopee' ? `Phase ${i + 1}` : form.genre === 'expedition' ? 'Coloriage demandé' : `Étape ${i + 1}`}</b>
+              <b>{form.genre === 'epopee' ? `Phase ${i + 1}` : form.genre === 'expedition' && form.etapes.length === 1 ? 'Coloriage demandé' : `Étape ${i + 1}`}</b>
               {form.genre === 'prophetie' && (
                 <span style={{ display: 'flex', gap: '4px' }}>
                   <button type="button" className="btn alt" aria-label="Monter" style={{ minWidth: 44, minHeight: 44 }} onClick={() => deplacer(i, -1)}><ChevronUp size={16} aria-hidden="true" /></button>
@@ -240,7 +255,7 @@ export default function Aventures() {
                 <small style={{ ...aide, fontWeight: 400 }}>Affiché une fois que la personne a soumis son coloriage pour cette étape.</small>
               </label>
             )}
-            {form.genre !== 'epopee' && nombre(`xp${i}`, form.genre === 'expedition' ? 'XP de l’expédition réussie' : 'XP de l’étape', e.xp, (v) => majEtape(i, { xp: v }))}
+            {form.genre !== 'epopee' && nombre(`xp${i}`, form.genre === 'expedition' && form.etapes.length === 1 ? 'XP de l’expédition réussie' : 'XP de l’étape', e.xp, (v) => majEtape(i, { xp: v }))}
             {form.genre === 'prophetie' && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <label style={champ}>Révélée le<input type="date" value={e.debut || ''} onChange={(x) => majEtape(i, { debut: x.target.value })} style={dateStyle} /></label>

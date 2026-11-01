@@ -156,8 +156,11 @@ export async function POST(req) {
     recompense: String(b.recompense || '').trim().slice(0, 80), image: String(b.image || '').trim().slice(0, 120),
     instructions: String(b.instructions || '').slice(0, 2000),
     message_fin: genre !== 'epopee' ? String(b.message_fin || '').slice(0, 2000) : '',
-    nb_coloriages: genre === 'expedition' ? Math.min(entier(b.nb_coloriages, 1, 52, 1), choixNbColoriages(debut, fin).at(-1)) : 1,
+    nb_coloriages: genre === 'expedition' ? etapes.length : 1,
   };
+  if (genre === 'expedition' && etapes.length > choixNbColoriages(debut, fin).at(-1)) {
+    return non('Trop de coloriages pour la durée de l’expédition : 1 si elle dure moins de 2 semaines, sinon un par semaine complète');
+  }
   let id = Number(b.id) || null;
   if (id) {
     await sql`UPDATE aventures SET genre = ${genre}, titre = ${champs.titre}, description = ${champs.description}, fete = ${champs.fete},

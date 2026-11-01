@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award, BookOpen, Settings } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award, BookOpen, Settings, Sparkles, ChevronRight, ArrowLeft } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -27,10 +27,8 @@ const ONGLETS = [
   { cle: 'motscles', label: 'Mots-clefs', icone: Tags, roles: ['admin', 'modo'] },
   { cle: 'titres', label: 'Titres', icone: Tag, roles: ['admin'] },
   { cle: 'membres', label: 'Postes', icone: Users, roles: ['admin', 'modo'] },
-  { cle: 'defis', label: 'Épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe', 'menestrel'] },
-  { cle: 'aventures', label: 'Aventure', icone: Compass, roles: ['admin'] },
+  { cle: 'activites', label: 'Activités', icone: Sparkles, roles: ['admin', 'modo', 'cheffe', 'menestrel'] },
   { cle: 'missives', label: 'Missives', icone: Mail, roles: ['admin', 'modo'] },
-  { cle: 'bingos', label: 'Bingo', icone: Grid3x3, roles: ['admin', 'menestrel'] },
   { cle: 'validation', label: 'Validation des bingos', icone: ClipboardCheck, roles: ['admin', 'modo'] },
   { cle: 'plus', label: 'Kromadex+', icone: Gift, roles: ['admin'] },
   { cle: 'lancement', label: 'Lancement', icone: Rocket, roles: ['admin'] },
@@ -38,15 +36,30 @@ const ONGLETS = [
   { cle: 'tomes', label: 'Tomes et livres', icone: BookOpen, roles: ['admin'] },
 ];
 
+// Regroupées sous le bouton Activités.
+const ACTIVITES = [
+  { cle: 'defis', label: 'Épreuves', aide: 'Créer et gérer les épreuves', icone: Trophy, roles: ['admin', 'modo', 'cheffe', 'menestrel'] },
+  { cle: 'bingos', label: 'Bingos', aide: 'Créer et gérer les bingos', icone: Grid3x3, roles: ['admin', 'menestrel'] },
+  { cle: 'aventures', label: 'Aventures', aide: 'Expéditions, épopées et prophéties', icone: Compass, roles: ['admin'] },
+];
+
 export default function EspaceAdmin({ role, monId }) {
-  const onglets = ONGLETS.filter((o) => o.roles.includes(role));
+  const onglets = ONGLETS.filter((o) => o.roles.includes(role) && (o.cle !== 'activites' || ACTIVITES.some((a) => a.roles.includes(role))));
+  const activites = ACTIVITES.filter((a) => a.roles.includes(role));
   const [actif, setActif] = useState(onglets[0]?.cle);
+  const [activite, setActivite] = useState(activites.length === 1 ? activites[0].cle : null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     const o = new URLSearchParams(window.location.search).get('onglet');
-    if (onglets.some((x) => x.cle === o)) setActif(o);
+    if (activites.some((x) => x.cle === o)) { setActif('activites'); setActivite(o); }
+    else if (onglets.some((x) => x.cle === o)) setActif(o);
   }, []);
+
+  function choisirOnglet(cle) {
+    setActif(cle);
+    if (cle === 'activites') setActivite(activites.length === 1 ? activites[0].cle : null);
+  }
 
   const [aTraiter, setATraiter] = useState({});
   useEffect(() => {
@@ -68,7 +81,7 @@ export default function EspaceAdmin({ role, monId }) {
           marginBottom: 'var(--espace-3)',
         }}>
           {onglets.map(({ cle, label, icone: Icone }) => (
-            <button key={cle} type="button" onClick={() => setActif(cle)} className={actif === cle ? 'btn' : 'btn alt'}
+            <button key={cle} type="button" onClick={() => choisirOnglet(cle)} className={actif === cle ? 'btn' : 'btn alt'}
               aria-label={aTraiter[cle] > 0 ? `${label}, ${aTraiter[cle]} à traiter` : undefined}
               style={{
                 position: 'relative',
@@ -85,11 +98,34 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'demandes' && <Demandes />}
       {actif === 'membres' && <Membres role={role} />}
       {actif === 'moderation' && <Moderation role={role} monId={monId} />}
-      {actif === 'defis' && <Defis role={role} monId={monId} />}
+      {actif === 'activites' && !activite && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {activites.map(({ cle, label, aide, icone: Icone }) => (
+            <button key={cle} type="button" onClick={() => setActivite(cle)} className="carte"
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '64px', cursor: 'pointer', textAlign: 'left', width: '100%', border: '1px solid var(--bordure-carte)', color: 'inherit' }}>
+              <span style={{ width: 44, height: 44, flex: '0 0 auto', borderRadius: '50%', background: 'var(--accent-doux)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--btn)' }}>
+                <Icone size={22} aria-hidden="true" />
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <b style={{ display: 'block' }}>{label}</b>
+                <small style={{ color: 'var(--texte-secondaire)' }}>{aide}</small>
+              </span>
+              <ChevronRight size={20} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+      )}
+      {actif === 'activites' && activite && activites.length > 1 && (
+        <button type="button" className="btn alt" onClick={() => setActivite(null)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', marginBottom: 'var(--espace-3)', fontWeight: 700 }}>
+          <ArrowLeft size={16} aria-hidden="true" /> Toutes les activités
+        </button>
+      )}
+      {actif === 'activites' && activite === 'defis' && <Defis role={role} monId={monId} />}
+      {actif === 'activites' && activite === 'bingos' && <Bingos role={role} />}
+      {actif === 'activites' && activite === 'aventures' && <Aventures />}
       {actif === 'missives' && <Missives role={role} monId={monId} />}
       {actif === 'titres' && <Titres />}
-      {actif === 'bingos' && <Bingos role={role} />}
-      {actif === 'aventures' && <Aventures />}
       {actif === 'validation' && <ValidationBingos />}
       {actif === 'signalements' && <><ContenuSignale /><SignalementsEpreuves /></>}
       {actif === 'motscles' && <MotsCles />}

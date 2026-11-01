@@ -237,15 +237,17 @@ export default function Aventure({ id, test: modeTest = false }) {
     </div>
   );
 
-  let gains = '';
+  let gains = [];
+  let maximumXP = null;
   if (a.genre === 'expedition') {
     const base = a.etapes.reduce((s, e) => s + (e.xp || 0), 0);
     const sec = a.etapes.flatMap((e) => e.contraintes || []).filter((c) => c.genre === 'secondaire').map((c) => c.xp).filter(Boolean);
-    gains = `${base} XP${a.etapes.length > 1 ? ` (${a.etapes.length} étapes)` : ''}${sec.length ? ` + ${sec[0]} XP par contrainte secondaire réussie` : ''} · progression de la Boussole`;
+    gains = [`${base} XP${a.etapes.length > 1 ? ` (${a.etapes.length} étapes)` : ''}`, sec.length ? `+${sec[0]} XP par contrainte secondaire réussie` : null, 'Progression de la Boussole'].filter(Boolean);
   } else if (a.genre === 'epopee') {
-    gains = `${xpDe(a, 'phase1', XP_EPOPEE.phase1)} XP pour ouvrir la route · ${xpDe(a, 'attaque', XP_EPOPEE.attaque)} XP pour ta 1re attaque · ${xpDe(a, 'victoire', XP_EPOPEE.victoire)} XP si le dragon est vaincu (maximum ${xpDe(a, 'max', XP_EPOPEE.max)} XP) · ${a.recompense || 'un blason'}`;
+    gains = [`${xpDe(a, 'phase1', XP_EPOPEE.phase1)} XP pour ouvrir la route`, `${xpDe(a, 'attaque', XP_EPOPEE.attaque)} XP pour ta 1re attaque`, `${xpDe(a, 'victoire', XP_EPOPEE.victoire)} XP si le dragon est vaincu`, a.recompense || 'Un blason'];
+    maximumXP = xpDe(a, 'max', XP_EPOPEE.max);
   } else {
-    gains = `${a.etapes[0]?.xp || XP_PROPHETIE.etape} XP par étape · ${xpDe(a, 'complet', XP_PROPHETIE.complet)} XP quand toutes les étapes sont accomplies · Orbe magique et un Parchemin du Destin`;
+    gains = [`${a.etapes[0]?.xp || XP_PROPHETIE.etape} XP par étape`, `${xpDe(a, 'complet', XP_PROPHETIE.complet)} XP quand toutes les étapes sont accomplies`, 'Orbe magique', 'Un Parchemin du Destin'];
   }
 
   return (
@@ -301,7 +303,9 @@ export default function Aventure({ id, test: modeTest = false }) {
         )}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
           <Gift size={18} aria-hidden="true" style={{ color: 'var(--btn)' }} />
-          {gains.split(' · ').map((g) => <Puce key={g}>{g}</Puce>)}
+          <b>Récompenses :</b>
+          {gains.map((g) => <Puce key={g}>{g}</Puce>)}
+          {maximumXP ? <small style={{ flexBasis: '100%', color: 'var(--texte-secondaire)' }}>Tu peux gagner un maximum de {maximumXP} XP</small> : null}
         </div>
         {a.parchemins > 0 && (
           <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>

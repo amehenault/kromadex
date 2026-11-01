@@ -53,8 +53,8 @@ export default async function TomePage({ searchParams }) {
         <h2 style={{ margin: 0, fontSize: '1.15rem' }}>{titre}</h2>
       </div>
 
-      <div className="carte" style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: 'var(--espace-3)' }}>
-        <div style={{ width: '84px', flex: '0 0 auto', aspectRatio: '3 / 4', borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--carte)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="carte" style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr)', columnGap: '14px', rowGap: '10px', alignItems: 'center', marginBottom: 'var(--espace-3)' }}>
+        <div style={{ gridRow: 'span 2', alignSelf: 'stretch', width: '110px', minHeight: '147px', aspectRatio: '3 / 4', borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--carte)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {couverture ? <img src={couverture} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <BookOpen size={28} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -71,8 +71,8 @@ export default async function TomePage({ searchParams }) {
           )}
           {cat && cat.type === 'cozy' && !cat.nb_pages && <NbPagesCozy tomeId={cat.id} />}
           {cat && <MotsCles tomeId={cat.id} possede={possede} />}
-          <ActionsTome tome={{ id: cat?.id || null, nom: titre, type: cat?.type || null }} moyenne={avis?.moyenne ?? null} nbAvis={avis?.nb || 0} />
         </div>
+        <ActionsTome tome={{ id: cat?.id || null, nom: titre, type: cat?.type || null }} moyenne={avis?.moyenne ?? null} nbAvis={avis?.nb || 0} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>

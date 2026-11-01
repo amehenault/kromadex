@@ -19,9 +19,19 @@ IMAGES.filter((i) => i.chemin.startsWith('/pionniers/') && i.fichier.toLowerCase
     };
   });
 
-export function cadresDebloques({ pionnier, role }) {
+IMAGES.filter((i) => i.chemin.startsWith('/parrainage/') && i.fichier.toLowerCase().includes('cadre'))
+  .forEach((i) => {
+    const base = i.fichier.replace(/\.[a-z0-9]+$/i, '');
+    CADRES[`parrainage_${base}`] = {
+      nom: 'Cadre de parrainage', image: i.chemin, photo: 0.6,
+      condition: 'Avoir invité une amie qui a publié son premier coloriage sur Kromadex.',
+    };
+  });
+
+export function cadresDebloques({ pionnier, role, parrainage }) {
   const liste = [];
   if (pionnier || role === 'admin') liste.push(...Object.keys(CADRES).filter((c) => c.startsWith('pionnier')));
+  if (parrainage || role === 'admin') liste.push(...Object.keys(CADRES).filter((c) => c.startsWith('parrainage')));
   return liste;
 }
 

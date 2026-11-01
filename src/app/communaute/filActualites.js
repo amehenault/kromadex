@@ -5,10 +5,11 @@ import { Avatar, BoutonJaime, imagePage, poster } from './outils';
 import FicheDetail from './ficheDetail';
 import { CartePublication, PublicationDetail, aimerPublication } from './publications';
 import Pseudo from '@/components/Pseudo';
+import { mentionActivite } from '@/lib/activitesNoms';
 
 const quand = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
-export default function FilActualites() {
+export default function FilActualites({ vue = 'fil' }) {
   const [suivis, setSuivis] = useState(false);
   const [fil, setFil] = useState([]);
   const [fin, setFin] = useState(false);
@@ -19,7 +20,7 @@ export default function FilActualites() {
   async function charger(reinit) {
     setCharge(true);
     const avant = !reinit && fil.length ? `&avant=${encodeURIComponent(fil.at(-1).date)}` : '';
-    const r = await fetch(`/api/publications?vue=fil${suivis ? '&suivis=1' : ''}${avant}`);
+    const r = await fetch(`/api/publications?vue=${vue}${suivis ? '&suivis=1' : ''}${avant}`);
     const d = r.ok ? (await r.json()).fil || [] : [];
     setFil((l) => (reinit ? d : [...l, ...d]));
     setFin(d.length < 20);
@@ -46,7 +47,25 @@ export default function FilActualites() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {fil.map((x) => (x.sorte === 'publication'
           ? <CartePublication key={`p${x.id}`} p={x} onOuvrir={setPublication} onLike={(p) => aimerPublication(p, maj('publication'))} />
-          : (
+          : x.sorte === 'participation' ? (
+            <div key={x.cle}
+              style={{ background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <Link href={`/membre/${x.auteur_id}`} aria-label="Voir le profil"><Avatar x={x} taille={28} /></Link>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <small style={{ display: 'block' }}><Pseudo x={x} /></small>
+                  <small style={{ color: 'var(--texte-secondaire)' }}>Participation à une activité · {quand(x.date)}</small>
+                </span>
+              </div>
+              <b style={{ fontSize: '0.9rem', color: 'var(--btn)', overflowWrap: 'anywhere' }}>{mentionActivite(x)}</b>
+              {x.img_size ? (
+                <div style={{ borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--carte)', aspectRatio: '4 / 3' }}>
+                  <img src={imagePage(x)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ) : null}
+              {(x.title || x.tome) && <small style={{ overflowWrap: 'anywhere' }}><b>{x.title}</b>{x.tome ? `${x.title ? ' · ' : ''}${x.tome}` : ''}{x.page_no ? `, p. ${x.page_no}` : ''}</small>}
+            </div>
+          ) : (
             <div key={`c${x.id}`} role="button" tabIndex={0} onClick={() => setFiche(x.id)} onKeyDown={(e) => e.key === 'Enter' && setFiche(x.id)}
               style={{ cursor: 'pointer', background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
@@ -69,7 +88,9 @@ export default function FilActualites() {
 
       {!charge && !fil.length && (
         <p style={{ color: 'var(--texte-secondaire)', textAlign: 'center' }}>
-          {suivis ? 'Les membres que tu suis n’ont encore rien publié.' : 'Rien pour l’instant. Pose une question ou partage un coloriage !'}
+          {vue === 'participations'
+            ? (suivis ? 'Les membres que tu suis n’ont encore participé à aucune activité.' : 'Aucune participation aux activités pour l’instant.')
+            : suivis ? 'Les membres que tu suis n’ont encore rien publié.' : 'Rien pour l’instant. Pose une question ou partage un coloriage !'}
         </p>
       )}
       {!fin && fil.length > 0 && (

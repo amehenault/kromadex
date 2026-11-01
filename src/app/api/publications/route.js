@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { exigerPoste } from '@/lib/roles';
 import { isId } from '@/lib/pages';
 import { mesTypesVisibles } from '@/lib/visibilite';
+import { participationsActivites } from '@/lib/participations';
 import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
 import { GENRES_PUBLICATION, MAX_IMAGES_PUBLICATION, MAX_TEXTE_PUBLICATION, MAX_PUBLICATIONS_JOUR } from '@/lib/publications';
 
@@ -19,6 +20,11 @@ export async function GET(req) {
   const suivis = q.get('suivis') === '1';
   const id = Number(q.get('id')) || null;
   const genre = GENRES_PUBLICATION[q.get('genre')] ? q.get('genre') : null;
+
+  if (q.get('vue') === 'participations') {
+    const fil = await participationsActivites(moi, { visibles: await mesTypesVisibles(moi), avant, suivis });
+    return NextResponse.json({ fil });
+  }
 
   const publications = await sql`
     SELECT 'publication' AS sorte, p.id, p.genre, p.texte, p.cree_le AS date, p.page_id, pg.title, pg.tome, pg.page_no,
@@ -51,7 +57,8 @@ export async function GET(req) {
       AND (${avant}::timestamptz IS NULL OR p.publiee_le < ${avant}::timestamptz)
       AND (${suivis}::boolean IS NOT TRUE OR p.user_id IN (SELECT suivi FROM abonnements WHERE suiveur = ${moi}))
     ORDER BY p.publiee_le DESC LIMIT 20`;
-  const fil = [...publications, ...coloriages].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
+  const participations = await participationsActivites(moi, { visibles, avant, suivis });
+  const fil = [...publications, ...coloriages, ...participations].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 20);
   return NextResponse.json({ fil });
 }
 

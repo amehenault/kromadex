@@ -6,6 +6,7 @@ import { jourQuebec } from '@/lib/temps';
 import { XP_EPOPEE, XP_PROPHETIE, PALIERS_BOUSSOLE } from '@/lib/activites';
 
 
+export const nbColoriages = (a) => Math.max(1, Number(a.nb_coloriages) || 1);
 const xpDe = (a, cle, defaut) => (Number.isFinite(Number(a.xp?.[cle])) ? Number(a.xp[cle]) : defaut);
 export const normaliser = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
@@ -15,14 +16,15 @@ export async function chargerAventure(id) {
            (((fin + 1)::timestamp - interval '1 second') AT TIME ZONE 'America/Toronto') AS fin_instant
     FROM aventures WHERE id = ${Number(id)}`;
   if (!a) return null;
+  const { illustration_b64, illustration_type, illustration_maj, ...reste } = a;
   const etapes = await sql`
-    SELECT id, ordre, nom, instructions, xp, to_char(debut, 'YYYY-MM-DD') AS debut, to_char(fin, 'YYYY-MM-DD') AS fin
+    SELECT id, ordre, nom, instructions, message, xp, to_char(debut, 'YYYY-MM-DD') AS debut, to_char(fin, 'YYYY-MM-DD') AS fin
     FROM aventure_etapes WHERE aventure_id = ${a.id} ORDER BY ordre`;
   const contraintes = etapes.length
     ? await sql`SELECT id, etape_id, ordre, texte, genre, degats, xp FROM aventure_contraintes WHERE etape_id = ANY(${etapes.map((e) => e.id)}) ORDER BY ordre, id`
     : [];
   for (const e of etapes) e.contraintes = contraintes.filter((c) => c.etape_id === e.id);
-  return { ...a, etapes };
+  return { ...reste, illustration: illustration_b64 ? new Date(illustration_maj || 0).getTime() : null, etapes };
 }
 
 export async function etatEpopee(a) {
@@ -41,8 +43,10 @@ export async function etatEpopee(a) {
 
 async function verifierBoussole(userId) {
   const [{ n }] = await sql`
-    SELECT count(DISTINCT s.aventure_id)::int AS n FROM aventure_soumissions s JOIN aventures a ON a.id = s.aventure_id
-    WHERE s.user_id = ${userId} AND s.reussie AND a.genre = 'expedition'`;
+    SELECT count(*)::int AS n FROM (
+      SELECT a.id FROM aventure_soumissions s JOIN aventures a ON a.id = s.aventure_id
+      WHERE s.user_id = ${userId} AND s.reussie AND a.genre = 'expedition'
+      GROUP BY a.id, a.nb_coloriages HAVING count(*) >= GREATEST(a.nb_coloriages, 1)) x`;
   for (const [i, palier] of PALIERS_BOUSSOLE.entries()) {
     if (n < palier) break;
     await donnerRecompense(userId, {
@@ -95,7 +99,7 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   const mesSoumissions = await sql`SELECT etape_id, to_char(jour, 'YYYY-MM-DD') AS jour FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${userId}`;
 
   if (a.genre === 'expedition') {
-    if (mesSoumissions.length) return { erreur: 'Une seule soumission est permise par expédition' };
+    if (mesSoumissions.length >= nbColoriages(a)) return { erreur: 'Tu as déjà soumis tous les coloriages de cette expédition' };
     if (manquantes.length) return { erreur: 'La contrainte obligatoire doit être respectée' };
     if (secondaires.length && !choisies.some((id) => secondaires.some((s) => s.id === id))) return { erreur: 'Respecte au moins une contrainte secondaire' };
   } else if (a.genre === 'prophetie') {
@@ -130,9 +134,11 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   let xp = 0;
   const gagner = async (cle, montant) => { if (montant > 0 && (await accorderXP(userId, cle, montant))) xp += montant; };
   if (a.genre === 'expedition') {
-    await gagner(`aventure:${a.id}:base`, etape.xp);
     for (const s of secondaires) if (choisies.includes(s.id)) await gagner(`aventure:${a.id}:c:${s.id}`, s.xp);
-    await verifierBoussole(userId);
+    if (mesSoumissions.length + 1 >= nbColoriages(a)) {
+      await gagner(`aventure:${a.id}:base`, etape.xp);
+      await verifierBoussole(userId);
+    }
   } else if (a.genre === 'prophetie') {
     await gagner(`aventure:${a.id}:etape:${etape.id}`, etape.xp || xpDe(a, 'etape', XP_PROPHETIE.etape));
     const [{ faites }] = await sql`SELECT count(DISTINCT etape_id)::int AS faites FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${userId} AND reussie`;

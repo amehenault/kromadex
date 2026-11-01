@@ -7,6 +7,7 @@ import { accorderSerie } from '@/lib/series';
 import { accorderXPColoriage } from '@/lib/xpColoriage';
 import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
 import { enregistrerMotsEnAttente } from '@/lib/motsCles';
+import { verifierParrainage } from '@/lib/parrainage';
 
 export async function POST(req) {
   try {
@@ -45,6 +46,7 @@ export async function POST(req) {
     `;
 
     if (image) await accorderXPColoriage(user.id, nouvelle.id).catch(() => {});
+    if (image && pub.publiee) await verifierParrainage(user.id).catch(() => {});
 
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     await accorderSerie(user.id, 'coloriage').catch(() => {});

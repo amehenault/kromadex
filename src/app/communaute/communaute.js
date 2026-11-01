@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Newspaper, HelpCircle, Brush, Images, Palette } from 'lucide-react';
+import { ArrowLeft, Newspaper, HelpCircle, Brush, Images, Palette, Trophy } from 'lucide-react';
 import FilActualites from './filActualites';
 import Publications from './publications';
 import Termines from './termines';
@@ -13,6 +13,7 @@ const ONGLETS = [
   ['en_cours', 'Coloriages en cours', Brush],
   ['termines', 'Coloriages terminés', Images],
   ['codes', 'Codes couleurs', Palette],
+  ['participations', 'Participations aux activités', Trophy],
 ];
 
 export default function Communaute({ monId, integre }) {
@@ -42,6 +43,7 @@ export default function Communaute({ monId, integre }) {
       </div>
 
       {onglet === 'fil' && <FilActualites />}
+      {onglet === 'participations' && <FilActualites key="participations" vue="participations" />}
       {onglet === 'questions' && <Publications genre="question" />}
       {onglet === 'en_cours' && <Publications genre="en_cours" />}
       {onglet === 'termines' && <Termines />}

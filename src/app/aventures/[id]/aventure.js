@@ -9,6 +9,7 @@ import ChoixColoriage from '@/components/ChoixColoriage';
 import { FETES, NOMS_AVENTURES, DEGATS, XP_EPOPEE, XP_PROPHETIE } from '@/lib/activites';
 import TexteErreur from '@/components/TexteErreur';
 import NombreParticipants from '@/components/NombreParticipants';
+import { imageRecompense } from '@/lib/recompenses';
 
 const ICONES = { expedition: Compass, epopee: Shield, prophetie: Sparkles };
 const jour = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
@@ -88,7 +89,10 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
 }
 
 function Contraintes({ etape }) {
+  if (!etape?.contraintes?.length) return null;
   return (
+    <>
+    <b>Contraintes :</b>
     <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
       {etape.contraintes.map((c) => (
         <li key={c.id} style={{ overflowWrap: 'anywhere' }}>
@@ -99,6 +103,7 @@ function Contraintes({ etape }) {
         </li>
       ))}
     </ul>
+    </>
   );
 }
 
@@ -134,6 +139,7 @@ export default function Aventure({ id }) {
   if (!a) return <p style={{ padding: 'var(--espace-3)' }}>Chargement…</p>;
 
   const Icone = ICONES[a.genre];
+  const fondExpedition = a.genre === 'expedition' && a.illustration ? `/api/aventures/illustration?id=${a.id}&v=${a.illustration}` : null;
   const fete = FETES.find((f) => f.valeur === a.fete);
   const terminee = a.fin < a.aujourdhui;
   const mes = (etapeId) => a.mesSoumissions.filter((s) => s.etape_id === etapeId);
@@ -176,7 +182,21 @@ export default function Aventure({ id }) {
         </small>
         <small style={{ color: 'var(--texte-secondaire)' }}>Du {jour(a.debut)} au {jour(a.fin)}{terminee ? ' · terminée' : ''}</small>
         {!terminee && <TempsRestant fin={a.fin_instant} />}
-        {a.description && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.description}</p>}
+        {(a.description || a.instructions) && (
+          <div style={fondExpedition ? { backgroundImage: `url(${fondExpedition})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 'var(--rayon-m)', padding: '14px' } : undefined}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', ...(fondExpedition ? { background: 'rgba(255,255,255,0.88)', color: '#1d1d1d', borderRadius: 'var(--rayon-m)', padding: '12px' } : {}) }}>
+              {a.description && (
+                <div>
+                  <b style={{ display: 'block', marginBottom: '4px' }}>Histoire</b>
+                  <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.description}</p>
+                </div>
+              )}
+              {a.instructions && (
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><b>Instructions globales :</b> {a.instructions}</p>
+              )}
+            </div>
+          </div>
+        )}
         <small style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', color: 'var(--texte-secondaire)' }}>
           <Gift size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '1px' }} /> <span>{gains}</span>
         </small>
@@ -197,17 +217,41 @@ export default function Aventure({ id }) {
         </div>
       )}
 
-      {a.genre === 'expedition' && a.etapes.map((e) => (
-        <div key={e.id} className="carte" style={carteEtape}>
-          <b>{e.nom}</b>
-          {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{e.instructions}</p>}
-          <Contraintes etape={e} />
-          {mes(e.id).length > 0
-            ? <><small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Expédition réussie</small>{vignettes(mes(e.id))}</>
-            : !terminee && a.inscrit && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
-          {!mes(e.id).length && <small style={{ color: 'var(--texte-secondaire)' }}>Une seule soumission est permise. Il n’y a pas de verdict : l’expédition est réussie dès que les contraintes sont respectées.</small>}
+      {a.genre === 'expedition' && a.complete && (
+        <div className="carte" style={{ ...carteEtape, alignItems: 'center', textAlign: 'center' }}>
+          {a.boussole && imageRecompense(a.boussole) && (
+            <img src={imageRecompense(a.boussole)} alt="Boussole" style={{ width: 120, height: 120, objectFit: 'contain' }} />
+          )}
+          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Trophy size={18} aria-hidden="true" /> Expédition réussie, bravo !</b>
+          {a.boussole && <small style={{ fontWeight: 700 }}>Ta Boussole : {a.boussole.detail}</small>}
+          {a.message_fin && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.message_fin}</p>}
         </div>
-      ))}
+      )}
+
+      {a.genre === 'expedition' && a.etapes.map((e) => {
+        const nb = Math.max(1, a.nb_coloriages || 1);
+        const faits = mes(e.id).length;
+        return (
+          <div key={e.id} className="carte" style={carteEtape}>
+            <b>{e.nom}</b>
+            {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{e.instructions}</p>}
+            <Contraintes etape={e} />
+            {nb > 1 && <small style={{ fontWeight: 700 }}>Coloriages soumis : {Math.min(faits, nb)} / {nb}</small>}
+            {faits >= nb && <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Expédition réussie</small>}
+            {vignettes(mes(e.id))}
+            {faits < nb && !terminee && a.inscrit && (
+              <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}>
+                <ImageIcon size={18} aria-hidden="true" /> {nb > 1 ? `Soumettre mon coloriage ${faits + 1} sur ${nb}` : 'Soumettre mon coloriage'}
+              </button>
+            )}
+            {faits < nb && (
+              <small style={{ color: 'var(--texte-secondaire)' }}>
+                {nb > 1 ? `${nb} coloriages à soumettre, chacun une seule fois.` : 'Une seule soumission est permise.'} Il n’y a pas de verdict : l’expédition est réussie dès que tous tes coloriages respectent les contraintes.
+              </small>
+            )}
+          </div>
+        );
+      })}
 
       {a.genre === 'epopee' && (
         <>
@@ -280,6 +324,16 @@ export default function Aventure({ id }) {
         </>
       )}
 
+      {a.genre === 'prophetie' && a.complete && (
+        <div className="carte" style={{ ...carteEtape, alignItems: 'center', textAlign: 'center' }}>
+          {imageRecompense({ genre: 'orbe', image: a.image }) && (
+            <img src={imageRecompense({ genre: 'orbe', image: a.image })} alt="Orbe magique" style={{ width: 120, height: 120, objectFit: 'contain' }} />
+          )}
+          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Trophy size={18} aria-hidden="true" /> Prophétie accomplie : tu gagnes l’Orbe magique « {a.titre} »</b>
+          {a.message_fin && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.message_fin}</p>}
+        </div>
+      )}
+
       {a.genre === 'prophetie' && a.etapes.map((e) => (
         <div key={e.id} className="carte" style={{ ...carteEtape, opacity: e.cache ? 0.75 : 1 }}>
           <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{e.cache && <Lock size={16} aria-hidden="true" />} {e.nom}</b>
@@ -287,11 +341,21 @@ export default function Aventure({ id }) {
             <small style={{ color: 'var(--texte-secondaire)' }}>Cette étape sera révélée le {jour(e.debut)}.</small>
           ) : (
             <>
+              {a.illustration && (
+                <img src={`/api/aventures/illustration?id=${a.id}&v=${a.illustration}`} alt="Le dragon de la prophétie" loading="lazy"
+                  style={{ width: '100%', maxHeight: '260px', objectFit: 'contain', borderRadius: 'var(--rayon-m)' }} />
+              )}
               {e.debut && e.fin && <small style={{ color: 'var(--texte-secondaire)' }}>Du {jour(e.debut)} au {jour(e.fin)}</small>}
               {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{e.instructions}</p>}
               <Contraintes etape={e} />
               {mes(e.id).length
-                ? <><small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Étape accomplie</small>{vignettes(mes(e.id))}</>
+                ? (
+                  <>
+                    <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--btn)' }}><Check size={16} aria-hidden="true" /> Étape accomplie</small>
+                    {e.message && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontStyle: 'italic', padding: '8px 10px', borderLeft: '3px solid var(--btn)', background: 'var(--accent-doux)', borderRadius: 'var(--rayon-s)' }}>{e.message}</p>}
+                    {vignettes(mes(e.id))}
+                  </>
+                )
                 : !terminee && a.inscrit && (!e.fin || e.fin >= a.aujourdhui) && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
             </>
           )}

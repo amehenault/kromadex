@@ -38,6 +38,7 @@ export async function raisonsXP(userId, cles) {
     else if (sorte === 'bingo') raison = `avancé dans le bingo${guillemets(nom(bingos, id))}`;
     else if (sorte === 'aventure') raison = `avancé dans l’aventure${guillemets(nom(aventures, id))}`;
     else if (sorte === 'relique') raison = 'complété une relique';
+    else if (sorte === 'objectif') raison = 'accompli un de tes objectifs';
     else raison = 'participé à une activité';
     return [cle, raison];
   }));

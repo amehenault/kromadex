@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Search } from 'lucide-react';
+import { ArrowLeft, BookOpen, Search, Images } from 'lucide-react';
+import FicheDetail from './ficheDetail';
+import { pagesDuNumero } from '@/lib/doublePage';
+
+const pagesDe = (no) => { const n = pagesDuNumero(no); return n.length ? n.map(String) : [String(no || '').trim()]; };
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { Avatar, BoutonJaime, imagePage, poster } from './outils';
 import { CodesLecture } from './ficheDetail';
@@ -19,6 +23,16 @@ export default function CodesCouleurs() {
   const [pages, setPages] = useState(null);
   const [page, setPage] = useState(null);
   const [fiches, setFiches] = useState(null);
+  const [enGalerie, setEnGalerie] = useState(false);
+  const [galerie, setGalerie] = useState(null);
+  const [filtrePage, setFiltrePage] = useState('');
+  const [ouverte, setOuverte] = useState(null);
+
+  useEffect(() => {
+    if (!tome || !enGalerie || galerie) return;
+    fetch(`/api/communaute?vue=tome&tome=${encodeURIComponent(tome.tome)}`).then((r) => r.json()).then((d) => setGalerie(d.fiches || []));
+  }, [tome, enGalerie, galerie]);
+  useEffect(() => { setGalerie(null); setFiltrePage(''); }, [tome]);
 
   useEffect(() => {
     setTomes(null); setTome(null);
@@ -79,10 +93,37 @@ export default function CodesCouleurs() {
   }
 
   if (tome) {
+    const puceVue = (actif) => ({ flex: '1 1 0', minHeight: '44px', borderRadius: '999px', fontSize: '0.85rem', padding: '4px 10px', minWidth: 0 });
+    const filtrees = (galerie || []).filter((f) => !filtrePage.trim() || pagesDe(f.page_no).includes(filtrePage.trim()));
     return (
       <>
         {retour('Tomes', () => setTome(null))}
-        <h3 style={{ margin: '0 0 4px' }}>{tome.tome}</h3>
+        <h3 style={{ margin: '0 0 8px' }}>{tome.tome}</h3>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+          <button type="button" className={!enGalerie ? 'btn' : 'btn alt'} style={puceVue()} onClick={() => setEnGalerie(false)}>Par page</button>
+          <button type="button" className={enGalerie ? 'btn' : 'btn alt'} style={puceVue()} onClick={() => setEnGalerie(true)}>
+            <Images size={16} aria-hidden="true" style={{ verticalAlign: 'middle' }} /> Tous les coloriages
+          </button>
+        </div>
+        {enGalerie ? (
+          <>
+            <input type="number" inputMode="numeric" min={1} value={filtrePage} onChange={(e) => setFiltrePage(e.target.value)}
+              placeholder="Filtrer par numéro de page" aria-label="Filtrer par numéro de page" style={{ width: '100%', marginBottom: '10px' }} />
+            {galerie === null && <p>Chargement…</p>}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px' }}>
+              {filtrees.map((f) => (
+                <button key={f.id} type="button" onClick={() => setOuverte(f.id)} aria-label={`${f.title || 'Coloriage'}${f.page_no ? `, page ${f.page_no}` : ''}`}
+                  style={{ all: 'unset', cursor: 'pointer', position: 'relative', aspectRatio: '1 / 1', borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--carte)', minWidth: 0 }}>
+                  <img src={imagePage(f)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {f.page_no && <small style={{ position: 'absolute', left: 4, bottom: 4, background: 'rgba(255,255,255,0.88)', color: '#1d1d1d', borderRadius: 'var(--rayon-s)', padding: '0 5px', fontWeight: 700 }}>p. {f.page_no}</small>}
+                </button>
+              ))}
+            </div>
+            {galerie && !filtrees.length && <p style={{ color: 'var(--texte-secondaire)' }}>{filtrePage ? 'Aucun coloriage publié pour cette page.' : 'Aucun coloriage publié pour ce tome.'}</p>}
+            {ouverte && <FicheDetail id={ouverte} onFermer={() => setOuverte(null)} onLike={() => {}} />}
+          </>
+        ) : (
+          <>
         <small style={{ display: 'block', color: 'var(--texte-secondaire)', marginBottom: '10px' }}>Touche une page pour voir les codes couleurs des autres.</small>
         {pages === null && <p>Chargement…</p>}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
@@ -98,6 +139,8 @@ export default function CodesCouleurs() {
           ))}
         </div>
         {pages && !pages.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucune page numérotée pour ce tome.</p>}
+          </>
+        )}
       </>
     );
   }

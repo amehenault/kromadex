@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles, History, Lock, Compass, Swords, Dices } from 'lucide-react';
+import { ArrowLeft, Flame, CalendarCheck, Heart, MessageCircle, Users, Trophy, Grid3x3, BookOpen, Sparkles, History, Lock, Compass, Swords, Dices, Paintbrush } from 'lucide-react';
 import { NOMS_AVENTURES } from '@/lib/activites';
 import { abonnementDe, JOURS_STATS_GRATUIT } from '@/lib/abonnement';
 import { sql } from '@/lib/db';
@@ -9,6 +9,8 @@ import { getUserProfile } from '@/lib/user';
 import { listerMesTomes } from '@/lib/mesTomes';
 import { typesVisibles } from '@/lib/typesColoriage';
 import { accord } from '@/lib/genre';
+import { crayonsLesPlusUtilises } from '@/lib/statsCrayons';
+import { anneeRetrospective } from '@/lib/retrospective';
 import { FUSEAU, BONUS_SERIE, serieEnCours, meilleureSerie, aujourdhuiLocal, joursColories, joursConnectes } from '@/lib/series';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +26,7 @@ export default async function StatistiquesPage() {
 
   const aujourdhui = await aujourdhuiLocal();
   const debutMois = `${aujourdhui.slice(0, 7)}-01`;
+  const anneeRetro = anneeRetrospective(aujourdhui);
   const [colories, connectes, [mois], tomesMois, tomesAvant, topLikes, [inter], defis, bingos, [bonus]] = await Promise.all([
     joursColories(uid),
     joursConnectes(uid),
@@ -93,7 +96,11 @@ export default async function StatistiquesPage() {
     : c.soumis ? 'Coloriage envoyé' : 'Coloriage à envoyer';
   const rienEnCours = !defis.length && !bingos.length && !aventures.length && !combats.length && !tournois.length && !tirages.length;
 
-  const [profile, mesTomes] = await Promise.all([getUserProfile(uid), listerMesTomes(uid)]);
+  const [profile, mesTomes, crayonsMois, crayonsTop] = await Promise.all([
+    getUserProfile(uid), listerMesTomes(uid),
+    crayonsLesPlusUtilises(uid, { depuis: debutMois, limite: 1 }),
+    crayonsLesPlusUtilises(uid, { limite: 10 }),
+  ]);
   const visibles = typesVisibles(profile?.types_pratiques, profile?.types_vus);
   const voitMystere = visibles.includes('mystere');
   const voitCozy = visibles.includes('cozy');
@@ -127,6 +134,14 @@ export default async function StatistiquesPage() {
     </div>
   );
 
+  const ligneCrayon = (c, i) => (
+    <div key={c.num} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', minWidth: 0 }}>
+      <span aria-hidden="true" style={{ flex: '0 0 auto', width: 18, height: 18, borderRadius: '50%', border: '1px solid var(--bordure-carte)', background: c.hex || 'var(--fond-carte)' }} />
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i === null ? '' : `${i + 1}. `}{c.num}</span>
+      <b style={{ flex: '0 0 auto' }}>{c.n} coloriage{c.n > 1 ? 's' : ''}</b>
+    </div>
+  );
+
   return (
     <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
@@ -135,6 +150,13 @@ export default async function StatistiquesPage() {
         </Link>
         <h2 style={{ margin: 0, fontSize: '1.2rem' }}>Statistiques</h2>
       </div>
+
+      {anneeRetro && (
+        <Link href={`/retrospective?annee=${anneeRetro}`} className="btn"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '48px', fontWeight: 700, marginBottom: 'var(--espace-3)' }}>
+          <Sparkles size={18} aria-hidden="true" /> Ma rétrospective {anneeRetro}
+        </Link>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: 'var(--espace-3)' }}>
         <div style={tuile}>
@@ -196,6 +218,22 @@ export default async function StatistiquesPage() {
         {tomesMois.length ? tomesMois.map(ligneTome) : <small style={petit}>Aucun coloriage ce mois-ci.</small>}
         <small style={{ ...petit, fontWeight: 700, marginTop: '4px' }}>Le mois dernier</small>
         {tomesAvant.length ? tomesAvant.map(ligneTome) : <small style={petit}>Aucun coloriage le mois dernier.</small>}
+      </div>
+
+      <div className="carte" style={carte}>
+        <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Paintbrush size={18} aria-hidden="true" /> Crayons les plus utilisés</b>
+        <small style={petit}>Tirés des codes couleurs de tes coloriages : un crayon compte une fois par coloriage.</small>
+        {crayonsTop.length ? (
+          <>
+            <small style={{ ...petit, fontWeight: 700 }}>Ton crayon préféré ce mois-ci</small>
+            {crayonsMois[0] ? ligneCrayon(crayonsMois[0], null) : <small style={petit}>Aucun code couleur ce mois-ci.</small>}
+            <small style={{ ...petit, fontWeight: 700, marginTop: '4px' }}>Les 10 crayons que tu utilises le plus</small>
+            {crayonsTop.map(ligneCrayon)}
+            <Link href="/profil/collection" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', minHeight: '44px', fontWeight: 700, color: 'inherit', fontSize: '0.9rem' }}>
+              Voir mes crayons à racheter
+            </Link>
+          </>
+        ) : <small style={petit}>Ajoute des codes couleurs à tes coloriages pour voir tes crayons préférés.</small>}
       </div>
 
       <div className="carte" style={carte}>

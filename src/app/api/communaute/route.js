@@ -5,6 +5,7 @@ import { isId } from '@/lib/pages';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { ajouterCodes } from '@/lib/palettesServeur';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
+import { verifierParrainage } from '@/lib/parrainage';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,17 @@ export async function GET(req) {
       GROUP BY page_no`;
     pages.sort((a, b) => (parseInt(a.page_no, 10) || 0) - (parseInt(b.page_no, 10) || 0) || a.page_no.localeCompare(b.page_no));
     return NextResponse.json({ pages });
+  }
+
+  if (vue === 'tome') {
+    const fiches = await sql`
+      SELECT p.id, p.title, p.page_no, OCTET_LENGTH(p.image_b64) AS img_size,
+             u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
+      FROM pages p JOIN users u ON u.id = p.user_id
+      WHERE p.publiee AND p.image_b64 IS NOT NULL AND lower(p.tome) = lower(${tome})
+      ORDER BY p.publiee_le DESC LIMIT 300`;
+    fiches.sort((a, b) => (parseInt(a.page_no, 10) || 1e9) - (parseInt(b.page_no, 10) || 1e9));
+    return NextResponse.json({ fiches });
   }
 
   if (vue === 'fiche') {
@@ -97,6 +109,7 @@ export async function POST(req) {
     const maj = await sql`UPDATE pages SET publiee = true, type_coloriage = ${type}, publiee_le = COALESCE(publiee_le, now())
       WHERE id = ${publier} AND user_id = ${user.id} AND image_b64 IS NOT NULL RETURNING id`;
     if (!maj.length) return NextResponse.json({ error: 'Coloriage introuvable (il faut une photo pour le publier)' }, { status: 404 });
+    await verifierParrainage(user.id).catch(() => {});
     return NextResponse.json({ ok: true });
   }
   if (!isId(id || '')) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });

@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText, Gift } from 'lucide-react';
+import { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText, Gift, HeartHandshake } from 'lucide-react';
 import { RECOMPENSES, imageRecompense, nomRecompense } from '@/lib/recompenses';
 
-const ICONES = { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText };
+const ICONES = { Crown, Gem, Medal, Shield, Sparkles, Award, Sword, Stamp, BadgeCheck, Compass, Swords, Puzzle, ScrollText, HeartHandshake };
 
 export function IconeRecompense({ r, taille = 40, carre = false }) {
   const [rate, setRate] = useState(false);

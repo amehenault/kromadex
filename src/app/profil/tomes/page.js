@@ -5,6 +5,7 @@ import { ArrowLeft, BookOpen, Search, Plus, Check, Heart } from 'lucide-react';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import OngletsCollections from '@/components/OngletsCollections';
 import AvisPagesCozy from '@/components/AvisPagesCozy';
+import AvisTome, { Cristaux } from '@/components/AvisTome';
 
 const TYPES = [
   { valeur: 'mystere', label: 'Tomes (coloriages mystères)' },
@@ -22,6 +23,7 @@ export default function CatalogueTomesPage() {
   const [enCours, setEnCours] = useState(null);
   const [progression, setProgression] = useState({});
   const [visibles, setVisibles] = useState(VALEURS_TYPES);
+  const [avis, setAvis] = useState(null);
 
   useEffect(() => {
     async function charger() {
@@ -218,6 +220,11 @@ export default function CatalogueTomesPage() {
                 )}
               </div>
               <b style={{ fontSize: '0.8rem', lineHeight: 1.25, color: 'var(--texte-principal)' }}>{t.nom}</b>
+              <button type="button" onClick={() => setAvis(t)} aria-label={`Avis sur ${t.nom}`}
+                style={{ all: 'unset', cursor: 'pointer', minHeight: '44px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                <Cristaux note={t.moyenne} taille={12} />
+                <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.72rem' }}>{t.nb_avis ? `${t.moyenne} (${t.nb_avis})` : 'Donner mon avis'}</small>
+              </button>
               {possede ? (
                 <small style={{ color: 'var(--btn)', fontSize: '0.72rem', fontWeight: 'bold' }}>
                   {progression[t.id]?.coloriees || 0} / {t.nb_pages || '?'} pages
@@ -245,6 +252,8 @@ export default function CatalogueTomesPage() {
           );
         })}
       </div>
+      {avis && <AvisTome tome={avis} onFermer={() => setAvis(null)}
+        onMaj={(id, champs) => setTomes((l) => l.map((x) => (Number(x.id) === Number(id) ? { ...x, ...champs } : x)))} />}
     </div>
   );
 }

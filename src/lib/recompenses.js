@@ -15,6 +15,7 @@ export const RECOMPENSES = {
   sceau: { nom: 'Sceau', pluriel: 'sceaux', auto: { dossier: 'recompenses-activites/epreuve/chef', mots: ['sceau'] }, prestige: 65, icone: 'Stamp' },
   badge_sentinelle: { nom: 'Badge de sentinelle', pluriel: 'badges de sentinelle', auto: { dossier: 'recompenses-activites/epreuve/sentinelles', mots: ['badge'] }, prestige: 60, icone: 'BadgeCheck' },
   boussole: { nom: 'Boussole', pluriel: 'boussoles', auto: { dossier: 'recompenses-activites/expedition', mots: ['boussole', 'expedition', 'level'] }, prestige: 55, icone: 'Compass' },
+  parrainage: { nom: 'Badge de parrainage', pluriel: 'badges de parrainage', auto: { dossier: 'parrainage', mots: ['badge'] }, prestige: 50, icone: 'HeartHandshake' },
   joute: { nom: 'Joute', pluriel: 'joutes', auto: { dossier: 'recompenses-activites/combat', mots: ['joute'] }, prestige: 45, icone: 'Swords' },
   fragment: { nom: 'Fragment de relique', pluriel: 'fragments de relique', auto: { dossier: 'recompenses-activites/epreuve/sentinelles', mots: ['fragment'] }, prestige: 35, icone: 'Puzzle' },
   parchemin: { nom: 'Parchemin du Destin', pluriel: 'parchemins du Destin', auto: { dossier: 'inventaire', mots: ['parchemin'] }, prestige: 30, icone: 'ScrollText',

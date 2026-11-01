@@ -14,7 +14,8 @@ export async function POST(req) {
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const b = await req.json().catch(() => ({}));
   const [u] = await sql`SELECT role, pionnier, notifs, unlocked_titles, xp, genre,
-      EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'relique') AS relique
+      EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'relique') AS relique,
+      EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'parrainage') AS parrainage
     FROM users WHERE id = ${user.id}`;
 
   if (b.notifs && typeof b.notifs === 'object') {

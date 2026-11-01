@@ -10,9 +10,11 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
     const tomes = await sql`
-      SELECT id, ean, nom, autre_nom, titre, type, editeur, collection, nb_pages, couverture, url
-      FROM tome_catalog
-      ORDER BY nom ASC
+      SELECT c.id, c.ean, c.nom, c.autre_nom, c.titre, c.type, c.editeur, c.collection, c.nb_pages, c.couverture, c.url,
+             a.moyenne, COALESCE(a.nb_avis, 0) AS nb_avis
+      FROM tome_catalog c
+      LEFT JOIN (SELECT tome_id, round(avg(note)::numeric, 1)::float AS moyenne, count(*)::int AS nb_avis FROM avis_tomes GROUP BY tome_id) a ON a.tome_id = c.id
+      ORDER BY c.nom ASC
     `;
     const possedes = await sql`
       SELECT u.tome_id,

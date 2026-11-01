@@ -49,6 +49,11 @@ import { verifierQuetes } from '@/lib/quetes';
 import { accord } from '@/lib/genre';
 import { quetesDestin } from '@/lib/quetesDestin';
 import QuetesDuDestin from '@/components/QuetesDuDestin';
+import ObjectifsPerso from '@/components/ObjectifsPerso';
+import Albums from '@/components/Albums';
+import Parrainage from '@/components/Parrainage';
+import { codeParrainage, filleules } from '@/lib/parrainage';
+import { listerObjectifs } from '@/lib/objectifs';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,13 +64,15 @@ export default async function ProfilPage() {
 
   const { liste: quetes } = await verifierQuetes(authUser.id);
   const destin = await quetesDestin(authUser.id);
+  const objectifs = await listerObjectifs(authUser.id);
+  const [codeInvitation, mesInvitees] = await Promise.all([codeParrainage(authUser.id), filleules(authUser.id)]);
 
   const profile = await getUserProfile(authUser.id);
   const nonLus = await aLire(authUser.id);
 
   await parcheminDuMois(authUser.id);
   const recompenses = await recompensesDe(authUser.id);
-  const debloques = cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: profile?.pionnier, role: profile?.role });
+  const debloques = cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), parrainage: recompenses.some((r) => r.genre === 'parrainage'), pionnier: profile?.pionnier, role: profile?.role });
   const cadre = cadreAffiche(profile?.cadre, debloques);
   const rappels = profile?.role === 'admin' ? await rappelsDuJour() : [];
 
@@ -416,6 +423,13 @@ export default async function ProfilPage() {
       )}
 
       {destin.length > 0 && <QuetesDuDestin quetes={JSON.parse(JSON.stringify(destin))} titre="Mes quêtes du Destin" />}
+
+      <ObjectifsPerso objectifs={JSON.parse(JSON.stringify(objectifs))}
+        bibliotheque={mesTomes.map((t) => ({ nom: t.nom, autreNom: t.autreNom, type: t.type, total: t.total || null }))} />
+
+      <Albums id={String(authUser.id)} moi />
+
+      <Parrainage code={codeInvitation} filleules={JSON.parse(JSON.stringify(mesInvitees))} />
 
       <div className="profil-acces">
 

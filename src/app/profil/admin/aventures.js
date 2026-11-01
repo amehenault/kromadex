@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown, ImagePlus } from 'lucide-react';
+import { compresserImage } from '@/lib/compressionImage';
 import { CATEGORIES_DEFI } from '@/lib/defis';
-import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES } from '@/lib/activites';
+import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES, choixNbColoriages } from '@/lib/activites';
 import { envoyer, colonne, ligneCarte, champ, aide, actions, petitBtn, dateStyle } from './outils';
 import { useBrouillon, BandeauBrouillon } from '@/components/Brouillon';
 import Deroulant from '@/components/Deroulant';
@@ -25,7 +26,7 @@ function modele(genre) {
   if (genre === 'expedition') {
     const f = FETES.find((x) => x.mois > new Date().getMonth() + 1) || FETES[0];
     return {
-      genre, titre: '', description: '', fete: f.valeur, categorie: 'tous', debut: `${annee}-${f.debut}`, fin: `${annee}-${f.fin}`, xp: {},
+      genre, titre: '', description: '', fete: f.valeur, categorie: 'tous', debut: `${annee}-${f.debut}`, fin: `${annee}-${f.fin}`, xp: {}, nb_coloriages: 1, message_fin: '',
       etapes: [{ nom: 'Expédition', instructions: '', xp: f.xp, contraintes: [contrainte('obligatoire'), contrainte('secondaire'), contrainte('secondaire')] }],
     };
   }
@@ -43,8 +44,8 @@ function modele(genre) {
   }
   const debut = iso(annee, 5, 1);
   return {
-    genre, titre: '', description: '', categorie: 'tous', debut, fin: finMois(annee, 5), xp: { complet: XP_PROPHETIE.complet }, image: '',
-    etapes: [0, 1, 2].map((i) => ({ nom: `Étape ${i + 1}`, instructions: '', xp: XP_PROPHETIE.etape, debut: plus(debut, i * 7), fin: plus(debut, i * 7 + 6), contraintes: [contrainte('obligatoire')] })),
+    genre, titre: '', description: '', categorie: 'tous', debut, fin: finMois(annee, 5), xp: { complet: XP_PROPHETIE.complet }, image: '', message_fin: '',
+    etapes: [0, 1, 2].map((i) => ({ nom: `Étape ${i + 1}`, instructions: '', message: '', xp: XP_PROPHETIE.etape, debut: plus(debut, i * 7), fin: plus(debut, i * 7 + 6), contraintes: [contrainte('obligatoire')] })),
   };
 }
 
@@ -52,6 +53,7 @@ export default function Aventures() {
   const [aventures, setAventures] = useState([]);
   const [form, setForm] = useState(null);
   const [message, setMessage] = useState('');
+  const [illustration, setIllustration] = useState({ url: '', fichier: null, retirer: false });
   const brouillon = useBrouillon('aventure', form || {}, Boolean(form && (form.titre?.trim() || form.description?.trim() || form.etapes?.some((e) => e.instructions?.trim()))));
 
   async function charger() {
@@ -75,11 +77,33 @@ export default function Aventures() {
     setForm({ ...form, fete: valeur, debut: `${annee}-${f.debut}`, fin: `${annee}-${f.fin}`, etapes: form.etapes.map((e, i) => (i === 0 ? { ...e, xp: f.xp } : e)) });
   }
 
+  function ouvrir(f) {
+    setIllustration({ url: f.id && f.illustration ? `/api/aventures/illustration?id=${f.id}&v=${f.illustration}` : '', fichier: null, retirer: false });
+    setForm(f);
+  }
+  async function choisirIllustration(e) {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const blob = await compresserImage(f, 900, 0.85);
+    setIllustration({ url: URL.createObjectURL(blob), fichier: blob, retirer: false });
+  }
+
   async function enregistrer(e) {
     e.preventDefault();
     const r = await envoyer('/api/aventures', 'POST', { ...form, action: 'enregistrer' });
-    setMessage(r.ok ? 'Aventure enregistrée' : r.error);
-    if (r.ok) { setForm(null); brouillon.effacer(); charger(); }
+    if (!r.ok) { setMessage(r.error); return; }
+    let erreurImage = '';
+    if (form.genre !== 'epopee' && illustration.fichier) {
+      const fd = new FormData();
+      fd.append('id', String(r.id)); fd.append('image', illustration.fichier, 'illustration.jpg');
+      const rep = await fetch('/api/aventures/illustration', { method: 'POST', body: fd });
+      if (!rep.ok) erreurImage = (await rep.json().catch(() => ({}))).error || 'L’image n’a pas pu être enregistrée.';
+    } else if (form.genre !== 'epopee' && illustration.retirer) {
+      await envoyer('/api/aventures/illustration', 'DELETE', { id: r.id });
+    }
+    setMessage(erreurImage ? `Aventure enregistrée, mais : ${erreurImage}` : 'Aventure enregistrée');
+    setForm(null); brouillon.effacer(); charger();
   }
   async function supprimer(a) {
     if (!confirm(`Supprimer « ${a.titre} » et toutes ses soumissions ?`)) return;
@@ -108,8 +132,11 @@ export default function Aventures() {
         <label style={champ}>Titre
           <input value={form.titre} onChange={(e) => maj({ titre: e.target.value })} maxLength={100} placeholder={form.genre === 'epopee' ? 'ex. Le royaume de Valombre' : 'ex. Le peuple des cœurs'} required />
         </label>
-        <label style={champ}>Histoire et instructions générales
+        <label style={champ}>Histoire
           <textarea rows={4} value={form.description} onChange={(e) => maj({ description: e.target.value })} maxLength={2000} />
+        </label>
+        <label style={champ}>Instructions globales
+          <textarea rows={3} value={form.instructions || ''} onChange={(e) => maj({ instructions: e.target.value })} maxLength={2000} />
         </label>
         <label style={champ}>Type de coloriage
           <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => maj({ categorie: v })}
@@ -146,6 +173,44 @@ export default function Aventures() {
           </>
         )}
         {form.genre === 'prophetie' && nombre('xc', 'XP quand toutes les étapes sont accomplies', form.xp.complet, (v) => maj({ xp: { ...form.xp, complet: v } }))}
+        {form.genre === 'expedition' && (
+          <label style={champ}>Nombre de coloriages à soumettre
+            <Deroulant titre="Nombre de coloriages" value={String(Math.min(form.nb_coloriages || 1, choixNbColoriages(form.debut, form.fin).at(-1)))}
+              onChange={(v) => maj({ nb_coloriages: Number(v) })}
+              options={choixNbColoriages(form.debut, form.fin).map((n) => ({ valeur: String(n), label: `${n} coloriage${n > 1 ? 's' : ''}` }))} />
+            <small style={{ ...aide, fontWeight: 400 }}>1 seul si l’expédition dure moins de 2 semaines, sinon jusqu’à un par semaine complète.</small>
+          </label>
+        )}
+        {form.genre !== 'epopee' && (
+          <div style={champ}>
+            {form.genre === 'prophetie' ? 'Image du dragon (facultatif)' : 'Image de fond (facultatif)'}
+            <small style={{ ...aide, fontWeight: 400 }}>
+              {form.genre === 'prophetie' ? 'Elle s’affiche dans chaque étape révélée de la prophétie.' : 'L’histoire et les instructions s’affichent par-dessus cette image.'}
+            </small>
+            {illustration.url && !illustration.retirer && (
+              <img src={illustration.url} alt={form.genre === 'prophetie' ? 'Dragon de la prophétie' : 'Image de fond de l’expédition'} style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: 'var(--rayon-m)', background: 'var(--fond-carte)' }} />
+            )}
+            <div style={actions}>
+              <label className="btn alt" style={{ ...petitBtn, cursor: 'pointer' }}>
+                <ImagePlus size={16} aria-hidden="true" /> {illustration.url && !illustration.retirer ? 'Changer l’image' : 'Choisir une image'}
+                <input type="file" accept="image/*" onChange={choisirIllustration} style={{ display: 'none' }} />
+              </label>
+              {illustration.url && !illustration.retirer && (
+                <button type="button" className="btn alt danger" style={petitBtn} onClick={() => setIllustration({ url: '', fichier: null, retirer: true })}>
+                  <Trash2 size={16} aria-hidden="true" /> Retirer
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {form.genre !== 'epopee' && (
+          <label style={champ}>{form.genre === 'prophetie' ? 'Message de fin (facultatif)' : 'Texte de félicitations (facultatif)'}
+            <textarea rows={3} value={form.message_fin || ''} onChange={(e) => maj({ message_fin: e.target.value })} maxLength={2000} />
+            <small style={{ ...aide, fontWeight: 400 }}>
+              {form.genre === 'prophetie' ? 'Affiché avec l’Orbe magique gagnée quand toutes les étapes sont accomplies.' : 'Affiché avec la Boussole gagnée quand tous les coloriages de l’expédition sont soumis.'}
+            </small>
+          </label>
+        )}
         {form.genre !== 'expedition' && (
           <label style={champ}>Image de la récompense (facultatif)
             <input value={form.image} onChange={(e) => maj({ image: e.target.value })} maxLength={120} placeholder={form.genre === 'epopee' ? 'ex. blason-valombre.png' : 'ex. orbe-trois-lunes.png'} />
@@ -169,6 +234,12 @@ export default function Aventures() {
             <label style={champ}>Instructions
               <textarea rows={3} value={e.instructions} onChange={(x) => majEtape(i, { instructions: x.target.value })} maxLength={2000} />
             </label>
+            {form.genre === 'prophetie' && (
+              <label style={champ}>Message après l’étape (facultatif)
+                <textarea rows={2} value={e.message || ''} onChange={(x) => majEtape(i, { message: x.target.value })} maxLength={2000} />
+                <small style={{ ...aide, fontWeight: 400 }}>Affiché une fois que la personne a soumis son coloriage pour cette étape.</small>
+              </label>
+            )}
             {form.genre !== 'epopee' && nombre(`xp${i}`, form.genre === 'expedition' ? 'XP de l’expédition réussie' : 'XP de l’étape', e.xp, (v) => majEtape(i, { xp: v }))}
             {form.genre === 'prophetie' && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -206,7 +277,7 @@ export default function Aventures() {
         {form.genre === 'prophetie' && (
           <button type="button" className="btn alt" style={petitBtn} onClick={() => {
             const der = form.etapes.at(-1);
-            setForm({ ...form, etapes: [...form.etapes, { nom: `Étape ${form.etapes.length + 1}`, instructions: '', xp: XP_PROPHETIE.etape, debut: der?.fin ? plus(der.fin, 1) : form.debut, fin: der?.fin ? plus(der.fin, 7) : form.fin, contraintes: [contrainte('obligatoire')] }] });
+            setForm({ ...form, etapes: [...form.etapes, { nom: `Étape ${form.etapes.length + 1}`, instructions: '', message: '', xp: XP_PROPHETIE.etape, debut: der?.fin ? plus(der.fin, 1) : form.debut, fin: der?.fin ? plus(der.fin, 7) : form.fin, contraintes: [contrainte('obligatoire')] }] });
           }}>
             <Plus size={14} aria-hidden="true" /> Ajouter une étape
           </button>
@@ -222,7 +293,7 @@ export default function Aventures() {
 
   return (
     <div style={colonne}>
-      <BandeauBrouillon nom="d’aventure" brouillon={brouillon} onReprendre={(d) => d && d.genre && setForm(d)} />
+      <BandeauBrouillon nom="d’aventure" brouillon={brouillon} onReprendre={(d) => d && d.genre && ouvrir(d)} />
       <div className="carte" style={colonne}>
         <b>Créer une aventure</b>
         <p style={aide}>Expédition : une par fête. Épopée : une par saison (janvier, mars, juillet, septembre), deux semaines. Prophétie : une par année, en mai ou en novembre.</p>
@@ -230,7 +301,7 @@ export default function Aventures() {
           {Object.entries(NOMS_AVENTURES).map(([g, n]) => {
             const Icone = ICONES[g];
             return (
-              <button key={g} type="button" className="btn" onClick={() => { setMessage(''); setForm(modele(g)); }}
+              <button key={g} type="button" className="btn" onClick={() => { setMessage(''); ouvrir(modele(g)); }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', minHeight: '58px', padding: '6px 4px', fontSize: '0.8rem', minWidth: 0 }}>
                 <Icone size={18} aria-hidden="true" /> {n.singulier}
               </button>
@@ -251,7 +322,7 @@ export default function Aventures() {
               {a.genre === 'epopee' && ` · ${a.stats.inscrits} inscrites · dragon : ${a.epopee.pvRestants} / ${a.pv}${a.epopee.vaincu ? ' (vaincu)' : ''}`}
             </small>
             <div style={actions}>
-              <button type="button" className="btn alt" style={petitBtn} onClick={() => setForm({ ...a, xp: a.xp || {} })}><Pencil size={14} aria-hidden="true" /> Modifier</button>
+              <button type="button" className="btn alt" style={petitBtn} onClick={() => ouvrir({ ...a, xp: a.xp || {} })}><Pencil size={14} aria-hidden="true" /> Modifier</button>
               <button type="button" className="btn alt danger" style={petitBtn} onClick={() => supprimer(a)}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
             </div>
           </div>

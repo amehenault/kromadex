@@ -681,3 +681,50 @@ create table if not exists souhaits (
 );
 create unique index if not exists souhaits_tome on souhaits (user_id, tome_id) where tome_id is not null;
 create unique index if not exists souhaits_coffret on souhaits (user_id, brand_id) where brand_id is not null;
+
+alter table aventures add column if not exists illustration_b64 text;
+alter table aventures add column if not exists illustration_type text;
+alter table aventures add column if not exists illustration_maj timestamptz;
+alter table aventures add column if not exists message_fin text not null default '';
+alter table aventures add column if not exists nb_coloriages int not null default 1;
+alter table aventure_etapes add column if not exists message text not null default '';
+alter table aventures add column if not exists instructions text not null default '';
+
+create table if not exists objectifs_perso (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  texte text not null default '',
+  tome text not null default '',
+  page_no text not null default '',
+  cree_le timestamptz not null default now(),
+  termine_le timestamptz
+);
+create index if not exists objectifs_perso_user on objectifs_perso (user_id, termine_le);
+
+create table if not exists albums (
+  id serial primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  nom text not null,
+  cree_le timestamptz not null default now()
+);
+create index if not exists albums_user on albums (user_id);
+create table if not exists album_pages (
+  album_id int not null references albums(id) on delete cascade,
+  page_id uuid not null references pages(id) on delete cascade,
+  ajoute_le timestamptz not null default now(),
+  primary key (album_id, page_id)
+);
+
+create table if not exists avis_tomes (
+  tome_id int not null references tome_catalog(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  note int not null check (note between 1 and 5),
+  avis text not null default '',
+  cree_le timestamptz not null default now(),
+  maj_le timestamptz not null default now(),
+  primary key (tome_id, user_id)
+);
+
+alter table users add column if not exists code_parrainage text;
+create unique index if not exists users_code_parrainage on users (code_parrainage) where code_parrainage is not null;
+alter table users add column if not exists parrain uuid references users(id) on delete set null;

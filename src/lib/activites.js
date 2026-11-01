@@ -74,3 +74,11 @@ export const NOMS_AVENTURES = {
 export const AVERTISSEMENT_SOUMISSION =
   'En soumettant ce coloriage, tu t’assures qu’il correspond à tous les critères, sans quoi tu risques de perdre le double des points et de voir ton coloriage supprimé, en plus de risquer une suspension. '
   + 'Une fois soumis, ce coloriage (photo, titre et ton pseudo) peut être vu par les membres connectés de Kromadex, même s’il n’est pas publié dans la communauté.';
+
+// Nombre de coloriages possibles pour une expédition : 1 si elle dure moins de 2 semaines,
+// sinon de 1 jusqu'au nombre de semaines complètes (1 mois : 1 à 4).
+export function choixNbColoriages(debut, fin) {
+  const jours = Math.round((new Date(`${fin}T12:00:00Z`) - new Date(`${debut}T12:00:00Z`)) / 86400000) + 1;
+  if (!Number.isFinite(jours) || jours < 14) return [1];
+  return Array.from({ length: Math.floor(jours / 7) }, (_, i) => i + 1);
+}

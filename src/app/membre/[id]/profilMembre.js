@@ -17,6 +17,7 @@ import { cadresDebloques, cadreAffiche, nomPionnier } from '@/lib/cadres';
 import PhotoCadre from '@/components/PhotoCadre';
 import { badgePionnier, OBJETS } from '@/lib/recompenses';
 import ListeSouhaits from '@/components/ListeSouhaits';
+import Albums from '@/components/Albums';
 
 
 export default function ProfilMembre({ membre, fiches: initiales, recompenses = [], moi }) {
@@ -43,7 +44,7 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
     if (r) majLike(f.id, r);
   }
 
-  const cadre = cadreAffiche(m.cadre, cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), pionnier: m.pionnier, role: m.role }));
+  const cadre = cadreAffiche(m.cadre, cadresDebloques({ relique: recompenses.some((r) => r.genre === 'relique'), parrainage: recompenses.some((r) => r.genre === 'parrainage'), pionnier: m.pionnier, role: m.role }));
   const compteur = { all: 'unset', cursor: 'pointer', textAlign: 'center', flex: 1, minHeight: '44px' };
 
   return (
@@ -105,6 +106,8 @@ export default function ProfilMembre({ membre, fiches: initiales, recompenses = 
         epingles={m.badges_epingles || []} modifiable={moi} />
 
       <ListeSouhaits id={m.id} moi={moi} titre={moi ? 'Ma liste de souhaits' : 'Liste de souhaits'} />
+
+      <Albums id={m.id} moi={moi} />
 
       <h3 style={{ margin: '0 0 10px' }}>Coloriages publiés</h3>
       {!fiches.length && <p style={{ color: 'var(--texte-secondaire)' }}>Aucun coloriage publié pour l'instant.</p>}

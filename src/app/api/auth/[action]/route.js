@@ -7,6 +7,7 @@ import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { nettoyerPseudo, erreurPseudo, pseudoPris, estDoublon, MESSAGE_PRIS } from '@/lib/pseudo';
 import { demanderReinitialisation, reinitialiser } from '@/lib/motDePasse';
 import { prevenir } from '@/lib/push';
+import { lierParrain } from '@/lib/parrainage';
 import { essaiConnexion, connexionReussie, appareilConnu, retenirAppareil, limiteParIp } from '@/lib/limites';
 
 const err = (m, s) => NextResponse.json({ error: m }, { status: s });
@@ -48,6 +49,7 @@ export async function POST(req, { params }) {
         values (${email}, ${hashPassword(pw)}, ${pseudo}, ${nom}, ${b.genre}, ${b.pays},
                 ${pratiques}, ${types(b.typesVus)})
         returning id`;
+      await lierParrain(r[0].id, String(b.parrain || '').trim().toLowerCase()).catch(() => {});
       await createSession(r[0].id);
       prevenir('inscriptions', { postes: ['admin'] },
         { titre: 'Nouvelle inscription', texte: `@${pseudo} vient de s’inscrire sur Kromadex.`, lien: '/profil/admin?onglet=lancement' });

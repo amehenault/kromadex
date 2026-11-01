@@ -11,7 +11,9 @@ export const dynamic = 'force-dynamic';
 export default async function TitreEtCadrePage() {
   const user = await getUser();
   if (!user) redirect('/login');
-  const [u] = await sql`SELECT role, pionnier, cadre, genre, title, unlocked_titles, xp FROM users WHERE id = ${user.id}`;
+  const [u] = await sql`SELECT role, pionnier, cadre, genre, title, unlocked_titles, xp,
+      EXISTS (SELECT 1 FROM recompenses r WHERE r.user_id = users.id AND r.genre = 'parrainage') AS parrainage
+    FROM users WHERE id = ${user.id}`;
   const niveau = calculerNiveau(u.xp || 0);
   const speciaux = (u.unlocked_titles || []).filter((t) => t !== 'Coloriste débutant');
   return (

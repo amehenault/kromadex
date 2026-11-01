@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Inscription from './Inscription';
@@ -11,6 +11,15 @@ export default function AuthForm() {
   const [msg, setMsg] = useState('');
   const [envoye, setEnvoye] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const [parrain, setParrain] = useState('');
+  useEffect(() => {
+    const code = (new URLSearchParams(window.location.search).get('parrain') || localStorage.getItem('kromadex-parrain') || '').trim().toLowerCase();
+    if (!/^[a-z0-9]{6,12}$/.test(code)) return;
+    localStorage.setItem('kromadex-parrain', code);
+    setParrain(code);
+    if (new URLSearchParams(window.location.search).get('parrain')) setMode('register');
+  }, []);
 
   function changer(m) { setMode(m); setMsg(''); setEnvoye(false); }
 
@@ -26,7 +35,7 @@ export default function AuthForm() {
     setBusy(false);
   }
 
-  if (mode === 'register') return <Inscription onConnexion={() => changer('login')} />;
+  if (mode === 'register') return <Inscription parrain={parrain} onConnexion={() => changer('login')} />;
 
   const retour = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '44px', minHeight: '44px', padding: 0 };
 

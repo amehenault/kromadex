@@ -2,13 +2,14 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const PUBLIC = 'public';
-const DOSSIERS = ['recompenses-activites', 'pionniers', 'inventaire'];
+const DOSSIERS = ['recompenses-activites', 'pionniers', 'inventaire', 'parrainage'];
 const EXTENSIONS = /\.(svg|png|webp|jpe?g)$/i;
 
 function typeDe(chemin) {
   const c = chemin.toLowerCase();
   if (c.startsWith('pionniers/')) return 'Pionnières';
   if (c.startsWith('inventaire/')) return 'Inventaire';
+  if (c.startsWith('parrainage/')) return 'Parrainage';
   if (c.includes('/epreuve/chef/')) return 'Épreuve des cheffes';
   if (c.includes('/epreuve/mensuelles/')) return 'Épreuve mensuelle';
   if (c.includes('/epreuve/sentinelles/')) return 'Épreuve des Sentinelles';

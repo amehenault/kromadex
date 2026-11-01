@@ -63,5 +63,7 @@ dans le nom du fichier.
 | Boussole (expédition) | recompenses-activites/expedition | boussole, expedition ou level + numéro du niveau (1 à 5 : 1re, 3e, 5e, 7e et 9e expédition réussie) |
 | Blason (épopée) | n'importe où dans recompenses-activites | blason ou epopee |
 | Orbe magique (prophétie) | n'importe où dans recompenses-activites | orbe ou prophetie |
+| Badge de parrainage | parrainage | badge |
+| Cadre de parrainage | parrainage | cadre |
 
 La liste est refaite par `scripts/manifeste-recompenses.mjs` (lancé avant `npm run build` et `npm run dev`).

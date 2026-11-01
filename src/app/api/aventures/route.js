@@ -6,7 +6,8 @@ import { jourQuebec } from '@/lib/temps';
 import { VALEURS_CATEGORIES } from '@/lib/defis';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { parcheminsDisponibles } from '@/lib/recompensesServeur';
-import { chargerAventure, etatEpopee, soumettre, repondreEnigme } from '@/lib/aventures';
+import { chargerAventure, etatEpopee, soumettre, repondreEnigme, nbColoriages } from '@/lib/aventures';
+import { choixNbColoriages } from '@/lib/activites';
 import { verifierLimite, parcheminDuMois } from '@/lib/abonnement';
 
 const GENRES = ['expedition', 'epopee', 'prophetie'];
@@ -22,6 +23,7 @@ async function vueMembre(a, userId) {
     FROM aventure_soumissions s JOIN pages p ON p.id = s.page_id
     WHERE s.aventure_id = ${a.id} AND s.user_id = ${userId} ORDER BY s.cree_le`;
   const epopee = a.genre === 'epopee' ? await etatEpopee(a) : null;
+  const faites = new Set(mes.map((s) => s.etape_id));
   const etapes = a.etapes.map((e) => {
     let cache = false;
     if (a.genre === 'prophetie' && e.debut && e.debut > aujourdhui) cache = true;
@@ -29,11 +31,19 @@ async function vueMembre(a, userId) {
     if (a.genre === 'epopee' && e.ordre === 2 && !epopee.routeOuverte) cache = true;
     return cache
       ? { id: e.id, ordre: e.ordre, nom: a.genre === 'prophetie' ? `Étape ${e.ordre}` : e.nom, debut: e.debut, fin: e.fin, cache: true, contraintes: [] }
-      : e;
+      : { ...e, message: faites.has(e.id) ? e.message : '' };
   });
-  const { reponse, enigme, ...publique } = a;
+  const complete = (a.genre === 'prophetie' && a.etapes.length > 0 && a.etapes.every((e) => faites.has(e.id)))
+    || (a.genre === 'expedition' && mes.length >= nbColoriages(a));
+  const [boussole] = complete && a.genre === 'expedition'
+    ? await sql`SELECT genre, image, detail FROM recompenses WHERE user_id = ${userId} AND genre = 'boussole' ORDER BY cree_le DESC LIMIT 1`
+    : [];
+  const { reponse, enigme, message_fin, ...publique } = a;
   return {
     ...publique,
+    complete,
+    boussole: boussole || null,
+    message_fin: complete ? message_fin : '',
     enigme: inscription ? enigme : '',
     etapes,
     inscrit: !!inscription,
@@ -144,18 +154,21 @@ export async function POST(req) {
     enigme: String(b.enigme || '').slice(0, 1000), reponse: String(b.reponse || '').slice(0, 200),
     pv: entier(b.pv, 1, 1000000, 12000), min_contributions: entier(b.min_contributions, 1, 100, 6), min_attaques: entier(b.min_attaques, 1, 1000, 12),
     recompense: String(b.recompense || '').trim().slice(0, 80), image: String(b.image || '').trim().slice(0, 120),
+    instructions: String(b.instructions || '').slice(0, 2000),
+    message_fin: genre !== 'epopee' ? String(b.message_fin || '').slice(0, 2000) : '',
+    nb_coloriages: genre === 'expedition' ? Math.min(entier(b.nb_coloriages, 1, 52, 1), choixNbColoriages(debut, fin).at(-1)) : 1,
   };
   let id = Number(b.id) || null;
   if (id) {
     await sql`UPDATE aventures SET genre = ${genre}, titre = ${champs.titre}, description = ${champs.description}, fete = ${champs.fete},
       categorie = ${champs.categorie}, debut = ${debut}, fin = ${fin}, enigme = ${champs.enigme}, reponse = ${champs.reponse}, pv = ${champs.pv},
       min_contributions = ${champs.min_contributions}, min_attaques = ${champs.min_attaques}, xp = ${JSON.stringify(xp)}::jsonb,
-      recompense = ${champs.recompense}, image = ${champs.image} WHERE id = ${id}`;
+      recompense = ${champs.recompense}, image = ${champs.image}, message_fin = ${champs.message_fin}, nb_coloriages = ${champs.nb_coloriages}, instructions = ${champs.instructions} WHERE id = ${id}`;
   } else {
     const [a] = await sql`
-      INSERT INTO aventures (genre, titre, description, fete, categorie, debut, fin, enigme, reponse, pv, min_contributions, min_attaques, xp, recompense, image)
+      INSERT INTO aventures (genre, titre, description, fete, categorie, debut, fin, enigme, reponse, pv, min_contributions, min_attaques, xp, recompense, image, message_fin, nb_coloriages, instructions)
       VALUES (${genre}, ${champs.titre}, ${champs.description}, ${champs.fete}, ${champs.categorie}, ${debut}, ${fin}, ${champs.enigme}, ${champs.reponse},
-              ${champs.pv}, ${champs.min_contributions}, ${champs.min_attaques}, ${JSON.stringify(xp)}::jsonb, ${champs.recompense}, ${champs.image})
+              ${champs.pv}, ${champs.min_contributions}, ${champs.min_attaques}, ${JSON.stringify(xp)}::jsonb, ${champs.recompense}, ${champs.image}, ${champs.message_fin}, ${champs.nb_coloriages}, ${champs.instructions})
       RETURNING id`;
     id = a.id;
   }
@@ -163,16 +176,16 @@ export async function POST(req) {
   const gardees = [];
   for (const [i, e] of etapes.entries()) {
     const nom = String(e.nom || '').trim().slice(0, 100) || `Étape ${i + 1}`;
-    const valeurs = [nom, String(e.instructions || '').slice(0, 2000), entier(e.xp, 0, 5000, 0), date(e.debut), date(e.fin)];
+    const valeurs = [nom, String(e.instructions || '').slice(0, 2000), entier(e.xp, 0, 5000, 0), date(e.debut), date(e.fin), String(e.message || '').slice(0, 2000)];
     let etapeId = Number(e.id) || null;
     if (etapeId) {
       const maj = await sql`UPDATE aventure_etapes SET ordre = ${i + 1}, nom = ${valeurs[0]}, instructions = ${valeurs[1]}, xp = ${valeurs[2]},
-        debut = ${valeurs[3]}, fin = ${valeurs[4]} WHERE id = ${etapeId} AND aventure_id = ${id} RETURNING id`;
+        debut = ${valeurs[3]}, fin = ${valeurs[4]}, message = ${valeurs[5]} WHERE id = ${etapeId} AND aventure_id = ${id} RETURNING id`;
       if (!maj.length) etapeId = null;
     }
     if (!etapeId) {
-      const [n] = await sql`INSERT INTO aventure_etapes (aventure_id, ordre, nom, instructions, xp, debut, fin)
-        VALUES (${id}, ${i + 1}, ${valeurs[0]}, ${valeurs[1]}, ${valeurs[2]}, ${valeurs[3]}, ${valeurs[4]}) RETURNING id`;
+      const [n] = await sql`INSERT INTO aventure_etapes (aventure_id, ordre, nom, instructions, xp, debut, fin, message)
+        VALUES (${id}, ${i + 1}, ${valeurs[0]}, ${valeurs[1]}, ${valeurs[2]}, ${valeurs[3]}, ${valeurs[4]}, ${valeurs[5]}) RETURNING id`;
       etapeId = n.id;
     }
     gardees.push(etapeId);

@@ -8,7 +8,7 @@ import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { AGE_MINIMUM, CONDITIONS_UTILISATION, POLITIQUE_CONFIDENTIALITE } from '@/lib/pagesLegales';
 import Deroulant from './Deroulant';
 
-export default function Inscription({ onConnexion }) {
+export default function Inscription({ onConnexion, parrain = '' }) {
   const router = useRouter();
   const [etape, setEtape] = useState(1);
   const [f, setF] = useState({
@@ -44,8 +44,8 @@ export default function Inscription({ onConnexion }) {
     e.preventDefault();
     if (!etape2Ok) { setMessage('Il manque des informations : pseudo libre, nom, genre, pays et au moins un type de coloriage.'); return; }
     setOccupe(true); setMessage('');
-    const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
-    if (res.ok) { router.replace('/'); router.refresh(); return; }
+    const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...f, parrain }) });
+    if (res.ok) { localStorage.removeItem('kromadex-parrain'); router.replace('/'); router.refresh(); return; }
     const d = await res.json().catch(() => ({}));
     setMessage(d.error || 'Une erreur est survenue.');
     if (/courriel|mot de passe/i.test(d.error || '')) setEtape(1);
@@ -65,6 +65,7 @@ export default function Inscription({ onConnexion }) {
       <div>
         <small style={{ color: 'var(--texte-secondaire)', fontWeight: 700 }}>Étape {etape} sur 2</small>
         <h2 style={{ margin: '2px 0 0' }}>{etape === 1 ? 'Créer mon compte' : 'Mon profil'}</h2>
+        {parrain && etape === 1 && <small style={{ display: 'block', marginTop: '4px', color: 'var(--texte-secondaire)' }}>Une amie t’invite sur Kromadex : bienvenue !</small>}
       </div>
 
       {etape === 1 ? (

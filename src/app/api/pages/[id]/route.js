@@ -5,6 +5,7 @@ import { getUser } from '@/lib/auth';
 import { lirePublication, lirePalette } from '@/lib/pages';
 import { accorderXPColoriage, ajusterXPDoublePage, retirerXPColoriage } from '@/lib/xpColoriage';
 import { imageDuFormulaire, ErreurImage, reponseErreurImage, COTE } from '@/lib/images';
+import { verifierParrainage } from '@/lib/parrainage';
 
 export async function PUT(req, { params }) {
   try {
@@ -60,6 +61,7 @@ export async function PUT(req, { params }) {
     }
 
     await ajusterXPDoublePage(user.id, id).catch(() => {});
+    if (pub.publiee) await verifierParrainage(user.id).catch(() => {});
     if (changePalette) await sql`UPDATE pages SET palette_id = ${paletteId} WHERE id = ${id} AND user_id = ${user.id}`;
     if (tome) await sql`DELETE FROM user_tomes_masques WHERE user_id = ${String(user.id)} AND lower(nom) = lower(${tome})`;
     revalidatePath('/');

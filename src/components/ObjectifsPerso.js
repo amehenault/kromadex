@@ -47,7 +47,7 @@ export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque, sans
         </b>
       )}
       <small style={{ color: 'var(--texte-secondaire)' }}>
-        Fixe-toi tes propres objectifs : chacun rapporte {XP} XP une fois accompli.
+        Fixe tes propres objectifs, chacun rapporte {XP} XP une fois accompli.
       </small>
 
       {enCours.map((o) => (

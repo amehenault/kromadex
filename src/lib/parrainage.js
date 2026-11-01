@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { sql } from '@/lib/db';
 import { donnerRecompense } from '@/lib/recompensesServeur';
+import { lireReglage } from '@/lib/reglages';
 
 const LETTRES = 'abcdefghjkmnpqrstuvwxyz23456789';
 const nouveauCode = () => [...randomBytes(8)].map((o) => LETTRES[o % LETTRES.length]).join('');
@@ -21,7 +22,7 @@ export async function codeParrainage(userId) {
 }
 
 export async function lierParrain(filleuleId, code) {
-  if (!codeValide(code)) return;
+  if (!codeValide(code) || !(await lireReglage('parrainage_actif'))) return;
   await sql`UPDATE users SET parrain = p.id FROM users p
     WHERE users.id = ${filleuleId} AND users.parrain IS NULL AND p.code_parrainage = ${code} AND p.id <> users.id`;
 }

@@ -16,6 +16,7 @@ import Demandes from './demandes';
 import MotsCles from './motsCles';
 import KromadexPlus from './kromadexPlus';
 import Lancement from './lancement';
+import ReglageParrainage from './reglageParrainage';
 import Recompenses from './recompenses';
 
 const ONGLETS = [
@@ -92,7 +93,7 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'signalements' && <><ContenuSignale /><SignalementsEpreuves /></>}
       {actif === 'motscles' && <MotsCles />}
       {actif === 'plus' && <KromadexPlus />}
-      {actif === 'lancement' && <Lancement />}
+      {actif === 'lancement' && <><ReglageParrainage /><div style={{ height: 'var(--espace-3)' }} /><Lancement /></>}
       {actif === 'recompenses' && <Recompenses />}
       {actif === 'tomes' && <TomesAdmin />}
     </>

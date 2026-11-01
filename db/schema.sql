@@ -740,3 +740,9 @@ create table if not exists aventure_tests (
   cree_le timestamptz not null default now()
 );
 create index if not exists aventure_tests_aventure on aventure_tests (aventure_id, user_id);
+
+create table if not exists reglages (
+  cle text primary key,
+  valeur jsonb not null,
+  maj_le timestamptz not null default now()
+);

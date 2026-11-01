@@ -53,6 +53,7 @@ import ObjectifsPerso from '@/components/ObjectifsPerso';
 import Albums from '@/components/Albums';
 import Parrainage from '@/components/Parrainage';
 import { codeParrainage, filleules } from '@/lib/parrainage';
+import { lireReglage } from '@/lib/reglages';
 import { listerObjectifs } from '@/lib/objectifs';
 
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,8 @@ export default async function ProfilPage() {
   const { liste: quetes } = await verifierQuetes(authUser.id);
   const destin = await quetesDestin(authUser.id);
   const objectifs = await listerObjectifs(authUser.id);
-  const [codeInvitation, mesInvitees] = await Promise.all([codeParrainage(authUser.id), filleules(authUser.id)]);
+  const parrainageActif = await lireReglage('parrainage_actif');
+  const [codeInvitation, mesInvitees] = parrainageActif ? await Promise.all([codeParrainage(authUser.id), filleules(authUser.id)]) : [null, []];
 
   const profile = await getUserProfile(authUser.id);
   const nonLus = await aLire(authUser.id);
@@ -429,7 +431,7 @@ export default async function ProfilPage() {
 
       <Albums id={String(authUser.id)} moi />
 
-      <Parrainage code={codeInvitation} filleules={JSON.parse(JSON.stringify(mesInvitees))} />
+      {parrainageActif && <Parrainage code={codeInvitation} filleules={JSON.parse(JSON.stringify(mesInvitees))} />}
 
       <div className="profil-acces">
 

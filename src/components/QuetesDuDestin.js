@@ -11,7 +11,7 @@ export default function QuetesDuDestin({ quetes: initiales, titre = 'Quêtes du 
   const [quetes, setQuetes] = useState(initiales);
 
   async function abandonner(q) {
-    if (!confirm(`Abandonner la quête « ${q.tome}, page ${q.page_no} » ? Elle disparaîtra sans donner d’XP.`)) return;
+    if (!confirm(`Abandonner la quête ${q.tome}, page ${q.page_no} ? Elle disparaîtra sans donner d’XP.`)) return;
     const r = await fetch('/api/roue', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quete: q.id }) });
     if (r.ok) { setQuetes((l) => l.filter((x) => x.id !== q.id)); router.refresh(); }
   }

@@ -53,7 +53,7 @@ dans le nom du fichier.
 | Parchemin du Destin | inventaire | parchemin |
 | Coffre au trésor (épreuve mensuelle) | recompenses-activites/epreuve/mensuelles | coffre |
 | Badge du mois | recompenses-activites/epreuve/mensuelles | badge |
-| Relique complète | recompenses-activites/epreuve/sentinelles | relique (sans « fragment ») |
+| Relique complète | recompenses-activites/epreuve/sentinelles | relique (sans Fragment) |
 | Fragment de relique | recompenses-activites/epreuve/sentinelles | fragment |
 | Badge de sentinelle | recompenses-activites/epreuve/sentinelles | badge |
 | Sceaux des chef.fes | recompenses-activites/epreuve/chef | sceau + numéro (sceau7 ajoute un 7e choix) |

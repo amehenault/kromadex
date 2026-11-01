@@ -7,6 +7,9 @@ import { categoriesBingoVisibles } from '@/lib/visibilite';
 export async function participationsActivites(moi, { visibles, avant = null, suivis = false, limite = 20 }) {
   const lignes = await sql`
     SELECT x.*, p.title, p.tome, p.page_no, OCTET_LENGTH(p.image_b64) AS img_size,
+           (SELECT count(*)::int FROM page_likes l WHERE l.page_id = p.id) AS likes,
+           EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime,
+           (SELECT count(*)::int FROM page_commentaires c WHERE c.page_id = p.id) AS nb_commentaires,
            u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj
     FROM (
       SELECT 'bingo' AS genre, b.id AS activite_id, b.titre AS nom_activite, c.user_id, c.page_id, min(c.cree_le) AS date

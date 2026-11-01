@@ -22,7 +22,7 @@ function recompenses(d) {
   if (d.genre === 'groupe') {
     return `${XP_GROUPE.complete} XP chacun si l’objectif est atteint, sinon ${XP_GROUPE.participation} XP de participation${d.multiple ? ` · ${XP_GROUPE.supplementaire} XP par coloriage supplémentaire` : ''}`;
   }
-  const titre = d.titre_gagnant ? ` · titre « ${d.titre_gagnant} »` : '';
+  const titre = d.titre_gagnant ? ` · titre ${d.titre_gagnant}` : '';
   if (d.genre === 'officiel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, Coffre au trésor, badge du mois${titre}, et elle devient Cheffe des coloristes`;
   if (d.genre === 'menestrel') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP${titre}`;
   if (d.genre === 'modo') return `Participation ${xp.participation} XP · la personne gagnante : +${xp.victoire} XP, badge de l’épreuve et un fragment de relique${titre}`;
@@ -65,7 +65,7 @@ export default function CarteDefi({ defi: d, onChange, monId, onModifier }) {
     onChange();
   }
   async function supprimer() {
-    if (!confirm(`Supprimer l’épreuve « ${d.titre} » ?`)) return;
+    if (!confirm(`Supprimer l’épreuve ${d.titre} ?`)) return;
     await poster('/api/defis', { id: d.id }, 'DELETE');
     onChange();
   }

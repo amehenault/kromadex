@@ -67,7 +67,7 @@ async function verifierVictoireEpopee(a) {
     const [{ deja }] = await sql`SELECT COALESCE(sum(xp), 0)::int AS deja FROM xp_journal WHERE user_id = ${c.user_id} AND cle LIKE ${`aventure:${a.id}:%`}`;
     const reste = Math.max(0, Math.min(xp, xpDe(a, 'max', XP_EPOPEE.max) - deja));
     if (reste) await accorderXP(c.user_id, `aventure:${a.id}:victoire`, reste);
-    await donnerRecompense(c.user_id, { genre: 'blason', detail: a.recompense ? `« ${a.recompense} »` : `« ${a.titre} »`, source: `aventure:${a.id}`, image: a.image });
+    await donnerRecompense(c.user_id, { genre: 'blason', detail: a.recompense ? `${a.recompense}` : `${a.titre}`, source: `aventure:${a.id}`, image: a.image });
   }
   return true;
 }
@@ -145,7 +145,7 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
     const [{ faites }] = await sql`SELECT count(DISTINCT etape_id)::int AS faites FROM aventure_soumissions WHERE aventure_id = ${a.id} AND user_id = ${userId} AND reussie`;
     if (faites >= a.etapes.length) {
       await gagner(`aventure:${a.id}:complet`, xpDe(a, 'complet', XP_PROPHETIE.complet));
-      await donnerRecompense(userId, { genre: 'orbe', detail: `« ${a.titre} »`, source: `aventure:${a.id}`, image: a.image });
+      await donnerRecompense(userId, { genre: 'orbe', detail: `${a.titre}`, source: `aventure:${a.id}`, image: a.image });
       await donnerRecompense(userId, { genre: 'parchemin', source: `aventure:${a.id}` });
     }
   } else if (etape.ordre === 1) {

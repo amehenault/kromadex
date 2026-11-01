@@ -28,7 +28,7 @@ export async function POST(req, { params }) {
   const mot = propre((await req.json().catch(() => ({}))).mot);
   if (mot.length < 2) return NextResponse.json({ error: 'Le mot-clef doit contenir au moins 2 caractères' }, { status: 400 });
   const existant = (p.mots_cles || []).find((m) => cleMot(m) === cleMot(mot));
-  if (existant) return NextResponse.json({ error: `« ${existant} » est déjà sur ce coloriage` }, { status: 409 });
+  if (existant) return NextResponse.json({ error: `${existant} est déjà sur ce coloriage` }, { status: 409 });
   if ((p.mots_cles || []).length >= 30) return NextResponse.json({ error: '30 mots-clefs maximum par coloriage' }, { status: 400 });
   const [r] = await sql`UPDATE pages SET mots_cles = array_append(mots_cles, ${mot}) WHERE id = ${p.id} RETURNING mots_cles`;
   return NextResponse.json({ mots: r.mots_cles });

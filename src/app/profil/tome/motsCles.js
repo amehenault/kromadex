@@ -22,7 +22,7 @@ export default function MotsCles({ tomeId, possede }) {
     e.preventDefault();
     const r = await fetch('/api/mots-cles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tomeId, mot, pageNo: page }) });
     const d = await r.json().catch(() => ({}));
-    setMessage(r.ok ? `Mot-clef « ${mot.trim()} » ajouté` : d.error || 'Erreur');
+    setMessage(r.ok ? `Mot-clef ${mot.trim()} ajouté` : d.error || 'Erreur');
     if (r.ok) { setMot(''); charger(); }
   }
 
@@ -34,7 +34,7 @@ export default function MotsCles({ tomeId, possede }) {
   }
 
   async function retirer(m) {
-    if (!confirm(`Retirer le mot-clef « ${m.mot} » ?`)) return;
+    if (!confirm(`Retirer le mot-clef ${m.mot} ?`)) return;
     await fetch('/api/mots-cles', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id }) });
     charger();
   }

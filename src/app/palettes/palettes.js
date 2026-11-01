@@ -280,7 +280,7 @@ export default function Palettes() {
       {onglet === 'communaute' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {communaute.length > 0 && <BoutonFiltre />}
-          {!communaute.length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette partagée pour l’instant. Partage la tienne depuis « Mes palettes ».</p>}
+          {!communaute.length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette partagée pour l’instant. Partage la tienne depuis Mes palettes.</p>}
           {communaute.length > 0 && !filtrer(communaute).length && <p style={{ color: 'var(--texte-secondaire)', margin: 0 }}>Aucune palette {nomFiltre} partagée pour l’instant.</p>}
           {filtrer(communaute).map((p) => (
             <div key={p.id} className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: 0 }}>

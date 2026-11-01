@@ -85,7 +85,7 @@ export async function POST(req) {
   if (n >= 50) return NextResponse.json({ error: 'Tu as déjà ajouté 50 mots-clefs aujourd’hui' }, { status: 429 });
   const cle = cleMot(mot);
   const [existant] = await sql`SELECT mot FROM mots_cles WHERE tome_id = ${Number(b.tomeId)} AND page_no = ${pageNo} AND cle = ${cle}`;
-  if (existant) return NextResponse.json({ error: `« ${existant.mot} » est déjà un mot-clef de cette page` }, { status: 409 });
+  if (existant) return NextResponse.json({ error: `${existant.mot} est déjà un mot-clef de cette page` }, { status: 409 });
   const cree = await sql`INSERT INTO mots_cles (tome_id, page_no, mot, cle, user_id) VALUES (${Number(b.tomeId)}, ${pageNo}, ${mot}, ${cle}, ${profil.id})
     ON CONFLICT DO NOTHING RETURNING id`;
   if (!cree.length) return NextResponse.json({ error: 'Ce mot-clef existe déjà pour cette page' }, { status: 409 });

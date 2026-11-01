@@ -117,7 +117,7 @@ export default function Aventures() {
     setForm(null); brouillon.effacer(); charger();
   }
   async function supprimer(a) {
-    if (!confirm(`Supprimer « ${a.titre} » et toutes ses soumissions ?`)) return;
+    if (!confirm(`Supprimer ${a.titre} et toutes ses soumissions ?`)) return;
     await envoyer('/api/aventures', 'DELETE', { id: a.id });
     charger();
   }
@@ -222,7 +222,7 @@ export default function Aventures() {
       <div style={champ}>
         {epopee ? 'Blason à gagner' : 'Orbe à gagner'}
         <small style={{ ...aide, fontWeight: 400 }}>
-          Images du dossier public/recompenses-activites/{epopee ? 'epopee' : 'prophetie'}. « Par défaut » prend la première.
+          Images du dossier public/recompenses-activites/{epopee ? 'epopee' : 'prophetie'}. Par défaut prend la première.
         </small>
         <ChoixImageRecompense dossier={epopee ? 'epopee' : 'prophetie'} genre={epopee ? 'blason' : 'orbe'}
           valeur={form.image || ''} onChange={(v) => maj({ image: v })} />
@@ -283,7 +283,7 @@ export default function Aventures() {
               </label>
               <label style={champ}>Réponse de l’énigme
                 <input value={form.reponse} onChange={(e) => maj({ reponse: e.target.value })} maxLength={200} placeholder="ex. le miroir" />
-                <small style={{ ...aide, fontWeight: 400 }}>Majuscules et accents ne comptent pas. Plusieurs réponses acceptées : sépare-les par une barre verticale « | ».</small>
+                <small style={{ ...aide, fontWeight: 400 }}>Majuscules et accents ne comptent pas. Plusieurs réponses acceptées : sépare-les par une barre verticale |.</small>
               </label>
               <div style={grille}>
                 {nombre('mc', 'Contributions pour ouvrir la route', form.min_contributions, (v) => maj({ min_contributions: v }))}
@@ -309,7 +309,7 @@ export default function Aventures() {
             <>
               <label style={champ}>Nom de la récompense (facultatif)
                 <input value={form.recompense} onChange={(e) => maj({ recompense: e.target.value })} maxLength={80} placeholder="ex. Blason de Valombre" />
-                <small style={{ ...aide, fontWeight: 400 }}>Laisse vide pour « Blason » suivi du titre de l’épopée.</small>
+                <small style={{ ...aide, fontWeight: 400 }}>Laisse vide pour Blason suivi du titre de l’épopée.</small>
               </label>
               {imageRecompenseChamp}
               {messageFin('Message de bravo (facultatif)', 'Affiché avec le blason gagné quand le dragon est vaincu.')}

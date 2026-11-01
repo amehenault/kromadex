@@ -3,16 +3,18 @@ import { sql } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 import { getUserProfile } from '@/lib/user';
 import { isId } from '@/lib/pages';
+import { accesCommunaute } from '@/lib/pagesCommunaute';
 
 export async function GET(req) {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   const id = new URL(req.url).searchParams.get('page');
   if (!isId(String(id || ''))) return NextResponse.json({ commentaires: [] });
+  if (!(await accesCommunaute(id))) return NextResponse.json({ commentaires: [] });
   const commentaires = await sql`
     SELECT c.id, c.parent_id, c.texte, c.cree_le, c.user_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
            (c.user_id = ${user.id} OR p.user_id = ${user.id}) AS peut_retirer, (c.user_id = ${user.id}) AS mien
-    FROM page_commentaires c JOIN users u ON u.id = c.user_id JOIN pages p ON p.id = c.page_id AND p.publiee
+    FROM page_commentaires c JOIN users u ON u.id = c.user_id JOIN pages p ON p.id = c.page_id
     WHERE c.page_id = ${id} ORDER BY c.cree_le ASC LIMIT 500`;
   return NextResponse.json({ commentaires });
 }
@@ -24,8 +26,7 @@ export async function POST(req) {
   const t = String(texte || '').trim().slice(0, 1000);
   if (!t) return NextResponse.json({ error: 'Écris ton commentaire' }, { status: 400 });
   if (!isId(String(pageId || ''))) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
-  const [p] = await sql`SELECT 1 FROM pages WHERE id = ${pageId} AND publiee`;
-  if (!p) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
+  if (!(await accesCommunaute(pageId))) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   let parent = null;
   if (parentId) {
     const [c] = await sql`SELECT id, parent_id FROM page_commentaires WHERE id = ${Number(parentId)} AND page_id = ${pageId}`;

@@ -49,19 +49,19 @@ export default function MotsCles() {
   }
   async function garder(m) {
     const r = await envoyer('/api/mots-cles', 'PUT', { id: m.id, garder: true });
-    setMessage(r.ok ? `« ${m.mot} » est gardé, signalements effacés` : r.error);
+    setMessage(r.ok ? `${m.mot} est gardé, signalements effacés` : r.error);
     if (r.ok) { charger(); window.dispatchEvent(new Event('kromadex-lu')); }
   }
   async function supprimer(m) {
-    if (!confirm(`Supprimer le mot-clef « ${m.mot} » ?`)) return;
+    if (!confirm(`Supprimer le mot-clef ${m.mot} ?`)) return;
     await envoyer('/api/mots-cles', 'DELETE', { id: m.id });
     charger();
     window.dispatchEvent(new Event('kromadex-lu'));
   }
   async function sanctionner(m, jours) {
     const libelle = SANCTIONS.find(([j]) => j === jours)[1].toLowerCase();
-    if (!confirm(`Confirmer : ${libelle} ${m.pseudo ? `@${m.pseudo}` : 'ce membre'} pour le mot-clef « ${m.mot} » ?`)) return;
-    const r = await envoyer('/api/moderation', 'POST', { userId: m.auteur_id, motif: `Mot-clef inapproprié : « ${m.mot} » (${m.tome})`, jours });
+    if (!confirm(`Confirmer : ${libelle} ${m.pseudo ? `@${m.pseudo}` : 'ce membre'} pour le mot-clef ${m.mot} ?`)) return;
+    const r = await envoyer('/api/moderation', 'POST', { userId: m.auteur_id, motif: `Mot-clef inapproprié : ${m.mot} (${m.tome})`, jours });
     setMessage(r.ok ? 'Sanction envoyée' : r.error);
   }
 

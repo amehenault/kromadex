@@ -76,7 +76,7 @@ export default function Annonces() {
             <Icone size={20} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '2px' }} />
             <div style={{ minWidth: 0 }}>
               <small style={{ textTransform: 'uppercase', fontWeight: 700, color: 'var(--texte-secondaire)' }}>{type} · {a.titre}</small>
-              <b style={{ display: 'block' }}>Une nouvelle {type} est disponible ! Vas-tu y participer pour gagner des XP et une récompense spéciale ?</b>
+              <b style={{ display: 'block' }}>Une nouvelle aventure est disponible ! Vas-tu y participer pour gagner des XP et une récompense spéciale ?</b>
               <TempsRestant fin={a.fin_instant} style={{ display: 'flex', margin: '4px 0' }} />
               <small style={{ color: 'var(--btn)', fontWeight: 700 }}>{a.inscrit ? 'Tu participes · voir l’aventure' : 'Voir l’aventure'}</small>
             </div>

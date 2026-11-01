@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, BookOpen, Tag, X } from 'lucide-react';
+import { Search, BookOpen, Tag, X, Images } from 'lucide-react';
 
 export default function RechercheAccueil() {
   const [q, setQ] = useState('');
@@ -33,13 +33,14 @@ export default function RechercheAccueil() {
 
       {resultats && (
         <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-          {!resultats.length && <small style={{ color: 'var(--texte-secondaire)' }}>Aucun tome ni livre trouvé pour « {q.trim()} ».</small>}
+          {!resultats.length && <small style={{ color: 'var(--texte-secondaire)' }}>Aucun tome ni livre trouvé pour {q.trim()}.</small>}
           {resultats.map((t) => {
             const pages = [...new Set(t.mots.filter((m) => m.page).map((m) => m.page))];
             const mots = [...new Set(t.mots.map((m) => m.mot))];
             return (
-              <Link key={t.id} href={`/profil/tome?nom=${encodeURIComponent(t.nom)}`}
-                style={{ display: 'flex', gap: '10px', alignItems: 'center', textDecoration: 'none', color: 'inherit', minHeight: '44px' }}>
+              <div key={t.id} style={{ display: 'flex', gap: '6px', alignItems: 'center', minWidth: 0 }}>
+              <Link href={`/profil/tome?nom=${encodeURIComponent(t.nom)}`}
+                style={{ flex: 1, minWidth: 0, display: 'flex', gap: '10px', alignItems: 'center', textDecoration: 'none', color: 'inherit', minHeight: '44px' }}>
                 <span style={{ width: '42px', flex: '0 0 auto', aspectRatio: '3 / 4', borderRadius: 'var(--rayon-s)', overflow: 'hidden', background: 'var(--accent-doux)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {t.couverture ? <img src={t.couverture} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <BookOpen size={18} aria-hidden="true" />}
                 </span>
@@ -56,6 +57,11 @@ export default function RechercheAccueil() {
                   )}
                 </span>
               </Link>
+              <Link href={`/galerie?tome=${encodeURIComponent(t.nom)}`} className="btn alt" aria-label={`Voir les coloriages de la communauté pour ${t.nom}`}
+                style={{ flex: '0 0 auto', minWidth: '44px', minHeight: '44px', padding: '4px 8px', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', fontSize: '0.7rem', fontWeight: 700 }}>
+                <Images size={18} aria-hidden="true" /> Coloriages
+              </Link>
+              </div>
             );
           })}
         </div>

@@ -66,7 +66,7 @@ export default function ContenuSignale() {
             )}
             {c && SUR[s.genre] && (
               <>
-                <small style={aide}>Sur {SUR[s.genre]} « {c.title || c.titre} »</small>
+                <small style={aide}>Sur {SUR[s.genre]} {c.title || c.titre}</small>
                 <p style={{ margin: 0, padding: '6px 10px', background: 'var(--carte)', borderRadius: 'var(--rayon-m)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{c.texte}</p>
               </>
             )}

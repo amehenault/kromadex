@@ -121,7 +121,7 @@ function OutilsMissive({ m, onMaj, onSupprimee }) {
     if (r.ok) { onMaj({ epinglee_jusqu: date, epinglee: Boolean(date && date >= aujourdhui) }); setMessage(date ? 'Épinglage enregistré' : 'Missive désépinglée'); }
   }
   async function supprimer() {
-    if (!confirm(`Supprimer la missive « ${m.titre} » pour tout le monde ?`)) return;
+    if (!confirm(`Supprimer la missive ${m.titre} pour tout le monde ?`)) return;
     const r = await fetch('/api/missives', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id }) });
     if (r.ok) onSupprimee();
   }

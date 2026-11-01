@@ -29,7 +29,7 @@ export default function ReglageParrainage() {
   return (
     <div className="carte" style={colonne}>
       <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><HeartHandshake size={18} aria-hidden="true" /> Parrainage</b>
-      <p style={aide}>Affiche ou cache le bloc « Inviter une amie » et le lien d’invitation dans le profil des membres.</p>
+      <p style={aide}>Affiche ou cache le bloc Inviter une amie et le lien d’invitation dans le profil des membres.</p>
       <div role="radiogroup" aria-label="Parrainage" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
         {option(false, 'Désactivé')}
         {option(true, 'Activé')}

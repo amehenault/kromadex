@@ -66,7 +66,7 @@ export default function Bingos({ role }) {
   }
 
   async function supprimer(b) {
-    if (!confirm(`Supprimer le bingo « ${b.titre} » ?`)) return;
+    if (!confirm(`Supprimer le bingo ${b.titre} ?`)) return;
     await envoyer('/api/bingos', 'DELETE', { id: b.id });
     charger();
   }

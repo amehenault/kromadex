@@ -25,7 +25,7 @@ export default function SondagesTermines() {
 
   return (
     <Feuille titre="Sondage terminé !" onFermer={vu}>
-      <p style={{ margin: 0, overflowWrap: 'anywhere' }}>Voici le résultat final du sondage de la missive <b>« {m.titre} »</b>.</p>
+      <p style={{ margin: 0, overflowWrap: 'anywhere' }}>Voici le résultat final du sondage de la missive <b>{m.titre}</b>.</p>
       <Sondage key={m.id} missiveId={m.id} sondage={m.sondage} lectureSeule />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
         <button type="button" className="btn alt" onClick={vu} style={{ minHeight: '44px' }}>Fermer</button>

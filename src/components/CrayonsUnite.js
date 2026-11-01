@@ -39,7 +39,7 @@ export default function CrayonsUnite() {
       <h3 style={{ margin: 0 }}>Crayons à l’unité</h3>
       <small style={{ color: 'var(--texte-secondaire)' }}>
         Un crayon qui n’est dans aucun coffret ? Écris sa marque et son code, puis choisis la couleur de sa pastille.
-        Tu le retrouveras dans « Crayons à l’unité » en choisissant un code couleur.
+        Tu le retrouveras dans Crayons à l’unité en choisissant un code couleur.
       </small>
 
       <form onSubmit={ajouter} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '8px', alignItems: 'end' }}>

@@ -14,7 +14,7 @@ export async function raisonsXP(userId, cles) {
     nums('destin').length ? sql`SELECT id, tome, page_no FROM roue_tirages WHERE id = ANY(${nums('destin')}) AND user_id = ${userId}` : [],
   ]);
   const nom = (liste, id, champ = 'titre') => liste.find((x) => String(x.id) === String(id))?.[champ];
-  const guillemets = (t) => (t ? ` « ${t} »` : '');
+  const guillemets = (t) => (t ? ` ${t}` : '');
 
   return Object.fromEntries(cles.map((cle) => {
     const [sorte, id] = cle.split(':');

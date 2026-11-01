@@ -57,7 +57,7 @@ Audit fait sur la base réelle (`information_schema`), table par table. La suppr
   - cases de bingo validées par elle ;
   - avertissements donnés par elle (Sentinelle) ;
   - clé anti-doublon des paiements (`paiements_traites`, sans `user_id`).
-- **Textes libres** : son pseudo ou son nom dans les sceaux gagnés par d'autres (« de @pseudo ») est remplacé par « de la cheffe » (ajouté). Les messages écrits **par d'autres** qui la nomment (par exemple dans un commentaire) ne sont pas modifiés.
+- **Textes libres** : son pseudo ou son nom dans les sceaux gagnés par d'autres (De @pseudo) est remplacé par De la cheffe (ajouté). Les messages écrits **par d'autres** qui la nomment (par exemple dans un commentaire) ne sont pas modifiés.
 - **Hors de la base** :
   - la restauration Neon (fenêtre de 6 h) ;
   - les copies en cache des navigateurs (1 jour au plus, voir la section 5) ;
@@ -72,7 +72,7 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 - Image non publiée et non soumise : seule la propriétaire la voit. Le visiteur, l'autre membre et la Sentinelle reçoivent un 404. La fiche (titre, codes) est refusée aussi.
 - Après le retrait d'une publication : l'image redevient privée, sauf si elle reste liée à une activité. C'est voulu : les votes et les verdicts en ont besoin.
 - Image soumise à une activité : visible par les membres connectés qui connaissent son adresse. **Ajouté** : l'avertissement affiché avant chaque soumission le dit maintenant.
-- « Publier dans la communauté » **n'est pas précoché** pour une nouvelle fiche (vérifié).
+- Publier dans la communauté **n'est pas précoché** pour une nouvelle fiche (vérifié).
 - Les courriels ne sont jamais envoyés aux Sentinelles ni aux membres (tests 4 et 9).
 
 ## 5. Images et caches
@@ -85,9 +85,9 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 
 ## 6. Information des membres (textes changés)
 
-- **Suppression du compte** : la promesse « tous tes échanges seront effacés pour toujours » est remplacée par ce qui est effacé, ce qui reste sans le nom de la personne, et la limite des copies.
+- **Suppression du compte** : la promesse Tous tes échanges seront effacés pour toujours est remplacée par ce qui est effacé, ce qui reste sans le nom de la personne, et la limite des copies.
 - **Inscription** :
-  - « Kromadex est réservé aux personnes de 14 ans et plus », avec des liens vers les conditions et la politique ;
+  - Kromadex est réservé aux personnes de 14 ans et plus, avec des liens vers les conditions et la politique ;
   - pseudo, nom, photo et biographie visibles par les autres membres connectés, jamais le courriel.
 - **Soumission à une activité** : le coloriage peut être vu par les membres connectés.
 - **Notifications** : on les désactive par appareil dans Paramètres (vérifié), et elles sont maintenant aussi désactivées à la déconnexion.
@@ -166,16 +166,16 @@ Testé (tests 1, 2 et 9b) avec un visiteur non connecté, la propriétaire, un a
 
 ## 12. Passages de la politique à corriger
 
-- **Section 2, Kromadex+** : remplacer « dont le contenu reçu, sauf le secret d'authentification principal retiré par l'application » par « une liste limitée de champs (événement, identifiant de l'événement, mode, montant, formule, identifiant du compte) et le courriel utilisé pour payer ; le reste de l'avis (nom, adresse, renseignements de carte) n'est pas conservé ».
-- **Section 2, Communauté / modération** : ajouter « signalements de contenu (raison et précisions, liés au compte qui signale) ».
-- **Section 8** : remplacer « avec une durée autorisée pouvant atteindre un an » par « pendant un jour au plus ».
+- **Section 2, Kromadex+** : remplacer Dont le contenu reçu, sauf le secret d'authentification principal retiré par l'application par Une liste limitée de champs (événement, identifiant de l'événement, mode, montant, formule, identifiant du compte) et le courriel utilisé pour payer ; le reste de l'avis (nom, adresse, renseignements de carte) n'est pas conservé.
+- **Section 2, Communauté / modération** : ajouter Signalements de contenu (raison et précisions, liés au compte qui signale).
+- **Section 8** : remplacer Avec une durée autorisée pouvant atteindre un an par Pendant un jour au plus.
 - **Section 9** :
-  - Supprimer « La suppression automatique selon les délais de 30 jours n'est pas encore en place » **une fois `NETTOYAGE_AUTO=actif` mis en production**.
-  - Remplacer « nettoyées lors des connexions lorsqu'elles ont plus de deux jours » par « supprimées chaque jour lorsqu'elles ont plus de deux jours ».
-  - Ajouter : « sessions expirées supprimées chaque jour ; liens de réinitialisation supprimés un jour après leur expiration ; appareils connus supprimés après un an ».
-  - Pièces comptables : voir le paragraphe « option A » donné à Amé le 22 octobre 2026 (ThriveCart et Stripe).
-- **Section 10** : remplacer « des journaux de paiement » par « la clé technique d'un paiement déjà traité, sans lien avec ton compte ». Préciser que les contenus partagés gardés sans ton nom sont les épreuves, missives et mots-clefs créés pour la communauté.
-- **Section 6, notifications** : ajouter « les notifications sont aussi désactivées sur l'appareil lors de la déconnexion ».
-- **Section 2, Communauté** (ajout du 22 octobre 2026) : ajouter « publications de la communauté (questions et coloriages en cours : texte, photos envoyées depuis ton appareil ou reprises d'un de tes coloriages), avec leurs J'aime et leurs commentaires ».
-- **Section 4, Visibilité** : ajouter « tes questions et tes coloriages en cours, avec leurs photos, sont visibles par les membres connectés jusqu'à ce que tu les retires ».
+  - Supprimer La suppression automatique selon les délais de 30 jours n'est pas encore en place **une fois `NETTOYAGE_AUTO=actif` mis en production**.
+  - Remplacer Nettoyées lors des connexions lorsqu'elles ont plus de deux jours par Supprimées chaque jour lorsqu'elles ont plus de deux jours.
+  - Ajouter : Sessions expirées supprimées chaque jour ; liens de réinitialisation supprimés un jour après leur expiration ; appareils connus supprimés après un an.
+  - Pièces comptables : voir le paragraphe Option A donné à Amé le 22 octobre 2026 (ThriveCart et Stripe).
+- **Section 10** : remplacer Des journaux de paiement par La clé technique d'un paiement déjà traité, sans lien avec ton compte. Préciser que les contenus partagés gardés sans ton nom sont les épreuves, missives et mots-clefs créés pour la communauté.
+- **Section 6, notifications** : ajouter Les notifications sont aussi désactivées sur l'appareil lors de la déconnexion.
+- **Section 2, Communauté** (ajout du 22 octobre 2026) : ajouter Publications de la communauté (questions et coloriages en cours : texte, photos envoyées depuis ton appareil ou reprises d'un de tes coloriages), avec leurs J'aime et leurs commentaires.
+- **Section 4, Visibilité** : ajouter Tes questions et tes coloriages en cours, avec leurs photos, sont visibles par les membres connectés jusqu'à ce que tu les retires.
 - **Section 6, Fournisseurs** : les administratrices et Sentinelles ne voient plus les courriels des membres dans l'Espace de l'Invocatrice (ils restent seulement dans la base, pour la connexion et les courriels de service).

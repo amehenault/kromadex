@@ -63,7 +63,7 @@ export default function Missives({ role, monId }) {
   }
 
   async function supprimer(m) {
-    if (!confirm(`Supprimer la missive « ${m.titre} » ?`)) return;
+    if (!confirm(`Supprimer la missive ${m.titre} ?`)) return;
     await envoyer('/api/missives', 'DELETE', { id: m.id });
     charger();
   }

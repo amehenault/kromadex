@@ -47,7 +47,7 @@ export default function Defis({ monId, integre }) {
     window.dispatchEvent(new Event('kromadex-lu'));
   }
 
-  const ONGLETS = [['mois', 'Épreuves', Trophy], ['bingos', 'Bingos', Grid3x3], ['groupe', 'De groupe', Users], ['aventures', 'Aventures', Compass], ['combats', 'Combats', Swords], ['roue', 'Roue du Destin', Dices, '/roue']];
+  const ONGLETS = [['mois', 'Épreuves', Trophy], ['groupe', 'Épreuves de groupe', Users], ['bingos', 'Bingos', Grid3x3], ['aventures', 'Aventures', Compass], ['combats', 'Combats', Swords], ['roue', 'Roue du Destin', Dices, '/roue']];
   const pastilleDe = (cle) => (SORTE_DE[cle] && nonVues[SORTE_DE[cle]] > 0);
   const totalNonVues = nonVues.epreuves + nonVues.bingos + nonVues.aventures;
   const duMois = (donnees?.defis || []).filter((d) => role === 'tous' || ROLE_DU_GENRE[d.genre] === role);

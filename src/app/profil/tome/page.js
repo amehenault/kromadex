@@ -7,6 +7,7 @@ import { pagesFaites } from '@/lib/mesTomes';
 import { pagesDuNumero, debutDoublePage } from '@/lib/doublePage';
 import NbPagesCozy from './nbPagesCozy';
 import MotsCles from './motsCles';
+import ActionsTome from './actionsTome';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,7 @@ export default async function TomePage({ searchParams }) {
   ]);
 
   const titre = cat?.nom || nom;
+  const [avis] = cat ? await sql`SELECT round(avg(note)::numeric, 1)::float AS moyenne, count(*)::int AS nb FROM avis_tomes WHERE tome_id = ${cat.id}` : [];
   const possede = cat ? (await sql`SELECT 1 FROM user_tomes WHERE user_id = ${uid} AND tome_id = ${cat.id}`).length > 0 : false;
   const couverture = couv
     ? `/api/tomes/cover?name=${encodeURIComponent(nom)}&format=img&v=${new Date(couv.updated_at).getTime()}`
@@ -69,6 +71,7 @@ export default async function TomePage({ searchParams }) {
           )}
           {cat && cat.type === 'cozy' && !cat.nb_pages && <NbPagesCozy tomeId={cat.id} />}
           {cat && <MotsCles tomeId={cat.id} possede={possede} />}
+          <ActionsTome tome={{ id: cat?.id || null, nom: titre, type: cat?.type || null }} moyenne={avis?.moyenne ?? null} nbAvis={avis?.nb || 0} />
         </div>
       </div>
 

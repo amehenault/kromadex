@@ -43,7 +43,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
   if (!modeAccepte(d)) {
-    await noter(`ignoré : mode « ${mode || 'inconnu'} » (ce site accepte « ${modeAttendu()} »)`);
+    await noter(`ignoré : mode ${mode || 'inconnu'} (ce site accepte ${modeAttendu()})`);
     return NextResponse.json({ ok: true, ignore: 'mode' });
   }
 

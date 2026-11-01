@@ -45,7 +45,7 @@ export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque }) {
         <Target size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Mes objectifs
       </b>
       <small style={{ color: 'var(--texte-secondaire)' }}>
-        Fixe-toi tes propres objectifs : chacun rapporte {XP} XP une fois accompli. Avec un tome et une page, l’objectif se coche tout seul quand tu ajoutes ce coloriage.
+        Fixe-toi tes propres objectifs : chacun rapporte {XP} XP une fois accompli.
       </small>
 
       {enCours.map((o) => (
@@ -63,7 +63,7 @@ export default function ObjectifsPerso({ objectifs: initiaux, bibliotheque }) {
                   <Check size={14} aria-hidden="true" /> C’est accompli
                 </button>
               )}
-              <button type="button" disabled={occupe} onClick={() => confirm(`Retirer l’objectif « ${libelle(o)} » ?`) && appeler('DELETE', { id: o.id })} style={{ ...lien, color: 'var(--texte-secondaire)' }}>
+              <button type="button" disabled={occupe} onClick={() => confirm(`Retirer l’objectif ${libelle(o)} ?`) && appeler('DELETE', { id: o.id })} style={{ ...lien, color: 'var(--texte-secondaire)' }}>
                 <Trash2 size={14} aria-hidden="true" /> Retirer
               </button>
             </div>

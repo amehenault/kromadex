@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy, Eye, RotateCcw, Footprints } from 'lucide-react';
+import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy, Eye, RotateCcw, Footprints, BookOpen, ChevronUp, ChevronDown, ScrollText } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
@@ -88,22 +88,78 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
   );
 }
 
+// Couleur de chaque sorte de contrainte, avec la couleur du texte posé dessus.
+const COULEURS_CONTRAINTE = {
+  obligatoire: ['var(--couleur-principale)', '#1d1d1d'],
+  secondaire: ['var(--btn)', '#ffffff'],
+  facile: ['var(--btn)', '#ffffff'],
+  intermediaire: ['#f2b233', '#1d1d1d'],
+  difficile: ['var(--danger)', '#ffffff'],
+};
+
+export function Puce({ children, fond = 'var(--accent-doux)', texte = 'var(--texte-principal)' }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 9px', borderRadius: '999px', background: fond, color: texte, fontSize: '0.75rem', fontWeight: 700, lineHeight: 1.3 }}>
+      {children}
+    </span>
+  );
+}
+
 function Contraintes({ etape }) {
   if (!etape?.contraintes?.length) return null;
   return (
-    <>
-    <b>Contraintes :</b>
-    <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {etape.contraintes.map((c) => (
-        <li key={c.id} style={{ overflowWrap: 'anywhere' }}>
-          {c.texte}{' '}
-          <small style={{ fontWeight: 700, color: 'var(--texte-secondaire)' }}>
-            ({DEGATS[c.genre] ? `${DEGATS[c.genre].label.toLowerCase()}, ${c.degats} points` : ETIQUETTE[c.genre].toLowerCase()}{c.genre === 'secondaire' && c.xp ? `, +${c.xp} XP` : ''})
-          </small>
-        </li>
-      ))}
-    </ul>
-    </>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <b>Contraintes :</b>
+      {etape.contraintes.map((c, i) => {
+        const [couleur, sur] = COULEURS_CONTRAINTE[c.genre] || COULEURS_CONTRAINTE.obligatoire;
+        return (
+          <div key={c.id} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px 12px', borderRadius: 'var(--rayon-m)', background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderLeft: `6px solid ${couleur}`, minWidth: 0 }}>
+            <span aria-hidden="true" style={{ flex: '0 0 auto', width: 28, height: 28, borderRadius: '50%', background: couleur, color: sur, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>{i + 1}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontWeight: 600, overflowWrap: 'anywhere' }}>{c.texte}</span>
+              <span style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
+                <Puce fond={couleur} texte={sur}>{DEGATS[c.genre] ? DEGATS[c.genre].label : ETIQUETTE[c.genre]}</Puce>
+                {DEGATS[c.genre] && <Puce><Swords size={12} aria-hidden="true" /> {c.degats} points de dégâts</Puce>}
+                {c.genre === 'secondaire' && c.xp ? <Puce>+{c.xp} XP</Puce> : null}
+              </span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// En-tête d'une étape : rond numéroté (ou crochet / cadenas), titre, dates et statut.
+function EnTeteEtape({ numero, titre, dates, statut }) {
+  const faite = statut === 'faite', verrou = statut === 'verrou';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+      <span aria-hidden="true" style={{
+        flex: '0 0 auto', width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.05rem',
+        background: faite ? 'var(--btn)' : verrou ? 'var(--carte)' : 'var(--couleur-principale)', color: faite ? '#ffffff' : verrou ? 'var(--texte-secondaire)' : '#1d1d1d',
+      }}>
+        {faite ? <Check size={20} /> : verrou ? <Lock size={18} /> : numero}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <b style={{ display: 'block', overflowWrap: 'anywhere' }}>{titre}</b>
+        {dates && <small style={{ color: 'var(--texte-secondaire)' }}>{dates}</small>}
+      </span>
+      <Puce fond={faite ? 'var(--btn)' : verrou ? 'var(--carte)' : 'var(--accent-doux)'} texte={faite ? '#ffffff' : 'var(--texte-principal)'}>
+        {faite ? 'Accomplie' : verrou ? 'À venir' : 'À faire'}
+      </Puce>
+    </div>
+  );
+}
+
+function Progression({ faites, total, libelle = 'Étapes accomplies' }) {
+  return (
+    <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: 'var(--espace-3)' }}>
+      <span style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontWeight: 700, fontSize: '0.9rem' }}>
+        <span>{libelle}</span><span>{faites} / {total}</span>
+      </span>
+      <div className="profil-xp-barre" style={{ margin: 0 }}><div className="profil-xp-remplissage" style={{ width: `${total ? Math.round((faites / total) * 100) : 0}%` }} /></div>
+    </div>
   );
 }
 
@@ -115,6 +171,7 @@ export default function Aventure({ id, test: modeTest = false }) {
   const [message, setMessage] = useState('');
   const [reponse, setReponse] = useState('');
   const [enigmeTest, setEnigmeTest] = useState(false);
+  const [histoireOuverte, setHistoireOuverte] = useState(null);
 
   async function charger() {
     const r = await fetch(`/api/aventures?id=${id}${modeTest ? '&test=1' : ''}`);
@@ -154,6 +211,7 @@ export default function Aventure({ id, test: modeTest = false }) {
   const fondExpedition = a.genre !== 'epopee' ? imageAventure : null;
   const fete = FETES.find((f) => f.valeur === a.fete);
   const terminee = !a.test && a.fin < a.aujourdhui;
+  const histoireVisible = histoireOuverte ?? !a.inscrit;
   const mes = (etapeId) => a.mesSoumissions.filter((s) => s.etape_id === etapeId);
   const bouton = { minHeight: '48px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' };
   const carteEtape = { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' };
@@ -219,22 +277,32 @@ export default function Aventure({ id, test: modeTest = false }) {
         {!terminee && <TempsRestant fin={a.fin_instant} />}
         {(a.description || a.instructions) && (
           <div style={fondExpedition ? { backgroundImage: `url(${fondExpedition})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 'var(--rayon-m)', padding: '14px' } : undefined}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', ...(fondExpedition ? { background: 'rgba(255,255,255,0.88)', color: '#1d1d1d', borderRadius: 'var(--rayon-m)', padding: '12px' } : {}) }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...(fondExpedition ? { background: 'rgba(255,255,255,0.88)', color: '#1d1d1d', borderRadius: 'var(--rayon-m)', padding: '12px' } : {}) }}>
               {a.description && (
-                <div>
-                  <b style={{ display: 'block', marginBottom: '4px' }}>Histoire</b>
-                  <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.description}</p>
+                <div style={{ padding: '10px 12px', borderRadius: 'var(--rayon-m)', background: fondExpedition ? 'transparent' : 'var(--accent-doux)' }}>
+                  <button type="button" onClick={() => setHistoireOuverte(!histoireVisible)} aria-expanded={histoireVisible}
+                    style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', minHeight: '44px', width: '100%', fontWeight: 800 }}>
+                    <BookOpen size={18} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Histoire
+                    <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>{histoireVisible ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}</span>
+                  </button>
+                  {histoireVisible
+                    ? <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.55 }}>{a.description}</p>
+                    : <small style={{ color: 'var(--texte-secondaire)' }}>Touche pour relire l’histoire.</small>}
                 </div>
               )}
               {a.instructions && (
-                <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><b>Instructions globales :</b> {a.instructions}</p>
+                <div style={{ padding: '10px 12px', borderRadius: 'var(--rayon-m)', border: '2px solid var(--btn)' }}>
+                  <b style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}><ScrollText size={18} aria-hidden="true" style={{ color: 'var(--btn)' }} /> Instructions globales</b>
+                  <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.55 }}>{a.instructions}</p>
+                </div>
               )}
             </div>
           </div>
         )}
-        <small style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', color: 'var(--texte-secondaire)' }}>
-          <Gift size={16} aria-hidden="true" style={{ flex: '0 0 auto', color: 'var(--btn)', marginTop: '1px' }} /> <span>{gains}</span>
-        </small>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+          <Gift size={18} aria-hidden="true" style={{ color: 'var(--btn)' }} />
+          {gains.split(' · ').map((g) => <Puce key={g}>{g}</Puce>)}
+        </div>
         {a.parchemins > 0 && (
           <small style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
             <img src="/inventaire/kromadex-parchemin.svg" alt="" aria-hidden="true" style={{ width: 20, height: 20 }} /> {a.parchemins} Parchemin{a.parchemins > 1 ? 's' : ''} du Destin disponible{a.parchemins > 1 ? 's' : ''}
@@ -263,19 +331,17 @@ export default function Aventure({ id, test: modeTest = false }) {
         </div>
       )}
 
-      {a.genre === 'expedition' && a.etapes.length > 1 && (
-        <small style={{ display: 'block', fontWeight: 700, marginBottom: 'var(--espace-3)' }}>
-          Étapes accomplies : {a.etapes.filter((e) => mes(e.id).length).length} / {a.etapes.length}
-        </small>
+      {a.genre === 'expedition' && a.inscrit && a.etapes.length > 1 && (
+        <Progression faites={a.etapes.filter((e) => mes(e.id).length).length} total={a.etapes.length} />
       )}
       {a.genre === 'expedition' && a.etapes.map((e, i) => {
         const plusieurs = a.etapes.length > 1;
         const faite = mes(e.id).length > 0;
         const titre = plusieurs ? (/^Étape \d+$/.test(e.nom) || !e.nom ? `Étape ${i + 1}` : `Étape ${i + 1} : ${e.nom}`) : (e.nom === 'Expédition' ? 'Coloriage demandé' : e.nom);
         return (
-          <div key={e.id} className="carte" style={carteEtape}>
-            <b>{titre}</b>
-            {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{e.instructions}</p>}
+          <div key={e.id} className="carte" style={{ ...carteEtape, gap: '12px' }}>
+            <EnTeteEtape numero={i + 1} titre={titre} statut={faite ? 'faite' : 'a_faire'} />
+            {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.55 }}>{e.instructions}</p>}
             <Contraintes etape={e} />
             {faite ? (
               <>
@@ -314,8 +380,8 @@ export default function Aventure({ id, test: modeTest = false }) {
             </div>
           ) : (
             <>
-              <div className="carte" style={carteEtape}>
-                <b>{a.etapes[0]?.nom || 'Phase 1'}</b>
+              <div className="carte" style={{ ...carteEtape, gap: '12px' }}>
+                <EnTeteEtape numero={1} titre={`Phase 1 : ${a.etapes[0]?.nom || 'Ouvrir la route'}`} statut={mes(a.etapes[0]?.id).length ? 'faite' : 'a_faire'} />
                 <small style={{ fontWeight: 700 }}>
                   Route : {Math.min(a.epopee.contributions, a.min_contributions)} / {a.min_contributions} contributions de personnes différentes
                   {a.epopee.routeOuverte ? ' · la route est ouverte !' : ''}
@@ -341,8 +407,8 @@ export default function Aventure({ id, test: modeTest = false }) {
                 )}
               </div>
 
-              <div className="carte" style={carteEtape}>
-                <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{a.epopee.routeOuverte ? <Swords size={18} aria-hidden="true" /> : <Lock size={18} aria-hidden="true" />} {a.etapes[1]?.nom || 'Phase 2'}</b>
+              <div className="carte" style={{ ...carteEtape, gap: '12px' }}>
+                <EnTeteEtape numero={2} titre={`Phase 2 : ${a.etapes[1]?.nom || 'Affronter le dragon'}`} statut={!a.epopee.routeOuverte ? 'verrou' : a.epopee.vaincu ? 'faite' : 'a_faire'} />
                 {!a.epopee.routeOuverte ? (
                   <small style={{ color: 'var(--texte-secondaire)' }}>Le dragon reste inaccessible tant que la route n’est pas ouverte. Ses points faibles seront alors révélés à toute la communauté.</small>
                 ) : (
@@ -360,7 +426,7 @@ export default function Aventure({ id, test: modeTest = false }) {
                             <img src={imageRecompense({ genre: 'blason', image: a.image })} alt="Blason" style={{ width: 120, height: 120, objectFit: 'contain' }} />
                           )}
                           <b style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--btn)' }}><Trophy size={18} aria-hidden="true" /> Le dragon est vaincu, bravo à toute la communauté !</b>
-                          {a.complete && <small style={{ fontWeight: 700 }}>Tu gagnes : {a.recompense || `Blason « ${a.titre} »`}</small>}
+                          {a.complete && <small style={{ fontWeight: 700 }}>Tu gagnes : {a.recompense || `Blason ${a.titre}`}</small>}
                           {a.message_fin && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.message_fin}</p>}
                         </div>
                       )
@@ -388,20 +454,23 @@ export default function Aventure({ id, test: modeTest = false }) {
           {imageRecompense({ genre: 'orbe', image: a.image }) && (
             <img src={imageRecompense({ genre: 'orbe', image: a.image })} alt="Orbe magique" style={{ width: 120, height: 120, objectFit: 'contain' }} />
           )}
-          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Trophy size={18} aria-hidden="true" /> Prophétie accomplie : tu gagnes l’Orbe magique « {a.titre} »</b>
+          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Trophy size={18} aria-hidden="true" /> Prophétie accomplie : tu gagnes l’Orbe magique {a.titre}</b>
           {a.message_fin && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.message_fin}</p>}
         </div>
       )}
 
-      {a.genre === 'prophetie' && a.etapes.map((e) => (
-        <div key={e.id} className="carte" style={{ ...carteEtape, opacity: e.cache ? 0.75 : 1 }}>
-          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{e.cache && <Lock size={16} aria-hidden="true" />} {e.nom}</b>
+      {a.genre === 'prophetie' && a.inscrit && (
+        <Progression faites={a.etapes.filter((e) => mes(e.id).length).length} total={a.etapes.length} />
+      )}
+      {a.genre === 'prophetie' && a.etapes.map((e, i) => (
+        <div key={e.id} className="carte" style={{ ...carteEtape, gap: '12px', opacity: e.cache ? 0.75 : 1 }}>
+          <EnTeteEtape numero={i + 1} titre={e.nom} statut={e.cache ? 'verrou' : mes(e.id).length ? 'faite' : 'a_faire'}
+            dates={e.cache ? `Révélée le ${jour(e.debut)}` : e.debut && e.fin ? `Du ${jour(e.debut)} au ${jour(e.fin)}` : ''} />
           {e.cache ? (
             <small style={{ color: 'var(--texte-secondaire)' }}>Cette étape sera révélée le {jour(e.debut)}.</small>
           ) : (
             <>
-              {e.debut && e.fin && <small style={{ color: 'var(--texte-secondaire)' }}>Du {jour(e.debut)} au {jour(e.fin)}</small>}
-              {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{e.instructions}</p>}
+              {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.55 }}>{e.instructions}</p>}
               <Contraintes etape={e} />
               {mes(e.id).length
                 ? (

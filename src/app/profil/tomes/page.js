@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Search, Plus, Check, Heart } from 'lucide-react';
+import { ArrowLeft, BookOpen, Search, Plus, Check, Heart, Images } from 'lucide-react';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import OngletsCollections from '@/components/OngletsCollections';
 import AvisPagesCozy from '@/components/AvisPagesCozy';
@@ -185,7 +185,7 @@ export default function CatalogueTomesPage() {
 
       {tomesAffiches.length === 0 && (
         <p style={{ color: 'var(--texte-secondaire)' }}>
-          {mesTomes ? 'Aucun tome dans ta bibliothèque ici. Touche « Je l\'ai » sous une couverture pour l\'ajouter.' : 'Aucun tome trouvé.'}
+          {mesTomes ? 'Aucun tome dans ta bibliothèque ici. Touche Je l\'ai sous une couverture pour l\'ajouter.' : 'Aucun tome trouvé.'}
         </p>
       )}
 
@@ -225,6 +225,10 @@ export default function CatalogueTomesPage() {
                 <Cristaux note={t.moyenne} taille={12} />
                 <small style={{ color: 'var(--texte-secondaire)', fontSize: '0.72rem' }}>{t.nb_avis ? `${t.moyenne} (${t.nb_avis})` : 'Donner mon avis'}</small>
               </button>
+              <Link href={`/galerie?tome=${encodeURIComponent(t.nom)}`}
+                style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 700, color: 'var(--texte-principal)' }}>
+                <Images size={14} aria-hidden="true" /> Voir les coloriages
+              </Link>
               {possede ? (
                 <small style={{ color: 'var(--btn)', fontSize: '0.72rem', fontWeight: 'bold' }}>
                   {progression[t.id]?.coloriees || 0} / {t.nb_pages || '?'} pages

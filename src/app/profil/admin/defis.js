@@ -51,7 +51,7 @@ export default function Defis({ role, monId }) {
   }
 
   async function supprimer(d) {
-    if (!confirm(`Supprimer l'épreuve « ${d.titre} » ?`)) return;
+    if (!confirm(`Supprimer l'épreuve ${d.titre} ?`)) return;
     await envoyer('/api/defis', 'DELETE', { id: d.id });
     charger();
   }

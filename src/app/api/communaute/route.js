@@ -6,6 +6,7 @@ import { mesTypesVisibles } from '@/lib/visibilite';
 import { ajouterCodes } from '@/lib/palettesServeur';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { verifierParrainage } from '@/lib/parrainage';
+import { accesCommunaute } from '@/lib/pagesCommunaute';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,8 @@ export async function GET(req) {
   if (vue === 'fiche') {
     const id = q.get('id');
     if (!isId(id || '')) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
+    const acces = await accesCommunaute(id);
+    if (!acces) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
     const [fiche] = await sql`
       SELECT p.id, p.title, p.tome, p.page_no, p.type_coloriage, p.publiee_le, OCTET_LENGTH(p.image_b64) AS img_size,
            u.id AS auteur_id, u.pseudo, u.name, u.role, (u.avatar_b64 IS NOT NULL) AS a_avatar, u.avatar_maj,
@@ -59,13 +62,14 @@ export async function GET(req) {
            EXISTS (SELECT 1 FROM page_likes l WHERE l.page_id = p.id AND l.user_id = ${moi}) AS aime, p.codes,
            (p.user_id = ${moi}) AS mienne
       FROM pages p JOIN users u ON u.id = p.user_id
-      WHERE p.publiee AND p.id = ${id}`;
+      WHERE p.id = ${id}`;
     if (!fiche) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
+    if (!acces.publiee && !fiche.mienne) fiche.codes = [];
     const [pal] = await sql`
       SELECT pa.id, pa.nom, pa.couleurs, pa.packs,
              COALESCE((SELECT json_agg(trim(concat_ws(' ', mb.brand_name, mb.sub_type, mb.range_name))) FROM marker_brands mb WHERE mb.id = ANY(pa.packs)), '[]') AS noms_packs
       FROM pages p JOIN palettes pa ON pa.id = p.palette_id WHERE p.id = ${id}`;
-    fiche.palette = pal ? (await ajouterCodes([pal]))[0] : null;
+    fiche.palette = pal && (acces.publiee || fiche.mienne) ? (await ajouterCodes([pal]))[0] : null;
     if (String(fiche.auteur_id) !== String(moi)) {
       await sql`INSERT INTO vues (user_id, genre, cible) VALUES (${moi}, 'fiche', ${id}) ON CONFLICT DO NOTHING`;
     }
@@ -113,8 +117,7 @@ export async function POST(req) {
     return NextResponse.json({ ok: true });
   }
   if (!isId(id || '')) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
-  const [p] = await sql`SELECT 1 FROM pages WHERE id = ${id} AND publiee`;
-  if (!p) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
+  if (!(await accesCommunaute(id))) return NextResponse.json({ error: 'Introuvable' }, { status: 404 });
   const supprime = await sql`DELETE FROM page_likes WHERE user_id = ${user.id} AND page_id = ${id} RETURNING 1`;
   if (!supprime.length) await sql`INSERT INTO page_likes (user_id, page_id) VALUES (${user.id}, ${id}) ON CONFLICT DO NOTHING`;
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM page_likes WHERE page_id = ${id}`;

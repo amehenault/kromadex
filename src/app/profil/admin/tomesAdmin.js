@@ -20,7 +20,7 @@ export default function TomesAdmin() {
     if (!r.ok) { setMessage(r.error); return; }
     setTomes((l) => l.map((x) => (x.id === t.id ? { ...x, nb_pages: r.nb_pages, nb_pages_manuel: true } : x)));
     setValeurs((v) => { const c = { ...v }; delete c[t.id]; return c; });
-    setMessage(`« ${t.nom} » : ${r.nb_pages} pages enregistrées.`);
+    setMessage(`${t.nom} : ${r.nb_pages} pages enregistrées.`);
   }
 
   if (!tomes) return <p>Chargement…</p>;

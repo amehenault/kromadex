@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award, BookOpen } from 'lucide-react';
+import { Users, Tag, Trophy, Mail, Grid3x3, Compass, ShieldAlert, Inbox, Tags, ClipboardCheck, Flag, Gift, Rocket, Award, BookOpen, Settings } from 'lucide-react';
 import Membres from './membres';
 import Titres from './titres';
 import Defis from './defis';
@@ -21,6 +21,7 @@ import Recompenses from './recompenses';
 
 const ONGLETS = [
   { cle: 'demandes', label: 'Demandes', icone: Inbox, roles: ['admin'] },
+  { cle: 'reglages', label: 'Réglages', icone: Settings, roles: ['admin'] },
   { cle: 'signalements', label: 'Contenu signalé', icone: Flag, roles: ['admin', 'modo'] },
   { cle: 'moderation', label: 'Modération', icone: ShieldAlert, roles: ['admin', 'modo'] },
   { cle: 'motscles', label: 'Mots-clefs', icone: Tags, roles: ['admin', 'modo'] },
@@ -93,7 +94,8 @@ export default function EspaceAdmin({ role, monId }) {
       {actif === 'signalements' && <><ContenuSignale /><SignalementsEpreuves /></>}
       {actif === 'motscles' && <MotsCles />}
       {actif === 'plus' && <KromadexPlus />}
-      {actif === 'lancement' && <><ReglageParrainage /><div style={{ height: 'var(--espace-3)' }} /><Lancement /></>}
+      {actif === 'lancement' && <Lancement />}
+      {actif === 'reglages' && <ReglageParrainage />}
       {actif === 'recompenses' && <Recompenses />}
       {actif === 'tomes' && <TomesAdmin />}
     </>

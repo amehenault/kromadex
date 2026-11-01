@@ -35,7 +35,7 @@ async function cloturerEpreuve(d) {
   if (!fige.length || !gagnant) return;
 
   const xp = XP_EPREUVES[d.genre].victoire;
-  const nom = `« ${d.titre} »`;
+  const nom = `${d.titre}`;
   if (d.genre === 'officiel') {
     await recompenserVictoire(gagnant, { cleXP: `victoire:${source}`, xp, genre: 'coffre', detail: `de ${nom}`, source });
     await donnerRecompense(gagnant, { genre: 'badge_epreuve', detail: nom, source, image: d.image });

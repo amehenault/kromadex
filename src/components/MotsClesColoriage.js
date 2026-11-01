@@ -49,23 +49,23 @@ export default function MotsClesColoriage({ pageId, tome: tomeCatalogue, tomeNom
     e.preventDefault();
     const m = mot.trim().replace(/\s+/g, ' ').slice(0, 40);
     const existant = mots.find((x) => cleMot(x.mot) === cleMot(m));
-    if (existant) { setMessage(`« ${existant.mot} » est déjà un mot-clef de ce coloriage`); return; }
+    if (existant) { setMessage(`${existant.mot} est déjà un mot-clef de ce coloriage`); return; }
     if (attente) {
       onAttente([...enAttente, m].slice(0, 30));
-      setMessage(`Mot-clef « ${m} » ajouté : il sera enregistré avec le coloriage`); setMot('');
+      setMessage(`Mot-clef ${m} ajouté : il sera enregistré avec le coloriage`); setMot('');
       return;
     }
     const r = partage
       ? await fetch('/api/mots-cles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tomeId: tome.id, mot: m, pageNo: page }) })
       : await fetch(`/api/pages/${pageId}/mots-cles`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mot: m }) });
     const d = await r.json().catch(() => ({}));
-    setMessage(r.ok ? `Mot-clef « ${m} » ajouté` : d.error || 'Erreur, réessaie.');
+    setMessage(r.ok ? `Mot-clef ${m} ajouté` : d.error || 'Erreur, réessaie.');
     if (r.ok) setMot('');
     charger();
   }
 
   async function retirer(m) {
-    if (!confirm(`Retirer le mot-clef « ${m.mot} » ?`)) return;
+    if (!confirm(`Retirer le mot-clef ${m.mot} ?`)) return;
     if (m.enAttente) { onAttente(enAttente.filter((x) => x !== m.mot)); return; }
     if (m.id) await fetch('/api/mots-cles', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id }) });
     else await fetch(`/api/pages/${pageId}/mots-cles`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mot: m.mot }) });

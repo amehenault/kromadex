@@ -6,6 +6,7 @@ import FicheDetail from './ficheDetail';
 import { CartePublication, PublicationDetail, aimerPublication } from './publications';
 import Pseudo from '@/components/Pseudo';
 import { mentionActivite } from '@/lib/activitesNoms';
+import { MessageCircle } from 'lucide-react';
 
 const quand = (d) => new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long' });
 
@@ -28,7 +29,8 @@ export default function FilActualites({ vue = 'fil' }) {
   }
   useEffect(() => { charger(true); }, [suivis]);
 
-  const maj = (sorte) => (id, champs) => setFil((l) => l.map((x) => (x.sorte === sorte && x.id === id ? { ...x, ...champs } : x)));
+  const estPage = (s) => s === 'coloriage' || s === 'participation';
+  const maj = (sorte) => (id, champs) => setFil((l) => l.map((x) => ((estPage(sorte) ? estPage(x.sorte) : x.sorte === sorte) && x.id === id ? { ...x, ...champs } : x)));
   async function aimerColoriage(f) {
     maj('coloriage')(f.id, { aime: !f.aime, likes: f.likes + (f.aime ? -1 : 1) });
     const r = await poster('/api/communaute', { id: f.id });
@@ -48,10 +50,10 @@ export default function FilActualites({ vue = 'fil' }) {
         {fil.map((x) => (x.sorte === 'publication'
           ? <CartePublication key={`p${x.id}`} p={x} onOuvrir={setPublication} onLike={(p) => aimerPublication(p, maj('publication'))} />
           : x.sorte === 'participation' ? (
-            <div key={x.cle}
-              style={{ background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
+            <div key={x.cle} role="button" tabIndex={0} onClick={() => setFiche(x.id)} onKeyDown={(e) => e.key === 'Enter' && setFiche(x.id)}
+              style={{ cursor: 'pointer', background: 'var(--fond-carte)', border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <Link href={`/membre/${x.auteur_id}`} aria-label="Voir le profil"><Avatar x={x} taille={28} /></Link>
+                <Link href={`/membre/${x.auteur_id}`} onClick={(e) => e.stopPropagation()} aria-label="Voir le profil"><Avatar x={x} taille={28} /></Link>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <small style={{ display: 'block' }}><Pseudo x={x} /></small>
                   <small style={{ color: 'var(--texte-secondaire)' }}>Participation à une activité · {quand(x.date)}</small>
@@ -64,6 +66,13 @@ export default function FilActualites({ vue = 'fil' }) {
                 </div>
               ) : null}
               {(x.title || x.tome) && <small style={{ overflowWrap: 'anywhere' }}><b>{x.title}</b>{x.tome ? `${x.title ? ' · ' : ''}${x.tome}` : ''}{x.page_no ? `, p. ${x.page_no}` : ''}</small>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <BoutonJaime aime={x.aime} likes={x.likes} onClick={() => aimerColoriage(x)} petit />
+                <button type="button" onClick={(e) => { e.stopPropagation(); setFiche(x.id); }} aria-label="Voir et écrire des commentaires"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--texte-secondaire)', fontWeight: 700, minHeight: '44px', fontSize: '0.8rem', padding: '4px' }}>
+                  <MessageCircle size={16} aria-hidden="true" /> {x.nb_commentaires || 0}
+                </button>
+              </div>
             </div>
           ) : (
             <div key={`c${x.id}`} role="button" tabIndex={0} onClick={() => setFiche(x.id)} onKeyDown={(e) => e.key === 'Enter' && setFiche(x.id)}

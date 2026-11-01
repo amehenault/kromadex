@@ -39,7 +39,7 @@ export default function Albums({ id, moi, titre }) {
         <FolderHeart size={20} aria-hidden="true" style={{ color: 'var(--btn)' }} /> {titre || (moi ? 'Mes albums' : 'Albums')}
       </b>
       {moi && !albums.length && (
-        <small style={{ color: 'var(--texte-secondaire)' }}>Regroupe tes coloriages en collections, par exemple « Halloween 2026 » ou « Mes Stitch ». Les autres voient seulement tes coloriages publiés.</small>
+        <small style={{ color: 'var(--texte-secondaire)' }}>Regroupe tes coloriages en collections, par exemple Halloween 2026 ou Mes Stitch.</small>
       )}
       {albums.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
@@ -97,7 +97,7 @@ export default function Albums({ id, moi, titre }) {
                 <button type="button" className="btn alt" style={{ ...bouton, flex: 1 }} onClick={() => { const nom = prompt('Nouveau nom de l’album', album.nom); if (nom?.trim()) appeler('POST', { action: 'renommer', albumId: album.id, nom }); }}>
                   <Pencil size={16} aria-hidden="true" /> Renommer
                 </button>
-                <button type="button" className="btn alt danger" style={{ ...bouton, flex: 1 }} onClick={async () => { if (confirm(`Supprimer l’album « ${album.nom} » ? Tes coloriages ne sont pas supprimés.`) && await appeler('DELETE', { albumId: album.id })) setOuvert(null); }}>
+                <button type="button" className="btn alt danger" style={{ ...bouton, flex: 1 }} onClick={async () => { if (confirm(`Supprimer l’album ${album.nom} ? Tes coloriages ne sont pas supprimés.`) && await appeler('DELETE', { albumId: album.id })) setOuvert(null); }}>
                   <Trash2 size={16} aria-hidden="true" /> Supprimer
                 </button>
               </div>
@@ -107,7 +107,7 @@ export default function Albums({ id, moi, titre }) {
         </Feuille>
       )}
       {album && choix && (
-        <ChoixColoriage titre={`Ajouter à « ${album.nom} »`} avertissement={false} exclure={album.pages.map((p) => p.id)}
+        <ChoixColoriage titre={`Ajouter à ${album.nom}`} avertissement={false} exclure={album.pages.map((p) => p.id)}
           onChoisir={async (f) => { await appeler('POST', { action: 'ajouter', albumId: album.id, pageId: f.id }); setChoix(false); }}
           onFermer={() => setChoix(false)} />
       )}

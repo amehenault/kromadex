@@ -77,7 +77,7 @@ export default function Fil() {
         <p style={{ color: 'var(--texte-secondaire)', textAlign: 'center' }}>
           {type === 'suivis'
             ? "Les membres que tu suis n'ont rien publié pour l'instant. Touche le nom d'un membre pour voir son profil et le suivre."
-            : 'Aucun coloriage publié pour l\'instant. Coche « Publier dans la communauté » dans une de tes fiches pour partager le tien !'}
+            : 'Aucun coloriage publié pour l\'instant. Coche Publier dans la communauté dans une de tes fiches pour partager le tien !'}
         </p>
       )}
       {!fin && fiches.length > 0 && (

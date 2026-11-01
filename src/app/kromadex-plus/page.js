@@ -78,7 +78,7 @@ export default async function KromadexPlus() {
             </a>
             <small style={{ color: 'var(--texte-secondaire)' }}>
               Prix en dollars canadiens, taxes en sus pour le Canada. Hors Canada, ta banque convertit le montant dans ta devise.
-              Tu choisis la formule sur la page de paiement. Sans engagement : annule à tout moment depuis « Gérer l’abonnement ».
+              Tu choisis la formule sur la page de paiement. Sans engagement : annule à tout moment depuis Gérer l’abonnement.
               Utilise de préférence le même courriel que ton compte Kromadex.
               {' '}Avant de t’abonner, lis les <a href={CONDITIONS_UTILISATION} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>conditions d’utilisation</a>.
             </small>

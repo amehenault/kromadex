@@ -11,7 +11,10 @@ import {
   X,
   BookOpen,
   Camera,
+  Gem,
+  Images,
 } from 'lucide-react';
+import AvisTome from '@/components/AvisTome';
 
 export default function MesTomes({ tomes }) {
   const router = useRouter();
@@ -20,6 +23,7 @@ export default function MesTomes({ tomes }) {
   const [edition, setEdition] = useState(null);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [avis, setAvis] = useState(null);
 
   const lien = (t) => `/profil/tome?nom=${encodeURIComponent(t.nom)}`;
 
@@ -291,6 +295,8 @@ export default function MesTomes({ tomes }) {
         })}
       </div>
 
+      {avis && <AvisTome tome={avis} onFermer={() => setAvis(null)} />}
+
       {menu && (
         <div data-feuille style={feuille} onClick={() => setMenu(null)}>
           <div
@@ -298,6 +304,19 @@ export default function MesTomes({ tomes }) {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={titrePanneau}>{menu.nom}</h3>
+
+            {menu.catalogueId && (
+              <button type="button" className="btn alt" style={ligneMenu}
+                onClick={() => { setAvis({ id: menu.catalogueId, nom: menu.nom, type: menu.type }); setMenu(null); }}>
+                <Gem size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+                <span>Donner mon avis (cristaux)</span>
+              </button>
+            )}
+
+            <Link href={`/galerie?tome=${encodeURIComponent(menu.nom)}`} className="btn alt" style={ligneMenu}>
+              <Images size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
+              <span>Voir les coloriages de la communauté</span>
+            </Link>
 
             {menu.perso && (
               <button

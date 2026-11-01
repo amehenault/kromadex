@@ -234,7 +234,7 @@ export default function Combats({ inviter, integre }) {
       )}
       {choix && (
         <ChoixColoriage type={choix.combat.categorie} onChoisir={choisir} onFermer={() => setChoix(null)} erreur={erreur}
-          aide={`Coloriage de type ${nomType(choix.combat.categorie)}, sur le thème « ${choix.combat.theme} ».`} />
+          aide={`Coloriage de type ${nomType(choix.combat.categorie)}, sur le thème ${choix.combat.theme}.`} />
       )}
     </div>
   );

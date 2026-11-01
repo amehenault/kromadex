@@ -60,7 +60,7 @@ async function avancerRonde(t) {
     await accorderXP(gagnant, `victoire:tournoi:${t.id}`, XP_TOURNOI.victoire);
     const genre = GENRES_TOURNOI.find((g) => g.valeur === t.genre);
     await donnerRecompense(gagnant, {
-      genre: 'insigne', detail: `${genre ? genre.label.toLowerCase() : ''} « ${t.titre} »`.trim(),
+      genre: 'insigne', detail: `${genre ? genre.label.toLowerCase() : ''} ${t.titre}`.trim(),
       source: `tournoi:${t.id}`, image: `insigne-${t.genre}.png`, xp: XP_TOURNOI.victoire, victoire: true,
     });
     return;

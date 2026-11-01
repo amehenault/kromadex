@@ -139,7 +139,8 @@ export default function Aventure({ id }) {
   if (!a) return <p style={{ padding: 'var(--espace-3)' }}>Chargement…</p>;
 
   const Icone = ICONES[a.genre];
-  const fondExpedition = a.genre === 'expedition' && a.illustration ? `/api/aventures/illustration?id=${a.id}&v=${a.illustration}` : null;
+  const imageAventure = a.illustration ? `/api/aventures/illustration?id=${a.id}&v=${a.illustration}` : null;
+  const fondExpedition = a.genre !== 'epopee' ? imageAventure : null;
   const fete = FETES.find((f) => f.valeur === a.fete);
   const terminee = a.fin < a.aujourdhui;
   const mes = (etapeId) => a.mesSoumissions.filter((s) => s.etape_id === etapeId);
@@ -312,11 +313,23 @@ export default function Aventure({ id }) {
                   <small style={{ color: 'var(--texte-secondaire)' }}>Le dragon reste inaccessible tant que la route n’est pas ouverte. Ses points faibles seront alors révélés à toute la communauté.</small>
                 ) : (
                   <>
+                    {imageAventure && (
+                      <img src={imageAventure} alt="Le dragon" loading="lazy" style={{ width: '100%', maxHeight: '260px', objectFit: 'contain', borderRadius: 'var(--rayon-m)' }} />
+                    )}
                     <small style={{ fontWeight: 700 }}>Résistance du dragon : {a.epopee.pvRestants} / {a.pv}</small>
                     <div className="profil-xp-barre" style={{ margin: 0 }}><div className="profil-xp-remplissage" style={{ width: `${Math.round((a.epopee.pvRestants / a.pv) * 100)}%`, background: 'var(--danger)' }} /></div>
                     <small style={{ color: 'var(--texte-secondaire)' }}>Attaques : {a.epopee.attaques} / {a.min_attaques} minimum. Pour vaincre le dragon, il faut les deux avant la fin de l’épopée.</small>
                     {a.epopee.vaincu
-                      ? <b style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--btn)' }}><Trophy size={18} aria-hidden="true" /> Le dragon est vaincu, bravo à toute la communauté !</b>
+                      ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
+                          {a.complete && imageRecompense({ genre: 'blason', image: a.image }) && (
+                            <img src={imageRecompense({ genre: 'blason', image: a.image })} alt="Blason" style={{ width: 120, height: 120, objectFit: 'contain' }} />
+                          )}
+                          <b style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--btn)' }}><Trophy size={18} aria-hidden="true" /> Le dragon est vaincu, bravo à toute la communauté !</b>
+                          {a.complete && <small style={{ fontWeight: 700 }}>Tu gagnes : {a.recompense || `Blason « ${a.titre} »`}</small>}
+                          {a.message_fin && <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{a.message_fin}</p>}
+                        </div>
+                      )
                       : (
                         <>
                           {a.etapes[1]?.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{a.etapes[1].instructions}</p>}
@@ -353,10 +366,6 @@ export default function Aventure({ id }) {
             <small style={{ color: 'var(--texte-secondaire)' }}>Cette étape sera révélée le {jour(e.debut)}.</small>
           ) : (
             <>
-              {a.illustration && (
-                <img src={`/api/aventures/illustration?id=${a.id}&v=${a.illustration}`} alt="Le dragon de la prophétie" loading="lazy"
-                  style={{ width: '100%', maxHeight: '260px', objectFit: 'contain', borderRadius: 'var(--rayon-m)' }} />
-              )}
               {e.debut && e.fin && <small style={{ color: 'var(--texte-secondaire)' }}>Du {jour(e.debut)} au {jour(e.fin)}</small>}
               {e.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{e.instructions}</p>}
               <Contraintes etape={e} />

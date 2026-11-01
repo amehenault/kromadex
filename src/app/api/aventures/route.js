@@ -34,7 +34,8 @@ async function vueMembre(a, userId) {
       : { ...e, message: faites.has(e.id) ? e.message : '' };
   });
   const complete = (a.genre === 'prophetie' && a.etapes.length > 0 && a.etapes.every((e) => faites.has(e.id)))
-    || (a.genre === 'expedition' && mes.length >= nbColoriages(a));
+    || (a.genre === 'expedition' && mes.length >= nbColoriages(a))
+    || (a.genre === 'epopee' && !!a.victoire_le && mes.length > 0);
   const [boussole] = complete && a.genre === 'expedition'
     ? await sql`SELECT genre, image, detail FROM recompenses WHERE user_id = ${userId} AND genre = 'boussole' ORDER BY cree_le DESC LIMIT 1`
     : [];
@@ -155,7 +156,7 @@ export async function POST(req) {
     pv: entier(b.pv, 1, 1000000, 12000), min_contributions: entier(b.min_contributions, 1, 100, 6), min_attaques: entier(b.min_attaques, 1, 1000, 12),
     recompense: String(b.recompense || '').trim().slice(0, 80), image: String(b.image || '').trim().slice(0, 120),
     instructions: String(b.instructions || '').slice(0, 2000),
-    message_fin: genre !== 'epopee' ? String(b.message_fin || '').slice(0, 2000) : '',
+    message_fin: String(b.message_fin || '').slice(0, 2000),
     nb_coloriages: genre === 'expedition' ? etapes.length : 1,
   };
   if (genre === 'expedition' && etapes.length > choixNbColoriages(debut, fin).at(-1)) {

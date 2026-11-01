@@ -35,7 +35,7 @@ function modele(genre) {
     const debut = iso(annee + (m <= new Date().getMonth() + 1 ? 1 : 0), m, 1);
     return {
       genre, titre: '', description: '', categorie: 'tous', debut, fin: plus(debut, 13), enigme: '', reponse: '', pv: 12000, min_contributions: 6, min_attaques: 12,
-      xp: { ...XP_EPOPEE }, recompense: 'Blason de ', image: '',
+      xp: { ...XP_EPOPEE }, recompense: '', image: '', message_fin: '',
       etapes: [
         { nom: 'Ouvrir la route vers le dragon', instructions: '', xp: 0, contraintes: [contrainte('obligatoire')] },
         { nom: 'Affronter le dragon', instructions: '', xp: 0, contraintes: [contrainte('facile'), contrainte('intermediaire'), contrainte('difficile')] },
@@ -103,12 +103,12 @@ export default function Aventures() {
     const r = await envoyer('/api/aventures', 'POST', { ...form, action: 'enregistrer' });
     if (!r.ok) { setMessage(r.error); return; }
     let erreurImage = '';
-    if (form.genre !== 'epopee' && illustration.fichier) {
+    if (illustration.fichier) {
       const fd = new FormData();
       fd.append('id', String(r.id)); fd.append('image', illustration.fichier, 'illustration.jpg');
       const rep = await fetch('/api/aventures/illustration', { method: 'POST', body: fd });
       if (!rep.ok) erreurImage = (await rep.json().catch(() => ({}))).error || 'L’image n’a pas pu être enregistrée.';
-    } else if (form.genre !== 'epopee' && illustration.retirer) {
+    } else if (illustration.retirer) {
       await envoyer('/api/aventures/illustration', 'DELETE', { id: r.id });
     }
     setMessage(erreurImage ? `Aventure enregistrée, mais : ${erreurImage}` : 'Aventure enregistrée');
@@ -129,9 +129,107 @@ export default function Aventures() {
 
   if (form) {
     const nom = NOMS_AVENTURES[form.genre];
-    return (
-      <form onSubmit={enregistrer} className="carte" style={colonne}>
-        <b>{form.id ? `Modifier : ${form.titre}` : `Nouvelle ${nom.singulier.toLowerCase()}`}</b>
+    const epopee = form.genre === 'epopee';
+    const grille = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' };
+    const section = (titre, enfants) => (
+      <fieldset style={{ border: '1px solid var(--bordure-carte)', borderRadius: 'var(--rayon-m)', padding: '10px 12px', margin: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <legend style={{ fontWeight: 800, padding: '0 6px', color: 'var(--btn)' }}>{titre}</legend>
+        {enfants}
+      </fieldset>
+    );
+    const titreEtape = (i) => (epopee ? null : form.genre === 'expedition' && form.etapes.length === 1 ? 'Coloriage demandé' : `Étape ${i + 1}`);
+    const blocEtape = (e, i) => (
+      <div key={i} style={epopee ? { display: 'flex', flexDirection: 'column', gap: '8px' } : { ...ligneCarte, gap: '8px' }}>
+        {!epopee && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+            <b>{titreEtape(i)}</b>
+            {form.genre === 'prophetie' && (
+              <span style={{ display: 'flex', gap: '4px' }}>
+                <button type="button" className="btn alt" aria-label="Monter" style={{ minWidth: 44, minHeight: 44 }} onClick={() => deplacer(i, -1)}><ChevronUp size={16} aria-hidden="true" /></button>
+                <button type="button" className="btn alt" aria-label="Descendre" style={{ minWidth: 44, minHeight: 44 }} onClick={() => deplacer(i, 1)}><ChevronDown size={16} aria-hidden="true" /></button>
+                {form.etapes.length > 1 && <button type="button" className="btn alt danger" aria-label="Retirer l’étape" style={{ minWidth: 44, minHeight: 44 }} onClick={() => setForm({ ...form, etapes: form.etapes.filter((_, j) => j !== i) })}><Trash2 size={16} aria-hidden="true" /></button>}
+              </span>
+            )}
+          </div>
+        )}
+        <label style={champ}>{epopee ? 'Nom de la phase' : 'Nom'}<input value={e.nom} onChange={(x) => majEtape(i, { nom: x.target.value })} maxLength={100} /></label>
+        <label style={champ}>{epopee ? 'Instructions de la phase' : 'Instructions'}
+          <textarea rows={3} value={e.instructions} onChange={(x) => majEtape(i, { instructions: x.target.value })} maxLength={2000} />
+        </label>
+        {form.genre === 'prophetie' && (
+          <label style={champ}>Message après l’étape (facultatif)
+            <textarea rows={2} value={e.message || ''} onChange={(x) => majEtape(i, { message: x.target.value })} maxLength={2000} />
+            <small style={{ ...aide, fontWeight: 400 }}>Affiché une fois que la personne a soumis son coloriage pour cette étape.</small>
+          </label>
+        )}
+        {!epopee && nombre(`xp${i}`, form.genre === 'expedition' && form.etapes.length === 1 ? 'XP de l’expédition réussie' : 'XP de l’étape', e.xp, (v) => majEtape(i, { xp: v }))}
+        {form.genre === 'prophetie' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <label style={champ}>Révélée le<input type="date" value={e.debut || ''} onChange={(x) => majEtape(i, { debut: x.target.value })} style={dateStyle} /></label>
+            <label style={champ}>Date limite<input type="date" value={e.fin || ''} min={e.debut} onChange={(x) => majEtape(i, { fin: x.target.value })} style={dateStyle} /></label>
+          </div>
+        )}
+        <b style={{ fontSize: '0.9rem' }}>{epopee && i === 1 ? 'Points faibles du dragon' : 'Contraintes'}</b>
+        {e.contraintes.map((c, k) => (
+          <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '8px', borderLeft: '3px solid var(--bordure-carte)' }}>
+            <label style={champ}>{epopee && i === 1 ? `Point faible ${k + 1}` : `Contrainte ${k + 1}`}
+              <input value={c.texte} onChange={(x) => majContrainte(i, k, { texte: x.target.value })} maxLength={300} placeholder="ex. Utiliser au moins 3 tons de rose" />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '6px', alignItems: 'end' }}>
+              {GENRES_CONTRAINTE[genreContraintes(i)].length > 1 && (
+                <label style={champ}>Type
+                  <Deroulant titre="Type de contrainte" value={c.genre} onChange={(v) => majContrainte(i, k, { genre: v, ...(DEGATS[v] ? { degats: Math.round((DEGATS[v].min + DEGATS[v].max) / 2) } : {}) })}
+                    options={GENRES_CONTRAINTE[genreContraintes(i)].map(([v, l]) => ({ valeur: v, label: l }))} />
+                </label>
+              )}
+              {epopee && i === 1 && nombre(`d${i}${k}`, 'Dégâts', c.degats, (v) => majContrainte(i, k, { degats: v }))}
+              {form.genre === 'expedition' && c.genre === 'secondaire' && nombre(`c${i}${k}`, 'XP en plus', c.xp, (v) => majContrainte(i, k, { xp: v }))}
+              <button type="button" className="btn alt danger" style={{ ...petitBtn, justifyContent: 'center' }} onClick={() => majEtape(i, { contraintes: e.contraintes.filter((_, j) => j !== k) })}>
+                <Trash2 size={16} aria-hidden="true" /> Retirer
+              </button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className="btn alt" style={petitBtn}
+          onClick={() => majEtape(i, { contraintes: [...e.contraintes, contrainte(epopee && i === 1 ? 'facile' : form.genre === 'expedition' ? 'secondaire' : 'obligatoire')] })}>
+          <Plus size={14} aria-hidden="true" /> {epopee && i === 1 ? 'Ajouter un point faible' : 'Ajouter une contrainte'}
+        </button>
+      </div>
+    );
+    const champImage = (titre, explication) => (
+      <div style={champ}>
+        {titre}
+        <small style={{ ...aide, fontWeight: 400 }}>{explication}</small>
+        {illustration.url && !illustration.retirer && (
+          <img src={illustration.url} alt="" style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: 'var(--rayon-m)', background: 'var(--fond-carte)' }} />
+        )}
+        <div style={actions}>
+          <label className="btn alt" style={{ ...petitBtn, cursor: 'pointer' }}>
+            <ImagePlus size={16} aria-hidden="true" /> {illustration.url && !illustration.retirer ? 'Changer l’image' : 'Choisir une image'}
+            <input type="file" accept="image/*" onChange={choisirIllustration} style={{ display: 'none' }} />
+          </label>
+          {illustration.url && !illustration.retirer && (
+            <button type="button" className="btn alt danger" style={petitBtn} onClick={() => setIllustration({ url: '', fichier: null, retirer: true })}>
+              <Trash2 size={16} aria-hidden="true" /> Retirer
+            </button>
+          )}
+        </div>
+      </div>
+    );
+    const imageRecompenseChamp = (
+      <label style={champ}>Image de la récompense (facultatif)
+        <input value={form.image} onChange={(e) => maj({ image: e.target.value })} maxLength={120} placeholder={epopee ? 'ex. blason-valombre.png' : 'ex. orbe-trois-lunes.png'} />
+        <small style={{ ...aide, fontWeight: 400 }}>Laisse vide pour utiliser l’image par défaut. Sinon, nom d’un fichier dans public/recompenses-activites.</small>
+      </label>
+    );
+    const messageFin = (label, explication) => (
+      <label style={champ}>{label}
+        <textarea rows={3} value={form.message_fin || ''} onChange={(e) => maj({ message_fin: e.target.value })} maxLength={2000} />
+        <small style={{ ...aide, fontWeight: 400 }}>{explication}</small>
+      </label>
+    );
+    const generalites = (
+      <>
         {form.genre === 'expedition' && (
           <label style={champ}>Fête
             <Deroulant titre="Fête" value={form.fete} onChange={(v) => choisirFete(v)}
@@ -139,7 +237,7 @@ export default function Aventures() {
           </label>
         )}
         <label style={champ}>Titre
-          <input value={form.titre} onChange={(e) => maj({ titre: e.target.value })} maxLength={100} placeholder={form.genre === 'epopee' ? 'ex. Le royaume de Valombre' : 'ex. Le peuple des cœurs'} required />
+          <input value={form.titre} onChange={(e) => maj({ titre: e.target.value })} maxLength={100} placeholder={epopee ? 'ex. Le royaume de Valombre' : 'ex. Le peuple des cœurs'} required />
         </label>
         <label style={champ}>Histoire
           <textarea rows={4} value={form.description} onChange={(e) => maj({ description: e.target.value })} maxLength={2000} />
@@ -155,32 +253,71 @@ export default function Aventures() {
           <label style={champ}>Début<input type="date" value={form.debut} onChange={(e) => maj({ debut: e.target.value })} style={dateStyle} /></label>
           <label style={champ}>Fin<input type="date" value={form.fin} min={form.debut} onChange={(e) => maj({ fin: e.target.value })} style={dateStyle} /></label>
         </div>
+      </>
+    );
+    const boutons = (
+      <>
+        <div style={actions}>
+          <button type="submit" className="btn" style={{ flex: 1, minHeight: '48px' }} disabled={!form.titre.trim()}>Enregistrer</button>
+          <button type="button" className="btn alt" onClick={() => setForm(null)}>Annuler</button>
+        </div>
+        {message && <small style={{ color: 'var(--danger)' }}>{message}</small>}
+      </>
+    );
 
-        {form.genre === 'epopee' && (
-          <>
-            <label style={champ}>Énigme de la phase 1
-              <textarea rows={3} value={form.enigme} onChange={(e) => maj({ enigme: e.target.value })} maxLength={1000} />
-            </label>
-            <label style={champ}>Réponse de l’énigme
-              <input value={form.reponse} onChange={(e) => maj({ reponse: e.target.value })} maxLength={200} placeholder="ex. le miroir" />
-              <small style={{ ...aide, fontWeight: 400 }}>Majuscules et accents ne comptent pas. Plusieurs réponses acceptées : sépare-les par une barre verticale « | ».</small>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-              {nombre('pv', 'Résistance du dragon', form.pv, (v) => maj({ pv: v }))}
-              {nombre('mc', 'Contributions pour ouvrir la route', form.min_contributions, (v) => maj({ min_contributions: v }))}
-              {nombre('ma', 'Attaques minimum', form.min_attaques, (v) => maj({ min_attaques: v }))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-              {nombre('x1', 'XP contribution phase 1', form.xp.phase1, (v) => maj({ xp: { ...form.xp, phase1: v } }))}
-              {nombre('x2', 'XP 1re attaque', form.xp.attaque, (v) => maj({ xp: { ...form.xp, attaque: v } }))}
-              {nombre('x3', 'XP dragon vaincu', form.xp.victoire, (v) => maj({ xp: { ...form.xp, victoire: v } }))}
-              {nombre('x4', 'XP maximum par personne', form.xp.max, (v) => maj({ xp: { ...form.xp, max: v } }))}
-            </div>
-            <label style={champ}>Nom de la récompense
-              <input value={form.recompense} onChange={(e) => maj({ recompense: e.target.value })} maxLength={80} placeholder="ex. Blason de Valombre" />
-            </label>
-          </>
-        )}
+    if (epopee) {
+      return (
+        <form onSubmit={enregistrer} className="carte" style={{ ...colonne, gap: '14px' }}>
+          <b>{form.id ? `Modifier : ${form.titre}` : 'Nouvelle épopée'}</b>
+          {section('1. L’épopée', generalites)}
+          {section('2. Phase 1 : ouvrir la route vers le dragon', (
+            <>
+              <label style={champ}>Énigme
+                <textarea rows={3} value={form.enigme} onChange={(e) => maj({ enigme: e.target.value })} maxLength={1000} />
+              </label>
+              <label style={champ}>Réponse de l’énigme
+                <input value={form.reponse} onChange={(e) => maj({ reponse: e.target.value })} maxLength={200} placeholder="ex. le miroir" />
+                <small style={{ ...aide, fontWeight: 400 }}>Majuscules et accents ne comptent pas. Plusieurs réponses acceptées : sépare-les par une barre verticale « | ».</small>
+              </label>
+              <div style={grille}>
+                {nombre('mc', 'Contributions pour ouvrir la route', form.min_contributions, (v) => maj({ min_contributions: v }))}
+                {nombre('x1', 'XP par contribution', form.xp.phase1, (v) => maj({ xp: { ...form.xp, phase1: v } }))}
+              </div>
+              {form.etapes[0] && blocEtape(form.etapes[0], 0)}
+            </>
+          ))}
+          {section('3. Phase 2 : affronter le dragon', (
+            <>
+              <div style={grille}>
+                {nombre('pv', 'Résistance du dragon', form.pv, (v) => maj({ pv: v }))}
+                {nombre('ma', 'Attaques minimum', form.min_attaques, (v) => maj({ min_attaques: v }))}
+                {nombre('x2', 'XP 1re attaque', form.xp.attaque, (v) => maj({ xp: { ...form.xp, attaque: v } }))}
+                {nombre('x3', 'XP dragon vaincu', form.xp.victoire, (v) => maj({ xp: { ...form.xp, victoire: v } }))}
+                {nombre('x4', 'XP maximum par personne', form.xp.max, (v) => maj({ xp: { ...form.xp, max: v } }))}
+              </div>
+              {champImage('Image du dragon (facultatif)', 'Elle s’affiche dans la phase 2, quand la route est ouverte.')}
+              {form.etapes[1] && blocEtape(form.etapes[1], 1)}
+            </>
+          ))}
+          {section('4. Fin de l’épopée : bravo !', (
+            <>
+              <label style={champ}>Nom de la récompense (facultatif)
+                <input value={form.recompense} onChange={(e) => maj({ recompense: e.target.value })} maxLength={80} placeholder="ex. Blason de Valombre" />
+                <small style={{ ...aide, fontWeight: 400 }}>Laisse vide pour « Blason » suivi du titre de l’épopée.</small>
+              </label>
+              {imageRecompenseChamp}
+              {messageFin('Message de bravo (facultatif)', 'Affiché avec le blason gagné quand le dragon est vaincu.')}
+            </>
+          ))}
+          {boutons}
+        </form>
+      );
+    }
+
+    return (
+      <form onSubmit={enregistrer} className="carte" style={colonne}>
+        <b>{form.id ? `Modifier : ${form.titre}` : `Nouvelle ${nom.singulier.toLowerCase()}`}</b>
+        {generalites}
         {form.genre === 'prophetie' && nombre('xc', 'XP quand toutes les étapes sont accomplies', form.xp.complet, (v) => maj({ xp: { ...form.xp, complet: v } }))}
         {form.genre === 'expedition' && (
           <label style={champ}>Nombre de coloriages à soumettre
@@ -196,99 +333,9 @@ export default function Aventures() {
             )}
           </label>
         )}
-        {form.genre !== 'epopee' && (
-          <div style={champ}>
-            {form.genre === 'prophetie' ? 'Image du dragon (facultatif)' : 'Image de fond (facultatif)'}
-            <small style={{ ...aide, fontWeight: 400 }}>
-              {form.genre === 'prophetie' ? 'Elle s’affiche dans chaque étape révélée de la prophétie.' : 'L’histoire et les instructions s’affichent par-dessus cette image.'}
-            </small>
-            {illustration.url && !illustration.retirer && (
-              <img src={illustration.url} alt={form.genre === 'prophetie' ? 'Dragon de la prophétie' : 'Image de fond de l’expédition'} style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: 'var(--rayon-m)', background: 'var(--fond-carte)' }} />
-            )}
-            <div style={actions}>
-              <label className="btn alt" style={{ ...petitBtn, cursor: 'pointer' }}>
-                <ImagePlus size={16} aria-hidden="true" /> {illustration.url && !illustration.retirer ? 'Changer l’image' : 'Choisir une image'}
-                <input type="file" accept="image/*" onChange={choisirIllustration} style={{ display: 'none' }} />
-              </label>
-              {illustration.url && !illustration.retirer && (
-                <button type="button" className="btn alt danger" style={petitBtn} onClick={() => setIllustration({ url: '', fichier: null, retirer: true })}>
-                  <Trash2 size={16} aria-hidden="true" /> Retirer
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-        {form.genre !== 'epopee' && (
-          <label style={champ}>{form.genre === 'prophetie' ? 'Message de fin (facultatif)' : 'Texte de félicitations (facultatif)'}
-            <textarea rows={3} value={form.message_fin || ''} onChange={(e) => maj({ message_fin: e.target.value })} maxLength={2000} />
-            <small style={{ ...aide, fontWeight: 400 }}>
-              {form.genre === 'prophetie' ? 'Affiché avec l’Orbe magique gagnée quand toutes les étapes sont accomplies.' : 'Affiché avec la Boussole gagnée quand tous les coloriages de l’expédition sont soumis.'}
-            </small>
-          </label>
-        )}
-        {form.genre !== 'expedition' && (
-          <label style={champ}>Image de la récompense (facultatif)
-            <input value={form.image} onChange={(e) => maj({ image: e.target.value })} maxLength={120} placeholder={form.genre === 'epopee' ? 'ex. blason-valombre.png' : 'ex. orbe-trois-lunes.png'} />
-            <small style={{ ...aide, fontWeight: 400 }}>Nom du fichier dans public/recompenses-activites/autres-activites.</small>
-          </label>
-        )}
+        {champImage('Fond à afficher (facultatif)', 'L’histoire et les instructions globales s’affichent par-dessus cette image.')}
 
-        {form.etapes.map((e, i) => (
-          <div key={i} style={{ ...ligneCarte, gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-              <b>{form.genre === 'epopee' ? `Phase ${i + 1}` : form.genre === 'expedition' && form.etapes.length === 1 ? 'Coloriage demandé' : `Étape ${i + 1}`}</b>
-              {form.genre === 'prophetie' && (
-                <span style={{ display: 'flex', gap: '4px' }}>
-                  <button type="button" className="btn alt" aria-label="Monter" style={{ minWidth: 44, minHeight: 44 }} onClick={() => deplacer(i, -1)}><ChevronUp size={16} aria-hidden="true" /></button>
-                  <button type="button" className="btn alt" aria-label="Descendre" style={{ minWidth: 44, minHeight: 44 }} onClick={() => deplacer(i, 1)}><ChevronDown size={16} aria-hidden="true" /></button>
-                  {form.etapes.length > 1 && <button type="button" className="btn alt danger" aria-label="Retirer l’étape" style={{ minWidth: 44, minHeight: 44 }} onClick={() => setForm({ ...form, etapes: form.etapes.filter((_, j) => j !== i) })}><Trash2 size={16} aria-hidden="true" /></button>}
-                </span>
-              )}
-            </div>
-            <label style={champ}>Nom<input value={e.nom} onChange={(x) => majEtape(i, { nom: x.target.value })} maxLength={100} /></label>
-            <label style={champ}>Instructions
-              <textarea rows={3} value={e.instructions} onChange={(x) => majEtape(i, { instructions: x.target.value })} maxLength={2000} />
-            </label>
-            {form.genre === 'prophetie' && (
-              <label style={champ}>Message après l’étape (facultatif)
-                <textarea rows={2} value={e.message || ''} onChange={(x) => majEtape(i, { message: x.target.value })} maxLength={2000} />
-                <small style={{ ...aide, fontWeight: 400 }}>Affiché une fois que la personne a soumis son coloriage pour cette étape.</small>
-              </label>
-            )}
-            {form.genre !== 'epopee' && nombre(`xp${i}`, form.genre === 'expedition' && form.etapes.length === 1 ? 'XP de l’expédition réussie' : 'XP de l’étape', e.xp, (v) => majEtape(i, { xp: v }))}
-            {form.genre === 'prophetie' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <label style={champ}>Révélée le<input type="date" value={e.debut || ''} onChange={(x) => majEtape(i, { debut: x.target.value })} style={dateStyle} /></label>
-                <label style={champ}>Date limite<input type="date" value={e.fin || ''} min={e.debut} onChange={(x) => majEtape(i, { fin: x.target.value })} style={dateStyle} /></label>
-              </div>
-            )}
-            <b style={{ fontSize: '0.9rem' }}>{form.genre === 'epopee' && i === 1 ? 'Points faibles du dragon' : 'Contraintes'}</b>
-            {e.contraintes.map((c, k) => (
-              <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '8px', borderLeft: '3px solid var(--bordure-carte)' }}>
-                <label style={champ}>Contrainte {k + 1}
-                  <input value={c.texte} onChange={(x) => majContrainte(i, k, { texte: x.target.value })} maxLength={300} placeholder="ex. Utiliser au moins 3 tons de rose" />
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '6px', alignItems: 'end' }}>
-                  {GENRES_CONTRAINTE[genreContraintes(i)].length > 1 && (
-                    <label style={champ}>Type
-                      <Deroulant titre="Type de contrainte" value={c.genre} onChange={(v) => majContrainte(i, k, { genre: v, ...(DEGATS[v] ? { degats: Math.round((DEGATS[v].min + DEGATS[v].max) / 2) } : {}) })}
-                        options={GENRES_CONTRAINTE[genreContraintes(i)].map(([v, l]) => ({ valeur: v, label: l }))} />
-                    </label>
-                  )}
-                  {form.genre === 'epopee' && i === 1 && nombre(`d${i}${k}`, 'Dégâts', c.degats, (v) => majContrainte(i, k, { degats: v }))}
-                  {form.genre === 'expedition' && c.genre === 'secondaire' && nombre(`c${i}${k}`, 'XP en plus', c.xp, (v) => majContrainte(i, k, { xp: v }))}
-                  <button type="button" className="btn alt danger" style={{ ...petitBtn, justifyContent: 'center' }} onClick={() => majEtape(i, { contraintes: e.contraintes.filter((_, j) => j !== k) })}>
-                    <Trash2 size={16} aria-hidden="true" /> Retirer
-                  </button>
-                </div>
-              </div>
-            ))}
-            <button type="button" className="btn alt" style={petitBtn}
-              onClick={() => majEtape(i, { contraintes: [...e.contraintes, contrainte(form.genre === 'epopee' && i === 1 ? 'facile' : form.genre === 'expedition' ? 'secondaire' : 'obligatoire')] })}>
-              <Plus size={14} aria-hidden="true" /> Ajouter une contrainte
-            </button>
-          </div>
-        ))}
+        {form.etapes.map(blocEtape)}
         {form.genre === 'prophetie' && (
           <button type="button" className="btn alt" style={petitBtn} onClick={() => {
             const der = form.etapes.at(-1);
@@ -297,11 +344,12 @@ export default function Aventures() {
             <Plus size={14} aria-hidden="true" /> Ajouter une étape
           </button>
         )}
-        <div style={actions}>
-          <button type="submit" className="btn" style={{ flex: 1, minHeight: '48px' }} disabled={!form.titre.trim()}>Enregistrer</button>
-          <button type="button" className="btn alt" onClick={() => setForm(null)}>Annuler</button>
-        </div>
-        {message && <small style={{ color: 'var(--danger)' }}>{message}</small>}
+
+        {form.genre === 'prophetie'
+          ? messageFin('Message de fin (facultatif)', 'Affiché avec l’Orbe magique gagnée quand toutes les étapes sont accomplies.')
+          : messageFin('Texte de félicitations (facultatif)', 'Affiché avec la Boussole gagnée quand tous les coloriages de l’expédition sont soumis.')}
+        {form.genre === 'prophetie' && imageRecompenseChamp}
+        {boutons}
       </form>
     );
   }

@@ -6,7 +6,7 @@ import { jourQuebec } from '@/lib/temps';
 import { VALEURS_CATEGORIES } from '@/lib/defis';
 import { mesTypesVisibles } from '@/lib/visibilite';
 import { parcheminsDisponibles } from '@/lib/recompensesServeur';
-import { chargerAventure, etatEpopee, soumettre, repondreEnigme, nbColoriages } from '@/lib/aventures';
+import { chargerAventure, etatEpopee, soumettre, soumettreTest, repondreEnigme, nbColoriages, normaliser } from '@/lib/aventures';
 import { choixNbColoriages } from '@/lib/activites';
 import { verifierLimite, parcheminDuMois } from '@/lib/abonnement';
 
@@ -57,6 +57,41 @@ async function vueMembre(a, userId) {
   };
 }
 
+async function vueTest(a, userId) {
+  const mes = await sql`
+    SELECT s.etape_id, s.page_id, s.degats, s.contraintes, to_char(s.cree_le, 'YYYY-MM-DD') AS jour, OCTET_LENGTH(p.image_b64) AS img_size
+    FROM aventure_tests s JOIN pages p ON p.id = s.page_id
+    WHERE s.aventure_id = ${a.id} AND s.user_id = ${userId} ORDER BY s.cree_le`;
+  const faites = new Set(mes.map((s) => s.etape_id));
+  let epopee = null;
+  if (a.genre === 'epopee') {
+    const [p1, p2] = a.etapes;
+    const routeOuverte = faites.has(p1?.id);
+    const attaques = mes.filter((s) => s.etape_id === p2?.id);
+    const degats = attaques.reduce((s, x) => s + x.degats, 0);
+    const pvRestants = Math.max(0, a.pv - degats);
+    epopee = { contributions: routeOuverte ? a.min_contributions : 0, attaques: attaques.length, degats, routeOuverte, pvRestants, vaincu: routeOuverte && pvRestants === 0 };
+  }
+  const complete = a.genre === 'epopee' ? !!epopee?.vaincu : a.etapes.length > 0 && a.etapes.every((e) => faites.has(e.id));
+  const { reponse, ...publique } = a;
+  return {
+    ...publique,
+    test: true,
+    etapes: a.etapes.map((e) => ({ ...e, message: faites.has(e.id) ? e.message : '' })),
+    complete,
+    victoire_le: epopee?.vaincu ? new Date().toISOString() : null,
+    boussole: complete && a.genre === 'expedition' ? { genre: 'boussole', image: 'level1', detail: 'niveau 1 (aperçu)' } : null,
+    message_fin: complete ? a.message_fin : '',
+    inscrit: true,
+    participants: (await sql`SELECT count(*)::int AS n FROM aventure_inscriptions WHERE aventure_id = ${a.id}`)[0].n,
+    enigmeResolue: false,
+    mesSoumissions: mes,
+    epopee,
+    parchemins: Math.max(1, await parcheminsDisponibles(userId)),
+    aujourdhui: jourQuebec(),
+  };
+}
+
 export async function GET(req) {
   const { profil, erreur } = await exigerPoste();
   if (erreur) return erreur;
@@ -81,6 +116,7 @@ export async function GET(req) {
     await parcheminDuMois(profil.id);
     const a = await chargerAventure(q.get('id'));
     if (!a || (a.debut > jourQuebec() && profil.role !== 'admin')) return NextResponse.json({ error: 'Aventure introuvable' }, { status: 404 });
+    if (q.get('test') === '1' && profil.role === 'admin') return NextResponse.json({ aventure: await vueTest(a, profil.id) });
     return NextResponse.json({ aventure: await vueMembre(a, profil.id) });
   }
 
@@ -106,6 +142,23 @@ export async function POST(req) {
   if (erreur) return erreur;
   const b = await req.json().catch(() => ({}));
   const non = (message, status = 400) => NextResponse.json({ error: message }, { status });
+
+  if (['test_soumettre', 'test_enigme', 'test_recommencer'].includes(b.action)) {
+    if (profil.role !== 'admin') return non('Réservé à l’Invocatrice', 403);
+    const a = await chargerAventure(b.id);
+    if (!a) return non('Aventure introuvable', 404);
+    if (b.action === 'test_recommencer') {
+      await sql`DELETE FROM aventure_tests WHERE aventure_id = ${a.id} AND user_id = ${profil.id}`;
+      return NextResponse.json({ ok: true });
+    }
+    if (b.action === 'test_enigme') {
+      const bonnes = String(a.reponse || '').split('|').map(normaliser).filter(Boolean);
+      return bonnes.includes(normaliser(b.reponse)) ? NextResponse.json({ ok: true }) : non('Ce n’est pas la bonne réponse. Essaie encore !');
+    }
+    if (!isId(String(b.pageId || ''))) return non('Choisis un coloriage');
+    const r = await soumettreTest(a, profil.id, b);
+    return r.erreur ? non(r.erreur) : NextResponse.json(r);
+  }
 
   if (b.action && b.action !== 'enregistrer') {
     const a = await chargerAventure(b.id);

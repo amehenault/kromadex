@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy } from 'lucide-react';
+import { ArrowLeft, Compass, Shield, Sparkles, Lock, Check, Gift, KeyRound, Swords, Image as ImageIcon, Trophy, Eye, RotateCcw } from 'lucide-react';
 import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
@@ -35,7 +35,7 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
   async function envoyer() {
     setOccupe(true); setErreur('');
     const r = await fetch('/api/aventures', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'soumettre', id: a.id, etapeId: etape.id, pageId: page.id, contraintes: cochees, parchemin }) });
+      body: JSON.stringify({ action: a.test ? 'test_soumettre' : 'soumettre', id: a.id, etapeId: etape.id, pageId: page.id, contraintes: cochees, parchemin }) });
     const d = await r.json().catch(() => ({}));
     setOccupe(false);
     if (!r.ok) { setErreur(d.error || 'Erreur'); return; }
@@ -44,8 +44,8 @@ function Soumission({ a, etape, attaque, onFini, onFermer }) {
 
   if (!page) {
     return (
-      <ChoixColoriage titre={etape.nom} tomes type={a.categorie} onChoisir={setPage} onFermer={onFermer}
-        aide="Le coloriage doit venir de ta section Tomes / Livres. Un même coloriage ne sert qu’une fois par aventure." />
+      <ChoixColoriage titre={etape.nom} tomes={!a.test} type={a.test ? undefined : a.categorie} avertissement={!a.test} onChoisir={setPage} onFermer={onFermer}
+        aide={a.test ? 'Mode test : choisis n’importe quel coloriage, même plusieurs fois.' : 'Le coloriage doit venir de ta section Tomes / Livres. Un même coloriage ne sert qu’une fois par aventure.'} />
     );
   }
   return (
@@ -107,32 +107,43 @@ function Contraintes({ etape }) {
   );
 }
 
-export default function Aventure({ id }) {
+export default function Aventure({ id, test: modeTest = false }) {
   const router = useRouter();
-  const [a, setA] = useState(null);
+  const [donnees, setA] = useState(null);
   const [erreur, setErreur] = useState('');
   const [soumission, setSoumission] = useState(null);
   const [message, setMessage] = useState('');
   const [reponse, setReponse] = useState('');
+  const [enigmeTest, setEnigmeTest] = useState(false);
 
   async function charger() {
-    const r = await fetch(`/api/aventures?id=${id}`);
+    const r = await fetch(`/api/aventures?id=${id}${modeTest ? '&test=1' : ''}`);
     const d = await r.json().catch(() => ({}));
     if (r.ok) setA(d.aventure); else setErreur(d.error || 'Aventure introuvable');
   }
-  useEffect(() => { charger(); }, [id]);
+  useEffect(() => { charger(); }, [id, modeTest]);
+
+  const a = donnees && donnees.test ? { ...donnees, enigmeResolue: enigmeTest } : donnees;
 
   async function action(corps) {
     setMessage('');
-    const r = await fetch('/api/aventures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: a.id, ...corps }) });
+    const enTest = a.test && corps.action === 'enigme';
+    const r = await fetch('/api/aventures', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: a.id, ...corps, ...(enTest ? { action: 'test_enigme' } : {}) }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) { setMessage(d.error || 'Erreur'); return; }
+    if (enTest) setEnigmeTest(true);
     charger();
   }
   function fini(d) {
     setSoumission(null);
-    setMessage(d.degats ? `Attaque réussie : ${d.degats} points de dégâts${d.xp ? ` · +${d.xp} XP` : ''}` : `Coloriage soumis${d.xp ? ` · +${d.xp} XP` : ''}`);
+    const texte = d.degats ? `Attaque réussie : ${d.degats} points de dégâts${d.xp ? ` · +${d.xp} XP` : ''}` : `Coloriage soumis${d.xp ? ` · +${d.xp} XP` : ''}`;
+    setMessage(d.test ? `Test : ${texte.charAt(0).toLowerCase()}${texte.slice(1)} (aucun XP, rien d’enregistré pour vrai)` : texte);
     charger(); router.refresh();
+  }
+  async function recommencerTest() {
+    await fetch('/api/aventures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: a.id, action: 'test_recommencer' }) });
+    setEnigmeTest(false); setMessage(''); charger();
   }
 
   if (erreur) return <p style={{ padding: 'var(--espace-3)' }}><TexteErreur texte={erreur} /></p>;
@@ -142,7 +153,7 @@ export default function Aventure({ id }) {
   const imageAventure = a.illustration ? `/api/aventures/illustration?id=${a.id}&v=${a.illustration}` : null;
   const fondExpedition = a.genre !== 'epopee' ? imageAventure : null;
   const fete = FETES.find((f) => f.valeur === a.fete);
-  const terminee = a.fin < a.aujourdhui;
+  const terminee = !a.test && a.fin < a.aujourdhui;
   const mes = (etapeId) => a.mesSoumissions.filter((s) => s.etape_id === etapeId);
   const bouton = { minHeight: '48px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' };
   const carteEtape = { display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: 'var(--espace-3)' };
@@ -171,11 +182,23 @@ export default function Aventure({ id }) {
   return (
     <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: 'var(--espace-3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: 'var(--espace-3)' }}>
-        <Link href="/aventures" className="btn alt" aria-label="Retour aux aventures" style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <Link href={a.test ? '/profil/admin' : '/aventures'} className="btn alt" aria-label={a.test ? 'Retour à l’Espace de l’Invocatrice' : 'Retour aux aventures'} style={{ display: 'inline-flex', alignItems: 'center' }}>
           <ArrowLeft size={16} aria-hidden="true" />
         </Link>
         <h2 style={{ margin: 0, fontSize: '1.2rem', minWidth: 0, overflowWrap: 'anywhere' }}>{a.titre}</h2>
       </div>
+      {a.test && (
+        <div className="carte" style={{ ...carteEtape, border: '2px dashed var(--btn)' }}>
+          <b style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Eye size={18} aria-hidden="true" /> Mode test</b>
+          <small>
+            Tu vois l’aventure comme les membres, avec toutes les étapes révélées. Tu peux soumettre n’importe quel coloriage, même plusieurs fois :
+            rien n’est enregistré pour vrai, aucun XP ni aucune récompense n’est donné. L’énigme, la route et le dragon ne tiennent compte que de tes essais.
+          </small>
+          <button type="button" className="btn alt" onClick={recommencerTest} style={{ minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 700 }}>
+            <RotateCcw size={16} aria-hidden="true" /> Recommencer le test
+          </button>
+        </div>
+      )}
 
       <div className="carte" style={carteEtape}>
         <small style={{ display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--btn)' }}>
@@ -335,7 +358,7 @@ export default function Aventure({ id }) {
                           {a.etapes[1]?.instructions && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{a.etapes[1].instructions}</p>}
                           <Contraintes etape={a.etapes[1]} />
                           <small style={{ color: 'var(--texte-secondaire)' }}>Une attaque par jour. Un même coloriage peut toucher plusieurs points faibles, mais ne sert qu’une fois.</small>
-                          {!terminee && (mes(a.etapes[1].id).some((s) => s.jour === a.aujourdhui)
+                          {!terminee && (!a.test && mes(a.etapes[1].id).some((s) => s.jour === a.aujourdhui)
                             ? <small style={{ fontWeight: 700 }}>Tu as déjà attaqué aujourd’hui : reviens demain.</small>
                             : <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: a.etapes[1], attaque: true })}><Swords size={18} aria-hidden="true" /> Attaquer le dragon</button>)}
                         </>
@@ -377,7 +400,7 @@ export default function Aventure({ id }) {
                     {vignettes(mes(e.id))}
                   </>
                 )
-                : !terminee && a.inscrit && (!e.fin || e.fin >= a.aujourdhui) && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
+                : !terminee && a.inscrit && (a.test || !e.fin || e.fin >= a.aujourdhui) && <button type="button" className="btn" style={bouton} onClick={() => setSoumission({ etape: e })}><ImageIcon size={18} aria-hidden="true" /> Soumettre mon coloriage</button>}
             </>
           )}
         </div>

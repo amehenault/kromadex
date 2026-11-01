@@ -4,8 +4,9 @@ import Aventure from './aventure';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AventurePage({ params }) {
+export default async function AventurePage({ params, searchParams }) {
   if (!(await getUser())) redirect('/login');
   const { id } = await params;
-  return <Aventure id={id} />;
+  const test = (await searchParams)?.test === '1';
+  return <Aventure id={id} test={test} />;
 }

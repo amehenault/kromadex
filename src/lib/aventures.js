@@ -157,6 +157,30 @@ export async function soumettre(a, userId, { etapeId, pageId, contraintes = [], 
   return { ok: true, xp, degats };
 }
 
+// Mode test de l'Invocatrice : n'importe quel coloriage, même plusieurs fois, sans dates, sans XP ni récompense.
+export async function soumettreTest(a, userId, { etapeId, pageId, contraintes = [], parchemin = null }) {
+  const etape = a.etapes.find((e) => e.id === Number(etapeId));
+  if (!etape) return { erreur: 'Étape introuvable' };
+  const [p] = await sql`SELECT id FROM pages WHERE id = ${pageId} AND user_id = ${userId} AND image_b64 IS NOT NULL`;
+  if (!p) return { erreur: 'Coloriage introuvable' };
+  const ids = new Set(etape.contraintes.map((c) => c.id));
+  const choisies = [...new Set((contraintes || []).map(Number))].filter((id) => ids.has(id));
+  const obligatoires = etape.contraintes.filter((c) => c.genre === 'obligatoire');
+  const secondaires = etape.contraintes.filter((c) => c.genre === 'secondaire');
+  const manquantes = obligatoires.filter((c) => !choisies.includes(c.id) && c.id !== Number(parchemin));
+  let degats = 0;
+  if (a.genre === 'epopee' && etape.ordre === 2) {
+    degats = etape.contraintes.filter((c) => choisies.includes(c.id)).reduce((s, c) => s + (c.degats || 0), 0);
+    if (!degats) return { erreur: 'Ton coloriage doit toucher au moins un point faible du dragon' };
+  } else {
+    if (manquantes.length) return { erreur: 'Les contraintes obligatoires doivent être respectées' };
+    if (a.genre === 'expedition' && secondaires.length && !choisies.some((id) => secondaires.some((s) => s.id === id))) return { erreur: 'Respecte au moins une contrainte secondaire' };
+  }
+  await sql`INSERT INTO aventure_tests (aventure_id, etape_id, user_id, page_id, contraintes, degats)
+    VALUES (${a.id}, ${etape.id}, ${userId}, ${p.id}, ${choisies}, ${degats})`;
+  return { ok: true, xp: 0, degats, test: true };
+}
+
 export async function repondreEnigme(a, userId, reponse) {
   const [inscription] = await sql`SELECT enigme_ok FROM aventure_inscriptions WHERE aventure_id = ${a.id} AND user_id = ${userId}`;
   if (!inscription) return { erreur: 'Inscris-toi d’abord à l’épopée' };

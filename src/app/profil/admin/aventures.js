@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown, ImagePlus } from 'lucide-react';
+import { Plus, Trash2, Compass, Shield, Sparkles, Pencil, ChevronUp, ChevronDown, ImagePlus, Eye } from 'lucide-react';
+import Link from 'next/link';
 import { compresserImage } from '@/lib/compressionImage';
 import { CATEGORIES_DEFI } from '@/lib/defis';
 import { FETES, XP_SECONDAIRE, XP_EPOPEE, XP_PROPHETIE, DEGATS, MOIS_EPOPEES, NOMS_AVENTURES, choixNbColoriages } from '@/lib/activites';
@@ -387,6 +388,7 @@ export default function Aventures() {
             <div style={actions}>
               <button type="button" className="btn alt" style={petitBtn} onClick={() => ouvrir({ ...a, xp: a.xp || {} })}><Pencil size={14} aria-hidden="true" /> Modifier</button>
               <button type="button" className="btn alt danger" style={petitBtn} onClick={() => supprimer(a)}><Trash2 size={14} aria-hidden="true" /> Supprimer</button>
+              <Link href={`/aventures/${a.id}?test=1`} className="btn alt" style={petitBtn}><Eye size={14} aria-hidden="true" /> Voir</Link>
             </div>
           </div>
         );

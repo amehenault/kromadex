@@ -7,7 +7,6 @@ import { TempsRestant } from '@/components/Fuseau';
 import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import Verdict, { PastilleColoriste } from '@/components/Verdict';
-import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
 import { COMBATS, XP_COMBATS, THEMES_DUEL, THEMES_JOUTE, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE } from '@/lib/activites';
 import { CATEGORIES_DEFI, nomCategorie } from '@/lib/defis';
 import Tournois from './tournois';
@@ -191,7 +190,6 @@ export default function Combats({ inviter, integre }) {
             {[['duel', 'Duel chromatique'], ['joute', 'Joute ouverte']].map(([g, l]) => (
               <button key={g} type="button" className={form.genre === g ? 'btn' : 'btn alt'} onClick={() => setForm({
                 ...form, genre: g,
-                ...(g === 'duel' && form.categorie === 'tous' ? { categorie: 'mystere' } : {}),
                 ...(g === 'duel' && form.themeType === 'libre' ? { themeType: 'couleur' } : {}),
               })} style={{ minHeight: '48px', fontWeight: 700 }}>{l}</button>
             ))}
@@ -203,7 +201,7 @@ export default function Combats({ inviter, integre }) {
           </small>
           <label style={champ}>Type de coloriage
             <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
-              options={(form.genre === 'joute' ? CATEGORIES_DEFI : TYPES_COLORIAGE).map((t) => ({ valeur: t.valeur, label: t.label }))} />
+              options={CATEGORIES_DEFI.map((t) => ({ valeur: t.valeur, label: t.label }))} />
           </label>
           <label style={champ}>Thème
             <Deroulant titre="Thème" value={form.themeType} onChange={(v) => setForm({ ...form, themeType: v })}

@@ -4,9 +4,8 @@ import { getUser } from '@/lib/auth';
 import { isId } from '@/lib/pages';
 import { verifierLimite } from '@/lib/abonnement';
 import { prevenir } from '@/lib/push';
-import { VALEURS_TYPES } from '@/lib/typesColoriage';
 import { COMBATS, THEMES_DUEL, THEMES_JOUTE } from '@/lib/activites';
-import { pageConvient } from '@/lib/defis';
+import { pageConvient, VALEURS_CATEGORIES } from '@/lib/defis';
 import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/lib/combats';
 
 const ACTIFS = ['invitation', 'ouvert', 'soumission'];
@@ -62,7 +61,7 @@ export async function POST(req) {
   if (b.action === 'creer') {
     const genre = b.genre === 'joute' ? 'joute' : 'duel';
     const places = [2, 3, 4].includes(Number(b.places)) ? Number(b.places) : COMBATS.maxJoute;
-    const categorie = VALEURS_TYPES.includes(b.categorie) || (genre === 'joute' && b.categorie === 'tous') ? b.categorie : null;
+    const categorie = VALEURS_CATEGORIES.includes(b.categorie) ? b.categorie : null;
     if (!categorie) return erreur('Choisis le type de coloriage');
     const themeType = (genre === 'joute' ? THEMES_JOUTE : THEMES_DUEL).some((t) => t.valeur === b.themeType) ? b.themeType : null;
     const theme = themeType === 'libre' ? 'Libre' : String(b.theme || '').trim().slice(0, 80);

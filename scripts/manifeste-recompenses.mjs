@@ -2,7 +2,10 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const PUBLIC = 'public';
-const DOSSIERS = ['recompenses-activites', 'pionniers', 'inventaire', 'parrainage'];
+// Tous les dossiers de public/ sont des récompenses, sauf ceux-ci : un nouveau dossier apparaît donc tout seul dans l'espace admin.
+const EXCLUS = ['tomes'];
+const DOSSIERS = readdirSync(PUBLIC, { withFileTypes: true }).filter((e) => e.isDirectory() && !EXCLUS.includes(e.name)).map((e) => e.name);
+const joli = (nom) => nom.replace(/[-_]+/g, ' ').replace(/^./, (l) => l.toUpperCase());
 const EXTENSIONS = /\.(svg|png|webp|jpe?g)$/i;
 
 function typeDe(chemin) {
@@ -24,7 +27,10 @@ function typeDe(chemin) {
   }
   if (c.includes('blason') || c.includes('epopee')) return 'Épopée';
   if (c.includes('orbe') || c.includes('prophetie')) return 'Prophétie';
-  return 'Autres';
+  // Dossier inconnu : son nom devient le type (le sous-dossier pour recompenses-activites).
+  const morceaux = chemin.split('/').slice(0, -1);
+  const dossier = morceaux[0] === 'recompenses-activites' ? morceaux[1] : morceaux[0];
+  return dossier ? joli(dossier) : 'Autres';
 }
 
 function dimensions(fichier, buf) {

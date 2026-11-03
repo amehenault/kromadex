@@ -8,14 +8,15 @@ import Feuille from '@/components/Feuille';
 import ChoixColoriage from '@/components/ChoixColoriage';
 import Verdict, { PastilleColoriste } from '@/components/Verdict';
 import { TYPES_COLORIAGE } from '@/lib/typesColoriage';
-import { COMBATS, XP_COMBATS, THEMES_DUEL, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE } from '@/lib/activites';
+import { COMBATS, XP_COMBATS, THEMES_DUEL, THEMES_JOUTE, VICTOIRES_EPEE, VICTOIRES_EXPERT_JOUTE } from '@/lib/activites';
+import { CATEGORIES_DEFI, nomCategorie } from '@/lib/defis';
 import Tournois from './tournois';
 import Pseudo from '@/components/Pseudo';
 import TexteErreur from '@/components/TexteErreur';
 import Deroulant from '@/components/Deroulant';
 
-const nomType = (v) => TYPES_COLORIAGE.find((t) => t.valeur === v)?.label || '';
-const nomTheme = (v) => THEMES_DUEL.find((t) => t.valeur === v)?.label || '';
+const nomTheme = (v) => THEMES_JOUTE.find((t) => t.valeur === v)?.label || '';
+const libelleTheme = (c) => (c.theme_type === 'libre' ? 'Thème libre' : `${nomTheme(c.theme_type)} : ${c.theme}`);
 const STATUT = {
   invitation: 'En attente de réponse', soumission: 'Coloriages en préparation', ouvert: 'Ouverte aux coloristes',
   verdict: 'Verdict de l’Assemblée', termine: 'Terminé', refuse: 'Refusé', annule: 'Annulé',
@@ -65,9 +66,9 @@ export default function Combats({ inviter, integre }) {
           <small style={{ textTransform: 'uppercase', fontWeight: 700, color: 'var(--btn)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             {c.genre === 'duel' ? <Swords size={14} aria-hidden="true" /> : <Users size={14} aria-hidden="true" />} {c.genre === 'duel' ? 'Duel chromatique' : 'Joute ouverte'}
           </small>
-          <small style={{ fontWeight: 700 }}>{nomType(c.categorie)}</small>
+          <small style={{ fontWeight: 700 }}>{nomCategorie(c.categorie)}</small>
         </div>
-        <b style={{ overflowWrap: 'anywhere' }}>{nomTheme(c.theme_type)} : {c.theme}</b>
+        <b style={{ overflowWrap: 'anywhere' }}>{libelleTheme(c)}</b>
         <small style={{ color: 'var(--texte-secondaire)' }}>
           {STATUT[c.statut]} · {c.coloriages} coloriage{c.coloriages > 1 ? 's' : ''}{c.genre === 'joute' ? ` · ${c.participants} / ${c.places || COMBATS.maxJoute} coloristes` : ''}
         </small>
@@ -122,7 +123,6 @@ export default function Combats({ inviter, integre }) {
   const mes = liste.filter((c) => c.je_participe && ['invitation', 'soumission', 'ouvert'].includes(c.statut));
   const joutes = liste.filter((c) => c.statut === 'ouvert' && !c.je_participe);
   const verdicts = liste.filter((c) => c.statut === 'verdict');
-  const termines = liste.filter((c) => ['termine', 'refuse', 'annule'].includes(c.statut));
 
   return (
     <div style={{ maxWidth: 'var(--largeur-max)', margin: '0 auto', padding: integre ? 0 : 'var(--espace-3)' }}>
@@ -182,7 +182,6 @@ export default function Combats({ inviter, integre }) {
           {joutes.map((c) => carte(c, [
             <button key="j" type="button" className="btn" style={petit} onClick={() => action({ action: 'rejoindre', id: c.id })}><Swords size={16} aria-hidden="true" /> Accepter la joute</button>,
           ]))}
-          {termines.length > 0 && <>{titre('Terminés')}{termines.map((c) => carte(c))}</>}
         </>
       )}
 
@@ -190,7 +189,11 @@ export default function Combats({ inviter, integre }) {
         <Feuille titre="Lancer un combat" onFermer={() => setForm(null)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
             {[['duel', 'Duel chromatique'], ['joute', 'Joute ouverte']].map(([g, l]) => (
-              <button key={g} type="button" className={form.genre === g ? 'btn' : 'btn alt'} onClick={() => setForm({ ...form, genre: g })} style={{ minHeight: '48px', fontWeight: 700 }}>{l}</button>
+              <button key={g} type="button" className={form.genre === g ? 'btn' : 'btn alt'} onClick={() => setForm({
+                ...form, genre: g,
+                ...(g === 'duel' && form.categorie === 'tous' ? { categorie: 'mystere' } : {}),
+                ...(g === 'duel' && form.themeType === 'libre' ? { themeType: 'couleur' } : {}),
+              })} style={{ minHeight: '48px', fontWeight: 700 }}>{l}</button>
             ))}
           </div>
           <small style={{ color: 'var(--texte-secondaire)' }}>
@@ -200,16 +203,20 @@ export default function Combats({ inviter, integre }) {
           </small>
           <label style={champ}>Type de coloriage
             <Deroulant titre="Type de coloriage" value={form.categorie} onChange={(v) => setForm({ ...form, categorie: v })}
-              options={TYPES_COLORIAGE.map((t) => ({ valeur: t.valeur, label: t.label }))} />
+              options={(form.genre === 'joute' ? CATEGORIES_DEFI : TYPES_COLORIAGE).map((t) => ({ valeur: t.valeur, label: t.label }))} />
           </label>
           <label style={champ}>Thème
             <Deroulant titre="Thème" value={form.themeType} onChange={(v) => setForm({ ...form, themeType: v })}
-              options={THEMES_DUEL.map((t) => ({ valeur: t.valeur, label: t.label }))} />
+              options={(form.genre === 'joute' ? THEMES_JOUTE : THEMES_DUEL).map((t) => ({ valeur: t.valeur, label: t.label }))} />
           </label>
-          <label style={champ}>{nomTheme(form.themeType)} choisi.e
-            <input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} maxLength={80}
-              placeholder={THEMES_DUEL.find((t) => t.valeur === form.themeType)?.aide} />
-          </label>
+          {form.themeType === 'libre' ? (
+            <small style={{ color: 'var(--texte-secondaire)' }}>Chaque coloriste soumet le coloriage de son choix.</small>
+          ) : (
+            <label style={champ}>{nomTheme(form.themeType)} {form.themeType === 'personnage' ? 'choisi' : 'choisie'}
+              <input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} maxLength={80}
+                placeholder={THEMES_DUEL.find((t) => t.valeur === form.themeType)?.aide} />
+            </label>
+          )}
           {form.genre === 'joute' && (
             <label style={champ}>Nombre de coloristes (toi comprise ou compris)
               <Deroulant titre="Nombre de coloristes" value={form.places || 4} onChange={(v) => setForm({ ...form, places: Number(v) })}
@@ -226,7 +233,7 @@ export default function Combats({ inviter, integre }) {
               <small style={{ color: 'var(--texte-secondaire)', fontWeight: 400 }}>Vous devez vous suivre mutuellement.</small>
             </label>
           )}
-          <button type="button" className="btn" onClick={creer} disabled={!form.theme.trim() || (form.genre === 'duel' && !form.inviteId)} style={{ minHeight: '48px', fontWeight: 700 }}>
+          <button type="button" className="btn" onClick={creer} disabled={(form.themeType !== 'libre' && !form.theme.trim()) || (form.genre === 'duel' && !form.inviteId)} style={{ minHeight: '48px', fontWeight: 700 }}>
             {form.genre === 'duel' ? 'Envoyer l’invitation' : 'Lancer la joute'}
           </button>
           {erreur && <small style={{ color: 'var(--danger)' }}><TexteErreur texte={erreur} /></small>}
@@ -234,7 +241,8 @@ export default function Combats({ inviter, integre }) {
       )}
       {choix && (
         <ChoixColoriage type={choix.combat.categorie} onChoisir={choisir} onFermer={() => setChoix(null)} erreur={erreur}
-          aide={`Coloriage de type ${nomType(choix.combat.categorie)}, sur le thème ${choix.combat.theme}.`} />
+          aide={choix.combat.categorie === 'tous' && choix.combat.theme_type === 'libre' ? 'Tous les coloriages conviennent, thème libre.'
+            : `${nomCategorie(choix.combat.categorie)}, ${choix.combat.theme_type === 'libre' ? 'thème libre' : `sur le thème ${choix.combat.theme}`}.`} />
       )}
     </div>
   );

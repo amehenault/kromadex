@@ -5,7 +5,8 @@ import { isId } from '@/lib/pages';
 import { verifierLimite } from '@/lib/abonnement';
 import { prevenir } from '@/lib/push';
 import { VALEURS_TYPES } from '@/lib/typesColoriage';
-import { COMBATS, THEMES_DUEL } from '@/lib/activites';
+import { COMBATS, THEMES_DUEL, THEMES_JOUTE } from '@/lib/activites';
+import { pageConvient } from '@/lib/defis';
 import { avancerCombats, verifierDepartVerdict, seSuiventMutuellement } from '@/lib/combats';
 
 const ACTIFS = ['invitation', 'ouvert', 'soumission'];
@@ -39,9 +40,7 @@ export async function GET() {
     LEFT JOIN combat_participants mp ON mp.combat_id = c.id AND mp.user_id = ${user.id}
     WHERE c.genre IN ('duel', 'joute') AND (
           c.statut IN ('ouvert', 'verdict')
-       OR (c.statut IN ('invitation', 'soumission') AND (mp.user_id IS NOT NULL OR c.invite = ${user.id}))
-       OR (c.statut = 'termine' AND c.verdict_fin > now() - interval '30 days')
-       OR (c.statut IN ('refuse', 'annule') AND mp.user_id IS NOT NULL AND c.cree_le > now() - interval '20 days'))
+       OR (c.statut IN ('invitation', 'soumission') AND (mp.user_id IS NOT NULL OR c.invite = ${user.id})))
     ORDER BY c.cree_le DESC LIMIT 200`;
   return NextResponse.json({ combats });
 }
@@ -57,16 +56,16 @@ export async function POST(req) {
   const monColoriage = async (pageId, categorie) => {
     if (!isId(String(pageId || ''))) return null;
     const [p] = await sql`SELECT id, COALESCE(NULLIF(type_coloriage, ''), (SELECT c.type FROM tome_catalog c WHERE lower(c.nom) = lower(tome) LIMIT 1), '') AS type_coloriage FROM pages WHERE id = ${pageId} AND user_id = ${moi} AND image_b64 IS NOT NULL`;
-    return p && p.type_coloriage === categorie ? p : null;
+    return p && pageConvient(categorie, p.type_coloriage) ? p : null;
   };
 
   if (b.action === 'creer') {
     const genre = b.genre === 'joute' ? 'joute' : 'duel';
     const places = [2, 3, 4].includes(Number(b.places)) ? Number(b.places) : COMBATS.maxJoute;
-    const categorie = VALEURS_TYPES.includes(b.categorie) ? b.categorie : null;
+    const categorie = VALEURS_TYPES.includes(b.categorie) || (genre === 'joute' && b.categorie === 'tous') ? b.categorie : null;
     if (!categorie) return erreur('Choisis le type de coloriage');
-    const themeType = THEMES_DUEL.some((t) => t.valeur === b.themeType) ? b.themeType : null;
-    const theme = String(b.theme || '').trim().slice(0, 80);
+    const themeType = (genre === 'joute' ? THEMES_JOUTE : THEMES_DUEL).some((t) => t.valeur === b.themeType) ? b.themeType : null;
+    const theme = themeType === 'libre' ? 'Libre' : String(b.theme || '').trim().slice(0, 80);
     if (!themeType || !theme) return erreur('Choisis le thème (couleur, personnage ou ambiance) et écris-le');
     const [{ n }] = await sql`SELECT count(*)::int AS n FROM combats WHERE createur = ${moi} AND statut = ANY(${ACTIFS})`;
     if (n >= 3) return erreur('Tu as déjà 3 combats en attente', 429);

@@ -29,6 +29,8 @@ export const THEMES_DUEL = [
   { valeur: 'personnage', label: 'Personnage', aide: 'ex. Stitch' },
   { valeur: 'ambiance', label: 'Ambiance', aide: 'ex. une nuit étoilée' },
 ];
+// Les joutes acceptent en plus un thème libre : n'importe quel coloriage convient.
+export const THEMES_JOUTE = [{ valeur: 'libre', label: 'Libre' }, ...THEMES_DUEL];
 
 export const TOURNOIS = {
   joursInscription: 7,

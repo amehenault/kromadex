@@ -6,10 +6,16 @@ import IMAGES from '@/lib/manifesteRecompenses.json';
 import { colonne, champ, aide } from './outils';
 import Deroulant from '@/components/Deroulant';
 
-const TYPES = [
+// Ordre d'affichage préféré ; tout nouveau type trouvé dans les dossiers s'ajoute à la suite.
+const ORDRE = [
   'Épreuve mensuelle', 'Épreuve des Sentinelles', 'Épreuve des cheffes', 'Épreuve de groupe', 'Bingo',
   'Duel', 'Joute', 'Tournoi du royaume', 'Combat', 'Expédition', 'Épopée', 'Prophétie',
-  'Pionnières', 'Inventaire', 'Autres',
+  'Pionnières', 'Parrainage', 'Inventaire',
+];
+const TYPES = [
+  ...ORDRE,
+  ...[...new Set(IMAGES.map((i) => i.type))].filter((t) => !ORDRE.includes(t) && t !== 'Autres').sort((a, b) => a.localeCompare(b, 'fr')),
+  'Autres',
 ];
 const TAILLES = [
   { px: 40, label: 'Liste (40)' },

@@ -20,20 +20,25 @@ export default function Roue({ tomes }) {
   const [mode, setMode] = useState('libre');
   const [tomeChoisi, setTomeChoisi] = useState('');
   const [typeChoisi, setTypeChoisi] = useState('');
+  const [typeLibre, setTypeLibre] = useState('tous');
   const [recherche, setRecherche] = useState('');
   const [angle, setAngle] = useState(0);
   const [tourne, setTourne] = useState(false);
   const [resultat, setResultat] = useState(null);
   const [message, setMessage] = useState('');
 
-  const admissibles = tomes.filter((t) => pagesLibres(t).length > 0);
+  const typesPresents = TYPES_COLORIAGE.filter((t) => tomes.some((x) => (x.type || 'autre') === t.valeur));
+  const filtreLibre = typesPresents.length > 1 && typesPresents.some((t) => t.valeur === typeLibre) ? typeLibre : 'tous';
+  const admissibles = tomes.filter((t) => pagesLibres(t).length > 0 && (filtreLibre === 'tous' || (t.type || 'autre') === filtreLibre));
 
   function lancer() {
     setMessage(''); setResultat(null); setTirage(null); setEnQuete(false);
     let tome;
     if (mode === 'libre') {
       if (!admissibles.length) {
-        setMessage(tomes.length
+        setMessage(filtreLibre !== 'tous'
+          ? "Aucun tome ou livre de ce type n'a de page libre connue. Essaie un autre type ou « Peu importe »."
+          : tomes.length
           ? "Aucun de tes tomes n'a de page libre connue : soit tout est colorié, soit le nombre de coloriages du livre est inconnu."
           : "Ajoute d'abord des tomes à ton profil pour que la Roue puisse choisir.");
         return;
@@ -66,7 +71,6 @@ export default function Roue({ tomes }) {
     router.push(`/pages/new?tome=${encodeURIComponent(resultat.tome.nom)}&page=${resultat.page}`);
   }
 
-  const typesPresents = TYPES_COLORIAGE.filter((t) => tomes.some((x) => (x.type || 'autre') === t.valeur));
   const tome = tomes.find((t) => t.nom === tomeChoisi);
   const motTome = typeChoisi === 'cozy' ? 'livre' : 'tome';
   const q = recherche.trim().toLowerCase();
@@ -119,6 +123,18 @@ export default function Roue({ tomes }) {
           ? 'La Roue choisit un de tes tomes au hasard, puis une page que tu n’as pas encore faite.'
           : 'Choisis ton tome, la Roue choisit une page que tu n’as pas encore faite.'}
       </p>
+
+      {mode === 'libre' && typesPresents.length > 1 && (
+        <div role="group" aria-label="Type de coloriage" style={{ display: 'grid', gridTemplateColumns: `repeat(${typesPresents.length + 1}, minmax(0, 1fr))`, gap: '6px', margin: '0 0 var(--espace-3)' }}>
+          {[...typesPresents, { valeur: 'tous', label: 'Peu importe' }].map((t) => (
+            <button key={t.valeur} type="button" className={filtreLibre === t.valeur ? 'btn' : 'btn alt'} aria-pressed={filtreLibre === t.valeur}
+              onClick={() => { setTypeLibre(t.valeur); setResultat(null); setMessage(''); }}
+              style={{ minHeight: '48px', fontSize: '0.88rem', minWidth: 0 }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {mode === 'guide' && (
         <div className="carte" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 var(--espace-3)' }}>
